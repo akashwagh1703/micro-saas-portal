@@ -18,7 +18,7 @@ import Settings from './pages/Settings';
 export default function App() {
   return (
     <Provider store={store}>
-      <BrowserRouter basename="/micro-saas">
+      <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <Toaster position="top-right" />
         <Routes>
           <Route path="/login" element={<Login />} />
