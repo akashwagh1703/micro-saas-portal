@@ -26,6 +26,7 @@ const nodeTypesList = [
 
 function CustomNode({ data, selected }) {
   const color = nodeTypesList.find((n) => n.type === data.nodeType)?.color || 'bg-slate-500';
+  const isCondition = data.nodeType === 'condition';
   return (
     <div className={`min-w-[160px] rounded-lg border-2 bg-white shadow ${selected ? 'border-emerald-500' : 'border-slate-200'}`}>
       <Handle type="target" position={Position.Top} className="!bg-slate-400" />
@@ -33,7 +34,16 @@ function CustomNode({ data, selected }) {
         {data.label || data.nodeType}
       </div>
       <div className="px-3 py-2 text-xs text-slate-500 truncate">{data.summary || 'Configure node'}</div>
-      <Handle type="source" position={Position.Bottom} className="!bg-slate-400" />
+      {isCondition ? (
+        <>
+          <span className="pointer-events-none absolute -bottom-4 left-[25%] -translate-x-1/2 text-[9px] font-semibold text-emerald-600">Yes</span>
+          <Handle id="true" type="source" position={Position.Bottom} style={{ left: '25%' }} className="!bg-emerald-500" />
+          <span className="pointer-events-none absolute -bottom-4 left-[75%] -translate-x-1/2 text-[9px] font-semibold text-red-500">No</span>
+          <Handle id="false" type="source" position={Position.Bottom} style={{ left: '75%' }} className="!bg-red-500" />
+        </>
+      ) : (
+        <Handle type="source" position={Position.Bottom} className="!bg-slate-400" />
+      )}
     </div>
   );
 }
@@ -70,6 +80,8 @@ export default function WorkflowBuilder() {
         id: e.id || `${e.source}-${e.target}`,
         source: e.source,
         target: e.target,
+        sourceHandle: e.sourceHandle ?? null,
+        label: e.sourceHandle === 'true' ? 'Yes' : e.sourceHandle === 'false' ? 'No' : undefined,
       }))
     );
   }, [id, setNodes, setEdges]);
@@ -77,7 +89,10 @@ export default function WorkflowBuilder() {
   useEffect(() => { loadWorkflow(); }, [loadWorkflow]);
 
   const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
+    (params) => {
+      const label = params.sourceHandle === 'true' ? 'Yes' : params.sourceHandle === 'false' ? 'No' : undefined;
+      setEdges((eds) => addEdge({ ...params, label }, eds));
+    },
     [setEdges]
   );
 
@@ -117,7 +132,7 @@ export default function WorkflowBuilder() {
       position: n.position,
       data: { ...n.data, nodeType: undefined, label: n.data.label, summary: undefined },
     })),
-    edges: edges.map((e) => ({ id: e.id, source: e.source, target: e.target })),
+    edges: edges.map((e) => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle ?? null })),
   });
 
   const saveWorkflow = async () => {
@@ -219,7 +234,33 @@ export default function WorkflowBuilder() {
       );
     }
 
-    return <p className="text-sm text-slate-500">Trigger node — fires on incoming messages.</p>;
+    if (type === 'trigger') {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm text-slate-500">Fires on incoming messages. Leave keywords empty to run on every message.</p>
+          <Input
+            label="Keywords (comma separated)"
+            value={selectedData.keywords || ''}
+            onChange={(e) => updateSelectedNodeData({ keywords: e.target.value })}
+            placeholder="hi, hello, support"
+          />
+          <div>
+            <label className="text-sm font-medium">Match</label>
+            <select
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              value={selectedData.match || 'any'}
+              onChange={(e) => updateSelectedNodeData({ match: e.target.value })}
+            >
+              <option value="any">Any keyword (contains)</option>
+              <option value="all">All keywords</option>
+              <option value="exact">Exact message</option>
+            </select>
+          </div>
+        </div>
+      );
+    }
+
+    return <p className="text-sm text-slate-500">Select a node to configure</p>;
   };
 
   return (

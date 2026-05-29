@@ -16,14 +16,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+const base = import.meta.env.BASE_URL || '/';
+const loginPath = `${base.replace(/\/$/, '')}/login`;
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      if (!window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login';
+      if (window.location.pathname !== loginPath) {
+        window.location.href = loginPath;
       }
     }
     return Promise.reject(error);

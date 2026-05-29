@@ -147,6 +147,7 @@ export default function Settings() {
             <Input label="Phone Number ID" value={whatsapp.phone_number_id || ''} onChange={(e) => setWhatsapp({ ...whatsapp, phone_number_id: e.target.value })} />
             <Input label="Business Account ID" value={whatsapp.business_account_id || ''} onChange={(e) => setWhatsapp({ ...whatsapp, business_account_id: e.target.value })} />
             <Input label="Verify Token" type="password" placeholder={whatsapp.has_verify_token ? '••••••••' : ''} onChange={(e) => setWhatsapp({ ...whatsapp, verify_token: e.target.value })} />
+            <Input label="App Secret" type="password" placeholder={whatsapp.has_app_secret ? '••••••••' : 'For webhook signature verification'} onChange={(e) => setWhatsapp({ ...whatsapp, app_secret: e.target.value })} />
             <div>
               <label className="text-sm font-medium text-slate-700">Webhook URL</label>
               <p className="mt-1 rounded-lg bg-slate-50 p-2 text-xs font-mono break-all">{webhookUrl}</p>
