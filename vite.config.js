@@ -3,9 +3,9 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  // Path the app is served from. Defaults to the reverse-proxy path used on
-  // cidcomitra.com; set VITE_BASE_PATH=/ when hosting at a domain root (e.g. Render).
-  base: process.env.VITE_BASE_PATH || '/micro-saas/',
+  // Path the app is served from. Defaults to the domain root (Render, etc.).
+  // For the cidcomitra.com reverse proxy, build with VITE_BASE_PATH=/micro-saas/.
+  base: process.env.VITE_BASE_PATH || '/',
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
