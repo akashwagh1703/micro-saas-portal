@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Workflow, Inbox, Users, Wifi, Bot } from 'lucide-react';
 import Card from '../components/ui/Card';
 import api from '../services/api';
@@ -11,10 +12,19 @@ const statConfig = [
 ];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [activities, setActivities] = useState([]);
 
   useEffect(() => {
+    api
+      .get('/settings/business-profile')
+      .then((r) => {
+        if (!r.data?.configured) {
+          navigate('/workflows', { replace: true });
+        }
+      })
+      .catch(() => {});
     api.get('/dashboard/stats').then((r) => setStats(r.data));
     api.get('/dashboard/activity').then((r) => setActivities(r.data.activities || []));
   }, []);
@@ -70,7 +80,7 @@ export default function Dashboard() {
 
       <Card title="Recent Activity">
         {activities.length === 0 ? (
-          <p className="text-sm text-slate-500">No activity yet. Connect WhatsApp and start receiving messages.</p>
+          <p className="text-sm text-slate-500">No activity yet. Connect WhatsApp and publish a workflow to get started.</p>
         ) : (
           <ul className="divide-y divide-slate-100">
             {activities.map((a) => (

@@ -7,6 +7,7 @@ import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import api from '../../services/api';
 import { setCredentials } from '../../store/authSlice';
+import { resolvePostAuthPath } from '../../utils/postAuth';
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '', password_confirmation: '' });
@@ -21,7 +22,7 @@ export default function Register() {
       const { data } = await api.post('/auth/register', form);
       dispatch(setCredentials(data));
       toast.success('Account created!');
-      navigate('/dashboard');
+      navigate(await resolvePostAuthPath(api));
     } catch (err) {
       const errors = err.response?.data?.errors;
       const msg = errors ? Object.values(errors).flat()[0] : 'Registration failed';

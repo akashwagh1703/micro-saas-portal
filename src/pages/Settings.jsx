@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
@@ -6,15 +7,31 @@ import Button from '../components/ui/Button';
 import api from '../services/api';
 import { useSelector } from 'react-redux';
 
+const VALID_TABS = ['profile', 'password', 'whatsapp', 'ai'];
+
 export default function Settings() {
   const user = useSelector((state) => state.auth.user);
-  const [tab, setTab] = useState('profile');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = VALID_TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'profile';
+  const [tab, setTab] = useState(initialTab);
   const [profile, setProfile] = useState({ name: '', email: '' });
   const [password, setPassword] = useState({ current_password: '', password: '', password_confirmation: '' });
   const [whatsapp, setWhatsapp] = useState({});
   const [integrations, setIntegrations] = useState({});
   const [webhookUrl, setWebhookUrl] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab && VALID_TABS.includes(urlTab)) {
+      setTab(urlTab);
+    }
+  }, [searchParams]);
+
+  const selectTab = (id) => {
+    setTab(id);
+    setSearchParams(id === 'profile' ? {} : { tab: id }, { replace: true });
+  };
 
   useEffect(() => {
     setProfile({ name: user?.name || '', email: user?.email || '' });
@@ -105,7 +122,7 @@ export default function Settings() {
         {tabs.map((t) => (
           <button
             key={t.id}
-            onClick={() => setTab(t.id)}
+            onClick={() => selectTab(t.id)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
               tab === t.id ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500'
             }`}

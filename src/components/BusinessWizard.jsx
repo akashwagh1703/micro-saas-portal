@@ -1,30 +1,123 @@
-import { useEffect, useState } from 'react';
-import { X, ArrowLeft, Sparkles, Check, Wand2, Bot, AlertTriangle } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { X, ArrowLeft, Sparkles, Check, Wand2, Bot, AlertTriangle, Lightbulb } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from './ui/Button';
 import api from '../services/api';
 
 const BUSINESS_OPTIONS = [
-  { key: 'farmer', label: 'Farmer / Agriculture' },
-  { key: 'real_estate', label: 'Real Estate' },
-  { key: 'coaching', label: 'Coaching Institute' },
-  { key: 'clinic', label: 'Clinic / Doctor' },
-  { key: 'local_shop', label: 'Local Shop' },
-  { key: 'travel', label: 'Travel Agency' },
-  { key: 'insurance', label: 'Insurance Agent' },
-  { key: 'ca_accountant', label: 'CA / Accountant' },
-  { key: 'support', label: 'Customer Support Team' },
-  { key: 'other', label: 'Other' },
+  {
+    key: 'farmer',
+    label: 'Farmer / Agriculture',
+    hint: 'Sell seeds, fertilizers, or advise on crops and seasons.',
+    example: 'Customers ask about prices, availability, and farming tips.',
+  },
+  {
+    key: 'real_estate',
+    label: 'Real Estate',
+    hint: 'Property listings, site visits, and buyer enquiries.',
+    example: 'Leads ask for flats, rent, or booking a property tour.',
+  },
+  {
+    key: 'coaching',
+    label: 'Coaching Institute',
+    hint: 'Courses, admissions, batch timings, and demo classes.',
+    example: 'Students ask about fees, syllabus, or trial sessions.',
+  },
+  {
+    key: 'clinic',
+    label: 'Clinic / Doctor',
+    hint: 'Appointments, timings, reports, and general queries.',
+    example: 'Patients book slots or ask clinic hours and location.',
+  },
+  {
+    key: 'local_shop',
+    label: 'Local Shop',
+    hint: 'Product catalog, prices, stock, and order updates.',
+    example: 'Shoppers ask "Do you have this?" or delivery time.',
+  },
+  {
+    key: 'travel',
+    label: 'Travel Agency',
+    hint: 'Trip packages, bookings, itineraries, and quotes.',
+    example: 'Customers enquire about destinations and travel dates.',
+  },
+  {
+    key: 'insurance',
+    label: 'Insurance Agent',
+    hint: 'Policies, renewals, claims, and premium quotes.',
+    example: 'Clients ask about coverage, documents, or renewal.',
+  },
+  {
+    key: 'ca_accountant',
+    label: 'CA / Accountant',
+    hint: 'Tax filing, GST, documents, and consultation slots.',
+    example: 'Clients share queries about ITR, GST, or deadlines.',
+  },
+  {
+    key: 'support',
+    label: 'Customer Support Team',
+    hint: 'Resolve tickets, FAQs, and follow-ups on WhatsApp.',
+    example: 'Users report issues or ask how to use your product.',
+  },
+  {
+    key: 'other',
+    label: 'Other business',
+    hint: 'Any business not listed above — we generate a custom flow.',
+    example: 'Describe your business and we tailor workflows with AI.',
+  },
 ];
 
 const USE_CASE_OPTIONS = [
-  { key: 'customer_support', label: 'Customer Support' },
-  { key: 'lead_generation', label: 'Lead Generation' },
-  { key: 'appointment_booking', label: 'Appointment Booking' },
-  { key: 'sales_assistant', label: 'Sales Assistant' },
-  { key: 'faq_bot', label: 'FAQ Bot' },
-  { key: 'ai_chat', label: 'AI Chat Assistant' },
+  {
+    key: 'customer_support',
+    label: 'Customer Support',
+    hint: 'Answer questions and resolve issues automatically.',
+    example: 'Order status, complaints, general help.',
+  },
+  {
+    key: 'lead_generation',
+    label: 'Lead Generation',
+    hint: 'Capture name, phone, and interest from new chats.',
+    example: 'Property enquiry, course demo, insurance quote.',
+  },
+  {
+    key: 'appointment_booking',
+    label: 'Appointment Booking',
+    hint: 'Collect date, time, and details for bookings.',
+    example: 'Doctor visit, site tour, tax consultation.',
+  },
+  {
+    key: 'sales_assistant',
+    label: 'Sales Assistant',
+    hint: 'Qualify buyers and suggest next steps.',
+    example: 'Product recommendations, upsell, follow-up.',
+  },
+  {
+    key: 'faq_bot',
+    label: 'FAQ Bot',
+    hint: 'Instant answers to common repeated questions.',
+    example: 'Timings, prices, location, policies.',
+  },
+  {
+    key: 'ai_chat',
+    label: 'AI Chat Assistant',
+    hint: 'Flexible AI replies for open-ended conversations.',
+    example: 'When customers ask varied or complex questions.',
+  },
 ];
+
+const RECOMMENDED_USE_CASES = {
+  farmer: ['faq_bot', 'customer_support'],
+  real_estate: ['lead_generation', 'appointment_booking'],
+  coaching: ['lead_generation', 'appointment_booking'],
+  clinic: ['appointment_booking', 'faq_bot'],
+  local_shop: ['faq_bot', 'customer_support'],
+  travel: ['lead_generation', 'appointment_booking'],
+  insurance: ['lead_generation', 'customer_support'],
+  ca_accountant: ['appointment_booking', 'customer_support'],
+  support: ['customer_support', 'faq_bot'],
+  other: ['ai_chat', 'customer_support'],
+};
 
 const NODE_LABELS = {
   trigger: 'Trigger',
@@ -46,14 +139,20 @@ function OptionList({ options, value, onSelect, disabled }) {
             type="button"
             disabled={disabled}
             onClick={() => onSelect(opt.key)}
-            className={`flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm transition ${
+            className={`rounded-lg border px-4 py-3 text-left transition ${
               selected
-                ? 'border-emerald-500 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-500'
-                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500'
+                : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
             } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
           >
-            <span>{opt.label}</span>
-            {selected && <Check size={16} className="text-emerald-600" />}
+            <div className="flex items-start justify-between gap-2">
+              <span className={`text-sm font-medium ${selected ? 'text-emerald-800' : 'text-slate-800'}`}>
+                {opt.label}
+              </span>
+              {selected && <Check size={16} className="mt-0.5 shrink-0 text-emerald-600" />}
+            </div>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">{opt.hint}</p>
+            <p className="mt-1 text-[11px] italic text-slate-400">{opt.example}</p>
           </button>
         );
       })}
@@ -61,24 +160,38 @@ function OptionList({ options, value, onSelect, disabled }) {
   );
 }
 
-function MultiOptionList({ options, values, onToggle }) {
+function MultiOptionList({ options, values, onToggle, recommended = [] }) {
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       {options.map((opt) => {
         const selected = values.includes(opt.key);
+        const isRecommended = recommended.includes(opt.key);
         return (
           <button
             key={opt.key}
             type="button"
             onClick={() => onToggle(opt.key)}
-            className={`flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm transition ${
+            className={`relative rounded-lg border px-4 py-3 text-left transition ${
               selected
-                ? 'border-emerald-500 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-500'
-                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500'
+                : isRecommended
+                  ? 'border-violet-200 bg-violet-50/40 hover:border-violet-300'
+                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
             }`}
           >
-            <span>{opt.label}</span>
-            {selected && <Check size={16} className="text-emerald-600" />}
+            {isRecommended && !selected && (
+              <span className="absolute right-2 top-2 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
+                Recommended
+              </span>
+            )}
+            <div className="flex items-start justify-between gap-2 pr-16">
+              <span className={`text-sm font-medium ${selected ? 'text-emerald-800' : 'text-slate-800'}`}>
+                {opt.label}
+              </span>
+              {selected && <Check size={16} className="mt-0.5 shrink-0 text-emerald-600" />}
+            </div>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">{opt.hint}</p>
+            <p className="mt-1 text-[11px] italic text-slate-400">{opt.example}</p>
           </button>
         );
       })}
@@ -87,8 +200,7 @@ function MultiOptionList({ options, values, onToggle }) {
 }
 
 /**
- * Guided setup: one business at a time, multiple use cases (one workflow each).
- * Changing business requires all current workflows to be paused first.
+ * Guided business setup: one business at a time, multiple use cases (one workflow each).
  */
 export default function BusinessWizard({ onClose, onCreated, profile: initialProfile }) {
   const [step, setStep] = useState(1);
@@ -106,12 +218,16 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
     profile?.configured && profile.business_category && business !== profile.business_category;
   const blockBusinessChange = isBusinessChange && !profile.can_change_business;
 
+  const recommendedUseCases = useMemo(
+    () => (business ? RECOMMENDED_USE_CASES[business] || [] : []),
+    [business],
+  );
+
+  const selectedBusinessLabel = BUSINESS_OPTIONS.find((o) => o.key === business)?.label;
+
   useEffect(() => {
     if (initialProfile) return;
-    api
-      .get('/settings/business-profile')
-      .then((r) => setProfile(r.data))
-      .catch(() => {});
+    api.get('/settings/business-profile').then((r) => setProfile(r.data)).catch(() => {});
   }, [initialProfile]);
 
   useEffect(() => {
@@ -156,6 +272,12 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
     );
   };
 
+  const applyRecommended = () => {
+    if (recommendedUseCases.length === 0) return;
+    setUseCases(recommendedUseCases);
+    toast.success('Recommended use cases selected');
+  };
+
   const finish = async () => {
     if (!business || useCases.length === 0) return;
     if (isOther && !businessDescription.trim()) {
@@ -169,13 +291,8 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
 
     setSubmitting(true);
     try {
-      const payload = {
-        business_category: business,
-        use_cases: useCases,
-      };
-      if (isOther) {
-        payload.business_description = businessDescription.trim();
-      }
+      const payload = { business_category: business, use_cases: useCases };
+      if (isOther) payload.business_description = businessDescription.trim();
 
       const { data } = await api.post('/workflows/setup-business', payload);
       const count = data.workflows?.length ?? 0;
@@ -185,15 +302,10 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
       onCreated?.(data);
     } catch (err) {
       const errors = err.response?.data?.errors;
-      if (errors?.business_description?.[0]) {
-        toast.error(errors.business_description[0]);
-      } else if (errors?.business_category?.[0]) {
-        toast.error(errors.business_category[0]);
-      } else if (errors?.use_cases?.[0]) {
-        toast.error(errors.use_cases[0]);
-      } else {
-        toast.error(err.response?.data?.message || 'Failed to set up workflows');
-      }
+      if (errors?.business_description?.[0]) toast.error(errors.business_description[0]);
+      else if (errors?.business_category?.[0]) toast.error(errors.business_category[0]);
+      else if (errors?.use_cases?.[0]) toast.error(errors.use_cases[0]);
+      else toast.error(err.response?.data?.message || 'Failed to set up workflows');
       setSubmitting(false);
     }
   };
@@ -204,14 +316,29 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
       return;
     }
     setBusiness(key);
-    if (key !== 'other') {
-      setBusinessDescription('');
+    if (key !== 'other') setBusinessDescription('');
+    if (!profile?.configured) setUseCases(RECOMMENDED_USE_CASES[key] || []);
+  };
+
+  const goToUseCases = () => {
+    if (!business) {
+      toast.error('Please select your business type first');
+      return;
     }
+    if (descriptionRequired) {
+      toast.error('Please describe your business');
+      return;
+    }
+    if (blockBusinessChange) return;
+    if (!profile?.configured && useCases.length === 0 && recommendedUseCases.length > 0) {
+      setUseCases(recommendedUseCases);
+    }
+    setStep(2);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-xl">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <div className="flex items-center gap-2">
             <Sparkles size={18} className="text-emerald-600" />
@@ -221,45 +348,53 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
             type="button"
             onClick={onClose}
             className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            aria-label="Close"
           >
             <X size={18} />
           </button>
         </div>
 
+        {!profile?.configured && (
+          <div className="border-b border-emerald-100 bg-emerald-50 px-6 py-4">
+            <p className="text-sm font-medium text-emerald-900">Set up your business workflows</p>
+            <p className="mt-1 text-xs leading-relaxed text-emerald-800">
+              Pick your industry and use cases — we&apos;ll create ready-made workflows for you.
+            </p>
+          </div>
+        )}
+
         <div className="px-6 py-5">
           <div className="mb-4 flex items-center gap-2 text-xs text-slate-400">
-            <span className={step === 1 ? 'font-semibold text-emerald-600' : ''}>1. Business</span>
+            <span className={step === 1 ? 'font-semibold text-emerald-600' : ''}>1. Your business</span>
             <span>›</span>
-            <span className={step === 2 ? 'font-semibold text-emerald-600' : ''}>2. Use cases</span>
+            <span className={step === 2 ? 'font-semibold text-emerald-600' : ''}>2. What to automate</span>
           </div>
 
           {profile?.configured && !profile.can_change_business && step === 1 && (
             <div className="mb-4 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
               <AlertTriangle size={16} className="mt-0.5 shrink-0" />
               <p>
-                You have {profile.published_count} published workflow(s). Pause them all on the
-                Workflows page before changing your business.
+                You have {profile.published_count} published workflow(s). Pause them all before changing
+                your business.
               </p>
             </div>
           )}
 
           {step === 1 ? (
             <>
-              <p className="mb-1 text-sm font-medium text-slate-700">What is your business?</p>
-              <p className="mb-3 text-xs text-slate-500">
-                One business at a time. You can run multiple use-case workflows for it.
-              </p>
-              <OptionList
-                options={BUSINESS_OPTIONS}
-                value={business}
-                onSelect={handleBusinessSelect}
-                disabled={false}
-              />
-
+              <div className="mb-4 flex gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                <Lightbulb size={16} className="mt-0.5 shrink-0 text-amber-500" />
+                <p>
+                  <span className="font-medium text-slate-700">How to choose:</span> Pick the card that best
+                  matches your business. One business at a time — add multiple automations in the next step.
+                </p>
+              </div>
+              <p className="mb-3 text-sm font-medium text-slate-700">What is your business?</p>
+              <OptionList options={BUSINESS_OPTIONS} value={business} onSelect={handleBusinessSelect} />
               {isOther && (
                 <div className="mt-4">
                   <label htmlFor="business-description" className="mb-1 block text-sm font-medium text-slate-700">
-                    Describe your business
+                    Describe your business <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     id="business-description"
@@ -268,29 +403,50 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
                     maxLength={500}
                     rows={3}
                     placeholder="e.g. Wedding photography studio in Mumbai"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
+              )}
+              {!business && (
+                <p className="mt-3 text-xs text-amber-700">Select one option above to continue.</p>
               )}
             </>
           ) : (
             <>
-              <p className="mb-1 text-sm font-medium text-slate-700">What do you want to automate?</p>
-              <p className="mb-3 text-xs text-slate-500">
-                Select one or more — each use case gets its own workflow with smart keyword triggers.
-              </p>
-              <MultiOptionList options={USE_CASE_OPTIONS} values={useCases} onToggle={toggleUseCase} />
-
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-violet-100 bg-violet-50/60 px-3 py-2.5">
+                <p className="text-xs text-violet-900">
+                  <span className="font-medium">Business:</span> {selectedBusinessLabel}
+                </p>
+                {recommendedUseCases.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={applyRecommended}
+                    className="rounded-md bg-violet-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-violet-700"
+                  >
+                    Use recommended
+                  </button>
+                )}
+              </div>
+              <div className="mb-4 flex gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                <Lightbulb size={16} className="mt-0.5 shrink-0 text-amber-500" />
+                <p>
+                  Select one or more use cases. Each gets its own workflow with keyword triggers.
+                </p>
+              </div>
+              <p className="mb-3 text-sm font-medium text-slate-700">What do you want to automate?</p>
+              <MultiOptionList
+                options={USE_CASE_OPTIONS}
+                values={useCases}
+                onToggle={toggleUseCase}
+                recommended={recommendedUseCases}
+              />
               {useCases.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {previewLoading ? (
                     <p className="text-xs text-slate-500">Loading previews…</p>
                   ) : (
                     previews.map((preview) => (
-                      <div
-                        key={preview.use_case}
-                        className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-3"
-                      >
+                      <div key={preview.use_case} className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-3">
                         <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
                           {preview.generation_mode === 'ai' ? <Bot size={14} /> : <Wand2 size={14} />}
                           {USE_CASE_OPTIONS.find((o) => o.key === preview.use_case)?.label}
@@ -325,10 +481,9 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
           ) : (
             <span />
           )}
-
           {step === 1 ? (
             <Button
-              onClick={() => setStep(2)}
+              onClick={goToUseCases}
               disabled={!business || descriptionRequired || blockBusinessChange}
             >
               Continue

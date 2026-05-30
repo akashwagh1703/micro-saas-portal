@@ -7,6 +7,7 @@ import AuthLayout from '../../components/layout/AuthLayout';
 import Button from '../../components/ui/Button';
 import api from '../../services/api';
 import { setCredentials } from '../../store/authSlice';
+import { resolvePostAuthPath } from '../../utils/postAuth';
 
 function AuthField({ label, icon: Icon, ...props }) {
   return (
@@ -40,7 +41,7 @@ export default function Login() {
       const { data } = await api.post('/auth/login', form);
       dispatch(setCredentials(data));
       toast.success('Welcome back!');
-      navigate('/dashboard');
+      navigate(await resolvePostAuthPath(api));
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed');
     } finally {
