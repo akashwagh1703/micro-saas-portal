@@ -14,11 +14,11 @@ import { logout } from '../../store/authSlice';
 import toast from 'react-hot-toast';
 
 const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/workflows', icon: Workflow, label: 'Workflows' },
-  { to: '/inbox', icon: Inbox, label: 'Inbox' },
-  { to: '/contacts', icon: Users, label: 'Contacts' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Home', hint: 'Your setup progress' },
+  { to: '/workflows', icon: Workflow, label: 'Auto-replies', hint: 'Turn bots on or off' },
+  { to: '/inbox', icon: Inbox, label: 'Messages', hint: 'Customer chats' },
+  { to: '/contacts', icon: Users, label: 'Contacts', hint: 'People who messaged you' },
+  { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp & smart replies' },
 ];
 
 export default function Sidebar() {
@@ -44,36 +44,46 @@ export default function Sidebar() {
         </div>
         <div>
           <p className="text-sm font-bold text-slate-900">WhatsFlow</p>
-          <p className="text-xs text-slate-500">Workflow Automation</p>
+          <p className="text-xs text-slate-500">WhatsApp auto-replies</p>
         </div>
       </div>
 
       <nav className="flex-1 space-y-1 p-3">
-        {navItems.map(({ to, icon: Icon, label }) => (
+        {navItems.map(({ to, icon: Icon, label, hint }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+              `block rounded-lg px-3 py-2.5 transition ${
                 isActive
-                  ? 'bg-emerald-50 text-emerald-700'
+                  ? 'bg-emerald-50 text-emerald-800'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`
             }
           >
-            <Icon size={18} />
-            {label}
+            {({ isActive }) => (
+              <>
+                <div className="flex items-center gap-3">
+                  <Icon size={18} className={isActive ? 'text-emerald-600' : ''} />
+                  <span className="text-sm font-medium">{label}</span>
+                </div>
+                <p className={`mt-0.5 pl-9 text-[11px] ${isActive ? 'text-emerald-600/80' : 'text-slate-400'}`}>
+                  {hint}
+                </p>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
       <div className="border-t border-slate-100 p-3">
         <button
+          type="button"
           onClick={handleLogout}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600"
         >
           <LogOut size={18} />
-          Logout
+          Log out
         </button>
       </div>
     </aside>

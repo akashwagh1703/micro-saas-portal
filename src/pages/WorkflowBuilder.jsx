@@ -17,12 +17,12 @@ import Input from '../components/ui/Input';
 import api from '../services/api';
 
 const nodeTypesList = [
-  { type: 'trigger', label: 'Trigger', color: 'bg-blue-500' },
-  { type: 'condition', label: 'Condition', color: 'bg-amber-500' },
-  { type: 'collect_input', label: 'Ask & Wait', color: 'bg-cyan-500' },
-  { type: 'api', label: 'API', color: 'bg-purple-500' },
-  { type: 'ai', label: 'AI', color: 'bg-violet-500' },
-  { type: 'send_message', label: 'Send Message', color: 'bg-emerald-500' },
+  { type: 'trigger', label: 'When message arrives', color: 'bg-blue-500' },
+  { type: 'condition', label: 'If message contains…', color: 'bg-amber-500' },
+  { type: 'collect_input', label: 'Ask a question', color: 'bg-cyan-500' },
+  { type: 'api', label: 'Call external API', color: 'bg-purple-500' },
+  { type: 'ai', label: 'Smart reply', color: 'bg-violet-500' },
+  { type: 'send_message', label: 'Send WhatsApp message', color: 'bg-emerald-500' },
 ];
 
 function CustomNode({ data, selected }) {
@@ -152,7 +152,7 @@ export default function WorkflowBuilder() {
         return;
       }
       await api.put(`/workflows/${id}`, { definition, name: workflow?.name });
-      toast.success('Workflow saved');
+      toast.success('Auto-reply saved');
     } catch (err) {
       toast.error(err.response?.data?.errors?.[0] || 'Save failed');
     } finally {
@@ -164,7 +164,7 @@ export default function WorkflowBuilder() {
     await saveWorkflow();
     try {
       await api.post(`/workflows/${id}/publish`);
-      toast.success('Workflow published');
+      toast.success('Auto-reply is live!');
       loadWorkflow();
     } catch (err) {
       toast.error(err.response?.data?.errors?.[0] || 'Publish failed');
@@ -319,20 +319,23 @@ export default function WorkflowBuilder() {
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to="/workflows"><Button variant="secondary">← Back</Button></Link>
-          <h1 className="text-xl font-bold">{workflow?.name || 'Workflow Builder'}</h1>
+          <div>
+            <h1 className="text-xl font-bold">{workflow?.name || 'Edit auto-reply'}</h1>
+            <p className="text-xs text-slate-500">Advanced editor — drag steps to customize</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="danger" onClick={deleteWorkflow} loading={deleting}>
             Delete
           </Button>
           <Button variant="secondary" onClick={saveWorkflow} loading={saving}>Save</Button>
-          <Button onClick={publish}>Publish</Button>
+          <Button onClick={publish}>{workflow?.status === 'published' ? 'Update live' : 'Go live'}</Button>
         </div>
       </div>
 
       <div className="flex flex-1 gap-4 overflow-hidden">
         <div className="w-48 flex-shrink-0 rounded-xl border border-slate-200 bg-white p-3">
-          <p className="mb-2 text-xs font-semibold uppercase text-slate-400">Add Node</p>
+          <p className="mb-2 text-xs font-semibold uppercase text-slate-400">Add step</p>
           {nodeTypesList.map((n) => (
             <button
               key={n.type}
@@ -363,7 +366,7 @@ export default function WorkflowBuilder() {
         </div>
 
         <div className="w-72 flex-shrink-0 overflow-y-auto rounded-xl border border-slate-200 bg-white p-4">
-          <h3 className="mb-3 font-semibold">Node Settings</h3>
+          <h3 className="mb-3 font-semibold">Step settings</h3>
           {renderNodeSettings()}
         </div>
       </div>

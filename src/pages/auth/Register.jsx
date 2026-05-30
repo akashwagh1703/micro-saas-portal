@@ -21,7 +21,7 @@ export default function Register() {
     try {
       const { data } = await api.post('/auth/register', form);
       dispatch(setCredentials(data));
-      toast.success('Account created!');
+      toast.success('Welcome! Let\'s set up your WhatsApp auto-replies.');
       navigate(await resolvePostAuthPath(api));
     } catch (err) {
       const errors = err.response?.data?.errors;

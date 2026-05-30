@@ -1,7 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
-import { Search, Send } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Search, Send, Inbox as InboxIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import EmptyState from '../components/ui/EmptyState';
+import TestBotCard from '../components/onboarding/TestBotCard';
 import api from '../services/api';
+import { fetchSetupProgress } from '../utils/setupProgress';
 
 export default function Inbox() {
   const [conversations, setConversations] = useState([]);
@@ -10,6 +14,7 @@ export default function Inbox() {
   const [contact, setContact] = useState(null);
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
+  const [progress, setProgress] = useState(null);
   const messagesEndRef = useRef(null);
 
   const fetchConversations = () => {
@@ -26,6 +31,7 @@ export default function Inbox() {
   };
 
   useEffect(() => {
+    fetchSetupProgress(api).then(setProgress);
     fetchConversations();
     const interval = setInterval(() => {
       fetchConversations();
@@ -58,43 +64,62 @@ export default function Inbox() {
 
   return (
     <div className="flex h-[calc(100vh-3rem)] flex-col">
-      <h1 className="mb-4 text-2xl font-bold">Inbox</h1>
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-slate-900">Customer messages</h1>
+        <p className="text-sm text-slate-500">Chats from WhatsApp — auto-replies appear here too</p>
+      </div>
+
+      {progress?.hasLive && (
+        <div className="mb-4">
+          <TestBotCard whatsappDisplay={progress.whatsappDisplay} workflows={progress.workflows} />
+        </div>
+      )}
+
       <div className="flex flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <div className="w-80 flex-shrink-0 border-r border-slate-100 flex flex-col">
+        <div className="flex w-80 flex-shrink-0 flex-col border-r border-slate-100">
           <div className="border-b p-3">
             <div className="relative">
               <Search className="absolute left-3 top-2.5 text-slate-400" size={14} />
               <input
                 className="w-full rounded-lg border border-slate-200 py-2 pl-8 pr-3 text-sm"
-                placeholder="Search..."
+                placeholder="Search chats..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {conversations.map((conv) => (
-              <button
-                key={conv.id}
-                onClick={() => selectConversation(conv)}
-                className={`flex w-full items-start gap-3 border-b border-slate-50 p-3 text-left hover:bg-slate-50 ${
-                  selected === conv.id ? 'bg-emerald-50' : ''
-                }`}
-              >
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
-                  {(conv.contact?.name || conv.contact?.phone || '?')[0].toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex justify-between">
-                    <p className="truncate font-medium text-sm">{conv.contact?.name || conv.contact?.phone}</p>
-                    {conv.unread_count > 0 && (
-                      <span className="rounded-full bg-emerald-600 px-1.5 text-xs text-white">{conv.unread_count}</span>
-                    )}
+            {conversations.length === 0 ? (
+              <div className="p-6 text-center">
+                <InboxIcon className="mx-auto mb-2 text-slate-300" size={32} />
+                <p className="text-sm text-slate-500">No messages yet</p>
+                <p className="mt-1 text-xs text-slate-400">Send a test WhatsApp to your business number</p>
+              </div>
+            ) : (
+              conversations.map((conv) => (
+                <button
+                  key={conv.id}
+                  type="button"
+                  onClick={() => selectConversation(conv)}
+                  className={`flex w-full items-start gap-3 border-b border-slate-50 p-3 text-left hover:bg-slate-50 ${
+                    selected === conv.id ? 'bg-emerald-50' : ''
+                  }`}
+                >
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
+                    {(conv.contact?.name || conv.contact?.phone || '?')[0].toUpperCase()}
                   </div>
-                  <p className="truncate text-xs text-slate-500">{conv.contact?.phone}</p>
-                </div>
-              </button>
-            ))}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex justify-between">
+                      <p className="truncate text-sm font-medium">{conv.contact?.name || conv.contact?.phone}</p>
+                      {conv.unread_count > 0 && (
+                        <span className="rounded-full bg-emerald-600 px-1.5 text-xs text-white">{conv.unread_count}</span>
+                      )}
+                    </div>
+                    <p className="truncate text-xs text-slate-500">{conv.contact?.phone}</p>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
         </div>
 
@@ -105,14 +130,12 @@ export default function Inbox() {
                 <p className="font-semibold">{contact?.name || contact?.phone}</p>
                 <p className="text-xs text-slate-500">{contact?.phone}</p>
               </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#e5ddd5]">
+              <div className="flex-1 space-y-3 overflow-y-auto bg-[#e5ddd5] p-4">
                 {messages.map((m) => (
                   <div
                     key={m.id}
                     className={`max-w-[75%] rounded-lg px-3 py-2 text-sm shadow ${
-                      m.direction === 'outgoing'
-                        ? 'ml-auto bg-[#dcf8c6]'
-                        : 'bg-white'
+                      m.direction === 'outgoing' ? 'ml-auto bg-[#dcf8c6]' : 'bg-white'
                     }`}
                   >
                     {m.content}
@@ -126,7 +149,7 @@ export default function Inbox() {
               <form onSubmit={sendMessage} className="flex gap-2 border-t p-3">
                 <input
                   className="flex-1 rounded-full border border-slate-200 px-4 py-2 text-sm"
-                  placeholder="Type a message..."
+                  placeholder="Type a reply..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                 />
@@ -136,18 +159,23 @@ export default function Inbox() {
               </form>
             </>
           ) : (
-            <div className="flex flex-1 items-center justify-center text-slate-400">
-              Select a conversation
-            </div>
+            <EmptyState
+              icon={InboxIcon}
+              title="Select a conversation"
+              description="Choose a chat on the left, or send a test message to your WhatsApp business number to see it here."
+              actionLabel={progress?.hasLive ? undefined : 'Connect WhatsApp'}
+              actionHref={progress?.hasLive ? undefined : '/settings?tab=whatsapp'}
+              hint={progress?.whatsappDisplay ? `Your number: ${progress.whatsappDisplay}` : undefined}
+            />
           )}
         </div>
 
         {contact && selected && (
           <div className="hidden w-64 flex-shrink-0 border-l border-slate-100 p-4 xl:block">
-            <h3 className="font-semibold mb-2">Contact Info</h3>
+            <h3 className="mb-2 font-semibold">Contact</h3>
             <p className="text-sm"><span className="text-slate-500">Name:</span> {contact.name || '—'}</p>
-            <p className="text-sm mt-1"><span className="text-slate-500">Phone:</span> {contact.phone}</p>
-            {contact.email && <p className="text-sm mt-1"><span className="text-slate-500">Email:</span> {contact.email}</p>}
+            <p className="mt-1 text-sm"><span className="text-slate-500">Phone:</span> {contact.phone}</p>
+            {contact.email && <p className="mt-1 text-sm"><span className="text-slate-500">Email:</span> {contact.email}</p>}
           </div>
         )}
       </div>

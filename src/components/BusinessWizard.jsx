@@ -342,7 +342,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <div className="flex items-center gap-2">
             <Sparkles size={18} className="text-emerald-600" />
-            <h2 className="font-semibold text-slate-900">Guided Setup</h2>
+            <h2 className="font-semibold text-slate-900">Set up my business</h2>
           </div>
           <button
             type="button"
@@ -490,7 +490,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
             </Button>
           ) : (
             <Button onClick={finish} loading={submitting} disabled={useCases.length === 0}>
-              Create {useCases.length > 1 ? `${useCases.length} workflows` : 'workflow'}
+              Create {useCases.length > 1 ? `${useCases.length} auto-replies` : 'auto-reply'}
             </Button>
           )}
         </div>

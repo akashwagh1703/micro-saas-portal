@@ -1,81 +1,90 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Play, Pause, Wand2, Building2, Trash2 } from 'lucide-react';
+import { Plus, Wand2, Building2, Trash2, Bot } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import EmptyState from '../components/ui/EmptyState';
 import BusinessWizard from '../components/BusinessWizard';
+import SetupChecklist from '../components/onboarding/SetupChecklist';
+import TestBotCard from '../components/onboarding/TestBotCard';
 import api from '../services/api';
+import { fetchSetupProgress, buildSetupSteps } from '../utils/setupProgress';
+import { describeTrigger } from '../utils/workflowKeywords';
 
 const USE_CASE_LABELS = {
-  customer_support: 'Customer Support',
-  lead_generation: 'Lead Generation',
-  appointment_booking: 'Appointment Booking',
-  sales_assistant: 'Sales Assistant',
-  faq_bot: 'FAQ Bot',
-  ai_chat: 'AI Chat Assistant',
+  customer_support: 'Customer support',
+  lead_generation: 'Lead capture',
+  appointment_booking: 'Appointments',
+  sales_assistant: 'Sales helper',
+  faq_bot: 'FAQ answers',
+  ai_chat: 'Smart chat',
 };
+
+const FIRST_LIVE_KEY = 'whatsflow_first_go_live';
 
 export default function Workflows() {
   const [workflows, setWorkflows] = useState([]);
   const [profile, setProfile] = useState(null);
+  const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [togglingId, setTogglingId] = useState(null);
   const navigate = useNavigate();
 
-  const fetchWorkflows = () => {
-    api.get('/workflows').then((r) => {
-      setWorkflows(r.data.data || []);
+  const refresh = () => {
+    fetchSetupProgress(api).then((p) => {
+      setProgress(p);
+      setProfile(p.profile);
+      setWorkflows(p.workflows);
       setLoading(false);
     });
   };
 
-  const fetchProfile = () => {
-    api
-      .get('/settings/business-profile')
-      .then((r) => setProfile(r.data))
-      .catch(() => {});
-  };
-
   useEffect(() => {
-    fetchWorkflows();
-    fetchProfile();
+    refresh();
     api
       .get('/settings/business-profile')
       .then((r) => {
-        if (!r.data?.configured) {
-          setWizardOpen(true);
-        }
+        if (!r.data?.configured) setWizardOpen(true);
       })
       .catch(() => {});
   }, []);
 
   const handleWizardCreated = () => {
     setWizardOpen(false);
-    fetchWorkflows();
-    fetchProfile();
+    toast.success('Auto-replies created! Connect WhatsApp, then go live.');
+    refresh();
   };
 
   const createWorkflow = async () => {
-    const { data } = await api.post('/workflows', { name: 'New Workflow' });
-    toast.success('Workflow created');
+    const { data } = await api.post('/workflows', { name: 'New Auto-reply' });
+    toast.success('Auto-reply created');
     navigate(`/workflows/${data.workflow.id}/edit`);
   };
 
   const togglePublish = async (wf) => {
+    setTogglingId(wf.id);
     try {
       if (wf.status === 'published') {
         await api.post(`/workflows/${wf.id}/unpublish`);
-        toast.success('Workflow paused');
+        toast.success('Turned off — customers will not get this auto-reply');
       } else {
         await api.post(`/workflows/${wf.id}/publish`);
-        toast.success('Workflow published');
+        const firstLive = !localStorage.getItem(FIRST_LIVE_KEY);
+        if (firstLive) {
+          localStorage.setItem(FIRST_LIVE_KEY, '1');
+          toast.success('You\'re live! Send a test WhatsApp message to see it work.', { duration: 5000 });
+        } else {
+          toast.success('Auto-reply is now live!');
+        }
       }
-      fetchWorkflows();
-      fetchProfile();
+      refresh();
     } catch (err) {
-      toast.error(err.response?.data?.errors?.[0] || 'Failed to update workflow');
+      toast.error(err.response?.data?.errors?.[0] || 'Could not update auto-reply');
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -89,33 +98,40 @@ export default function Workflows() {
     setDeletingId(wf.id);
     try {
       await api.delete(`/workflows/${wf.id}`);
-      toast.success('Workflow deleted');
-      fetchWorkflows();
-      fetchProfile();
+      toast.success('Auto-reply deleted');
+      refresh();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to delete workflow');
+      toast.error(err.response?.data?.message || 'Failed to delete');
     } finally {
       setDeletingId(null);
     }
   };
 
+  const steps = progress ? buildSetupSteps(progress) : [];
+
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Workflows</h1>
-          <p className="text-sm text-slate-500">Automate WhatsApp with visual workflows</p>
+          <h1 className="text-2xl font-bold text-slate-900">Auto-replies</h1>
+          <p className="text-sm text-slate-500">
+            Bots that answer customers on WhatsApp — turn on when you&apos;re ready
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => setWizardOpen(true)}>
             <Wand2 size={16} className="mr-1 inline" />
-            {profile?.configured ? 'Manage business' : 'Guided Setup'}
+            {profile?.configured ? 'Change business' : 'Set up my business'}
           </Button>
-          <Button onClick={createWorkflow}>
-            <Plus size={16} className="mr-1 inline" /> New Workflow
+          <Button variant="secondary" onClick={createWorkflow}>
+            <Plus size={16} className="mr-1 inline" /> Add custom
           </Button>
         </div>
       </div>
+
+      {progress && !progress.complete && (
+        <SetupChecklist steps={steps} compact />
+      )}
 
       {profile?.configured && (
         <Card className="!p-4 border-emerald-100 bg-emerald-50/40">
@@ -130,79 +146,98 @@ export default function Workflows() {
                   {profile.use_case_labels?.join(' · ')}
                 </p>
                 {profile.published_count > 0 && (
-                  <p className="mt-1 text-xs text-emerald-700">
-                    {profile.published_count} workflow(s) live
+                  <p className="mt-1 text-xs font-medium text-emerald-700">
+                    {profile.published_count} auto-repl{profile.published_count === 1 ? 'y' : 'ies'} live
                   </p>
                 )}
               </div>
             </div>
             {!profile.can_change_business && (
               <p className="max-w-xs text-xs text-amber-700">
-                Pause all workflows before changing your business in Guided Setup.
+                Turn off all live auto-replies before changing your business.
               </p>
             )}
           </div>
         </Card>
       )}
 
+      {progress?.hasLive && (
+        <TestBotCard whatsappDisplay={progress.whatsappDisplay} workflows={workflows} />
+      )}
+
       <section>
-        <h2 className="mb-4 text-lg font-semibold">Your Workflows</h2>
-        <Card>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">Your auto-replies</h2>
+        <Card className="!p-0 overflow-hidden">
           {loading ? (
-            <p className="text-sm text-slate-500">Loading...</p>
+            <p className="p-6 text-sm text-slate-500">Loading...</p>
           ) : workflows.length === 0 ? (
-            <div className="py-8 text-center">
-              <p className="mb-4 text-slate-500">
-                No workflows yet. Use Guided Setup to create workflows for your business.
-              </p>
-              <Button variant="secondary" onClick={() => setWizardOpen(true)}>
-                <Wand2 size={14} className="mr-1 inline" /> Guided Setup
-              </Button>
-            </div>
+            <EmptyState
+              icon={Bot}
+              title="No auto-replies yet"
+              description="Tell us your business and we'll create ready-made bots for appointments, FAQs, leads, and more."
+              hint="Takes about 2 minutes. You can edit everything later."
+              actionLabel="Set up my business"
+              onAction={() => setWizardOpen(true)}
+            />
           ) : (
-            <div className="space-y-3">
-              {workflows.map((wf) => (
-                <div key={wf.id} className="flex items-center justify-between rounded-lg border border-slate-100 p-4 hover:bg-slate-50">
-                  <div>
-                    <Link to={`/workflows/${wf.id}/edit`} className="font-semibold text-slate-900 hover:text-emerald-600">
-                      {wf.name}
-                    </Link>
-                    <p className="text-sm text-slate-500">{wf.description || 'No description'}</p>
-                    <div className="mt-1 flex flex-wrap gap-2">
-                      <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${
-                        wf.status === 'published' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
-                      }`}>
-                        {wf.status === 'published' ? 'live' : 'paused'}
-                      </span>
-                      {wf.use_case && (
-                        <span className="inline-block rounded-full bg-violet-50 px-2 py-0.5 text-xs text-violet-700">
-                          {USE_CASE_LABELS[wf.use_case] || wf.use_case}
-                        </span>
-                      )}
+            <div className="divide-y divide-slate-100">
+              {workflows.map((wf) => {
+                const isLive = wf.status === 'published';
+                return (
+                  <div key={wf.id} className="p-5">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            to={`/workflows/${wf.id}/edit`}
+                            className="font-semibold text-slate-900 hover:text-emerald-600"
+                          >
+                            {wf.name}
+                          </Link>
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                              isLive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {isLive ? 'Live' : 'Off'}
+                          </span>
+                          {wf.use_case && (
+                            <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs text-violet-700">
+                              {USE_CASE_LABELS[wf.use_case] || wf.use_case}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1 text-sm text-slate-500">{describeTrigger(wf.definition)}</p>
+                        {!isLive && (
+                          <p className="mt-1 text-xs text-slate-400">Nothing sends until you go live</p>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          onClick={() => togglePublish(wf)}
+                          loading={togglingId === wf.id}
+                          variant={isLive ? 'secondary' : 'primary'}
+                          className="min-w-[7rem]"
+                        >
+                          {isLive ? 'Turn off' : 'Go live'}
+                        </Button>
+                        <Link to={`/workflows/${wf.id}/edit`}>
+                          <Button variant="secondary">Edit</Button>
+                        </Link>
+                        <Button
+                          variant="danger"
+                          onClick={() => deleteWorkflow(wf)}
+                          loading={deletingId === wf.id}
+                          className="!px-3"
+                          title="Delete"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Link to={`/workflows/${wf.id}/executions`}>
-                      <Button variant="secondary">Logs</Button>
-                    </Link>
-                    <Button variant="secondary" onClick={() => togglePublish(wf)}>
-                      {wf.status === 'published' ? <Pause size={14} /> : <Play size={14} />}
-                    </Button>
-                    <Link to={`/workflows/${wf.id}/edit`}>
-                      <Button>Edit</Button>
-                    </Link>
-                    <Button
-                      variant="danger"
-                      onClick={() => deleteWorkflow(wf)}
-                      loading={deletingId === wf.id}
-                      className="!px-3"
-                      title="Delete workflow"
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Card>

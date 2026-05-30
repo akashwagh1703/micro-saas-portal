@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import EmptyState from '../components/ui/EmptyState';
 import api from '../services/api';
 
 export default function Contacts() {
@@ -44,8 +45,8 @@ export default function Contacts() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Contacts</h1>
-          <p className="text-sm text-slate-500">Manage your WhatsApp contacts</p>
+          <h1 className="text-2xl font-bold text-slate-900">Contacts</h1>
+          <p className="text-sm text-slate-500">People who have messaged you on WhatsApp</p>
         </div>
         <div className="relative">
           <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
@@ -62,7 +63,14 @@ export default function Contacts() {
         {loading ? (
           <p className="text-sm text-slate-500">Loading...</p>
         ) : contacts.length === 0 ? (
-          <p className="text-sm text-slate-500">No contacts found.</p>
+          <EmptyState
+            icon={Users}
+            title="No contacts yet"
+            description="When customers message your WhatsApp number, they'll show up here automatically."
+            actionLabel="Set up auto-replies"
+            actionHref="/workflows"
+            hint="Connect WhatsApp and go live to start receiving messages."
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
