@@ -1,36 +1,29 @@
-import { MessageCircle } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
+import AuthShowcase from '../auth/AuthShowcase';
 
 export default function AuthLayout({ children, title, subtitle }) {
   return (
-    <div className="flex min-h-screen">
-      <div className="hidden flex-1 flex-col justify-between bg-emerald-700 p-12 text-white lg:flex">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
-            <MessageCircle size={22} />
-          </div>
-          <span className="text-xl font-bold">WhatsFlow</span>
-        </div>
-        <div>
-          <h1 className="text-4xl font-bold leading-tight">
-            Automate WhatsApp workflows with ease
-          </h1>
-          <p className="mt-4 max-w-md text-emerald-100">
-            Build visual workflows, connect APIs, use AI, and manage your inbox — all in one SaaS platform.
-          </p>
-        </div>
-        <p className="text-sm text-emerald-200">© 2026 WhatsFlow</p>
+    <div className="flex h-screen max-h-screen overflow-hidden">
+      <div className="hidden h-full w-[52%] shrink-0 lg:block xl:w-[55%]">
+        <AuthShowcase />
       </div>
-      <div className="flex flex-1 items-center justify-center p-6">
-        <div className="w-full max-w-md">
-          <div className="mb-8 lg:hidden">
-            <div className="flex items-center gap-2 text-emerald-700">
-              <MessageCircle size={24} />
-              <span className="text-xl font-bold">WhatsFlow</span>
+
+      <div className="relative flex h-full flex-1 flex-col items-center justify-center bg-slate-50 p-4 sm:p-8">
+        <div className="w-full max-w-[400px]">
+          <div className="mb-6 flex items-center gap-2.5 lg:hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-700 text-white">
+              <MessageSquare size={18} strokeWidth={1.5} />
             </div>
+            <span className="text-lg font-semibold text-slate-900">WhatsFlow</span>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
-          {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
-          <div className="mt-6">{children}</div>
+
+          <div className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold tracking-tight text-slate-900">{title}</h2>
+              {subtitle && <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{subtitle}</p>}
+            </div>
+            {children}
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import ReactFlow, {
   Background,
   Controls,
@@ -53,9 +53,11 @@ const nodeTypes = { custom: CustomNode };
 
 export default function WorkflowBuilder() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [workflow, setWorkflow] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -166,6 +168,25 @@ export default function WorkflowBuilder() {
       loadWorkflow();
     } catch (err) {
       toast.error(err.response?.data?.errors?.[0] || 'Publish failed');
+    }
+  };
+
+  const deleteWorkflow = async () => {
+    const name = workflow?.name || 'this workflow';
+    const message =
+      workflow?.status === 'published'
+        ? `"${name}" is live. Delete it permanently?`
+        : `Delete "${name}" permanently?`;
+    if (!window.confirm(message)) return;
+
+    setDeleting(true);
+    try {
+      await api.delete(`/workflows/${id}`);
+      toast.success('Workflow deleted');
+      navigate('/workflows');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete workflow');
+      setDeleting(false);
     }
   };
 
@@ -301,6 +322,9 @@ export default function WorkflowBuilder() {
           <h1 className="text-xl font-bold">{workflow?.name || 'Workflow Builder'}</h1>
         </div>
         <div className="flex gap-2">
+          <Button variant="danger" onClick={deleteWorkflow} loading={deleting}>
+            Delete
+          </Button>
           <Button variant="secondary" onClick={saveWorkflow} loading={saving}>Save</Button>
           <Button onClick={publish}>Publish</Button>
         </div>

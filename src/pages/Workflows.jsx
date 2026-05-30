@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Play, Pause, Wand2, Building2 } from 'lucide-react';
+import { Plus, Play, Pause, Wand2, Building2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -21,6 +21,7 @@ export default function Workflows() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const navigate = useNavigate();
 
   const fetchWorkflows = () => {
@@ -75,6 +76,26 @@ export default function Workflows() {
       fetchProfile();
     } catch (err) {
       toast.error(err.response?.data?.errors?.[0] || 'Failed to update workflow');
+    }
+  };
+
+  const deleteWorkflow = async (wf) => {
+    const message =
+      wf.status === 'published'
+        ? `"${wf.name}" is live. Delete it permanently?`
+        : `Delete "${wf.name}" permanently?`;
+    if (!window.confirm(message)) return;
+
+    setDeletingId(wf.id);
+    try {
+      await api.delete(`/workflows/${wf.id}`);
+      toast.success('Workflow deleted');
+      fetchWorkflows();
+      fetchProfile();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete workflow');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -170,6 +191,15 @@ export default function Workflows() {
                     <Link to={`/workflows/${wf.id}/edit`}>
                       <Button>Edit</Button>
                     </Link>
+                    <Button
+                      variant="danger"
+                      onClick={() => deleteWorkflow(wf)}
+                      loading={deletingId === wf.id}
+                      className="!px-3"
+                      title="Delete workflow"
+                    >
+                      <Trash2 size={14} />
+                    </Button>
                   </div>
                 </div>
               ))}

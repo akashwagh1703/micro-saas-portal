@@ -1,12 +1,31 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { Mail, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AuthLayout from '../../components/layout/AuthLayout';
-import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import api from '../../services/api';
 import { setCredentials } from '../../store/authSlice';
+
+function AuthField({ label, icon: Icon, ...props }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-sm font-medium text-slate-700">{label}</label>
+      <div className="relative">
+        <Icon
+          size={18}
+          strokeWidth={1.5}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+        />
+        <input
+          className="auth-input-focus w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-emerald-600"
+          {...props}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -30,34 +49,42 @@ export default function Login() {
   };
 
   return (
-    <AuthLayout title="Sign in" subtitle="Enter your credentials to access your account">
+    <AuthLayout title="Sign in" subtitle="Access your WhatsApp automation dashboard">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
+        <AuthField
           label="Email"
+          icon={Mail}
           type="email"
+          placeholder="you@business.com"
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           required
         />
-        <Input
+
+        <AuthField
           label="Password"
+          icon={Lock}
           type="password"
+          placeholder="Enter your password"
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           required
         />
+
         <div className="flex justify-end">
-          <Link to="/forgot-password" className="text-sm text-emerald-600 hover:underline">
+          <Link to="/forgot-password" className="text-sm text-emerald-700 hover:underline">
             Forgot password?
           </Link>
         </div>
-        <Button type="submit" loading={loading} className="w-full">
+
+        <Button type="submit" loading={loading} className="w-full py-2.5">
           Sign in
         </Button>
+
         <p className="text-center text-sm text-slate-500">
-          No account?{' '}
-          <Link to="/register" className="font-medium text-emerald-600 hover:underline">
-            Register
+          Don&apos;t have an account?{' '}
+          <Link to="/register" className="font-medium text-emerald-700 hover:underline">
+            Create account
           </Link>
         </p>
       </form>
