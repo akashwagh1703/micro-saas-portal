@@ -19,6 +19,7 @@ import api from '../services/api';
 const nodeTypesList = [
   { type: 'trigger', label: 'Trigger', color: 'bg-blue-500' },
   { type: 'condition', label: 'Condition', color: 'bg-amber-500' },
+  { type: 'collect_input', label: 'Ask & Wait', color: 'bg-cyan-500' },
   { type: 'api', label: 'API', color: 'bg-purple-500' },
   { type: 'ai', label: 'AI', color: 'bg-violet-500' },
   { type: 'send_message', label: 'Send Message', color: 'bg-emerald-500' },
@@ -108,6 +109,9 @@ export default function WorkflowBuilder() {
         ...(type === 'condition' ? { field: 'message', operator: 'contains', value: '' } : {}),
         ...(type === 'ai' ? { prompt: 'Reply to: {{message}}', model: 'openai/gpt-4o-mini', provider: 'openrouter' } : {}),
         ...(type === 'api' ? { url: '', method: 'GET', headers: {}, body: {} } : {}),
+        ...(type === 'collect_input'
+          ? { field: 'answer', question: 'Please share your answer.' }
+          : {}),
       },
     };
     setNodes((nds) => [...nds, newNode]);
@@ -118,7 +122,7 @@ export default function WorkflowBuilder() {
     setNodes((nds) =>
       nds.map((n) =>
         n.id === selectedNode.id
-          ? { ...n, data: { ...n.data, ...updates, summary: updates.message || updates.prompt || updates.url || n.data.summary } }
+          ? { ...n, data: { ...n.data, ...updates, summary: updates.question || updates.message || updates.prompt || updates.url || n.data.summary } }
           : n
       )
     );
@@ -184,6 +188,32 @@ export default function WorkflowBuilder() {
             </select>
           </div>
           <Input label="Value" value={selectedData.value || ''} onChange={(e) => updateSelectedNodeData({ value: e.target.value })} />
+        </div>
+      );
+    }
+
+    if (type === 'collect_input') {
+      return (
+        <div className="space-y-3">
+          <p className="text-xs text-slate-500">
+            Sends a question and waits for the customer&apos;s reply before continuing. Use unique field names to chain multiple asks.
+          </p>
+          <Input
+            label="Field name (for {{variables}})"
+            value={selectedData.field || ''}
+            onChange={(e) => updateSelectedNodeData({ field: e.target.value })}
+            placeholder="budget"
+          />
+          <div>
+            <label className="text-sm font-medium">Question</label>
+            <textarea
+              className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-sm"
+              rows={3}
+              value={selectedData.question || ''}
+              onChange={(e) => updateSelectedNodeData({ question: e.target.value })}
+              placeholder="What is your budget range?"
+            />
+          </div>
         </div>
       );
     }
