@@ -12,16 +12,17 @@ import {
 import api from '../../services/api';
 import { logout } from '../../store/authSlice';
 import toast from 'react-hot-toast';
+import { BillingSidebarBadge } from '../billing/BillingBanner';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Home', hint: 'Your setup progress' },
   { to: '/workflows', icon: Workflow, label: 'Auto-replies', hint: 'Turn bots on or off' },
   { to: '/inbox', icon: Inbox, label: 'Messages', hint: 'Customer chats' },
   { to: '/contacts', icon: Users, label: 'Contacts', hint: 'People who messaged you' },
-  { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp & smart replies' },
+  { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, billing & AI' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ billing }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -45,6 +46,7 @@ export default function Sidebar() {
         <div>
           <p className="text-sm font-bold text-slate-900">WhatsFlow</p>
           <p className="text-xs text-slate-500">WhatsApp auto-replies</p>
+          <BillingSidebarBadge billing={billing} />
         </div>
       </div>
 

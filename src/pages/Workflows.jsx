@@ -11,6 +11,7 @@ import TestBotCard from '../components/onboarding/TestBotCard';
 import api from '../services/api';
 import { fetchSetupProgress, buildSetupSteps } from '../utils/setupProgress';
 import { describeTrigger } from '../utils/workflowKeywords';
+import { actionErrorMessage } from '../utils/actionErrorMessage';
 
 const USE_CASE_LABELS = {
   customer_support: 'Customer support',
@@ -82,7 +83,7 @@ export default function Workflows() {
       }
       refresh();
     } catch (err) {
-      toast.error(err.response?.data?.errors?.[0] || 'Could not update auto-reply');
+      toast.error(actionErrorMessage(err, 'Could not update auto-reply'));
     } finally {
       setTogglingId(null);
     }

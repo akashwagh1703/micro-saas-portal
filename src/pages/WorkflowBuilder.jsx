@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import api from '../services/api';
+import { actionErrorMessage } from '../utils/actionErrorMessage';
 
 const nodeTypesList = [
   { type: 'trigger', label: 'When message arrives', color: 'bg-blue-500' },
@@ -167,7 +168,7 @@ export default function WorkflowBuilder() {
       toast.success('Auto-reply is live!');
       loadWorkflow();
     } catch (err) {
-      toast.error(err.response?.data?.errors?.[0] || 'Publish failed');
+      toast.error(actionErrorMessage(err, 'Publish failed'));
     }
   };
 

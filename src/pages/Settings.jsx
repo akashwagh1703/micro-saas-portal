@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useOutletContext } from 'react-router-dom';
 import { Copy, ExternalLink, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import PlanBillingTab from '../components/billing/PlanBillingTab';
 import api from '../services/api';
 import { useSelector } from 'react-redux';
 
-const VALID_TABS = ['profile', 'password', 'whatsapp', 'ai'];
+const VALID_TABS = ['profile', 'password', 'billing', 'whatsapp', 'ai'];
 
 const META_CONSOLE = 'https://developers.facebook.com/apps';
 
@@ -26,6 +27,7 @@ function StepBadge({ n, done }) {
 
 export default function Settings() {
   const user = useSelector((state) => state.auth.user);
+  const { billing, refreshBilling } = useOutletContext() ?? {};
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = VALID_TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'profile';
   const [tab, setTab] = useState(initialTab);
@@ -129,6 +131,7 @@ export default function Settings() {
   const tabs = [
     { id: 'profile', label: 'Profile' },
     { id: 'password', label: 'Password' },
+    { id: 'billing', label: 'Plan & billing' },
     { id: 'whatsapp', label: 'WhatsApp' },
     { id: 'ai', label: 'Smart replies (AI)' },
   ];
@@ -178,6 +181,10 @@ export default function Settings() {
             <Button onClick={savePassword} loading={loading}>Update password</Button>
           </div>
         </Card>
+      )}
+
+      {tab === 'billing' && (
+        <PlanBillingTab billing={billing} onStatusChange={() => refreshBilling?.()} />
       )}
 
       {tab === 'whatsapp' && (
