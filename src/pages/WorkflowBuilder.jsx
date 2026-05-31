@@ -53,6 +53,81 @@ function CustomNode({ data, selected }) {
 
 const nodeTypes = { custom: CustomNode };
 
+function copyText(text, label = 'Copied') {
+  navigator.clipboard.writeText(text).then(() => toast.success(label)).catch(() => toast.error('Copy failed'));
+}
+
+function SaveLeadApiPanel({ apiConfig, curl, onRefresh, loading }) {
+  if (!apiConfig) {
+    return (
+      <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
+        {loading ? 'Loading lead API credentials…' : 'No API config yet.'}
+        {!loading && (
+          <button type="button" className="ml-1 font-medium text-emerald-700" onClick={onRefresh}>
+            Load credentials
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Lead API (same as Save Lead)</p>
+        <button type="button" className="text-xs font-medium text-emerald-700" onClick={onRefresh} disabled={loading}>
+          Refresh
+        </button>
+      </div>
+      <p className="text-[11px] leading-relaxed text-slate-500">
+        Pre-filled for Zapier, Postman, or an external CRM. The step still saves internally — no extra HTTP call during chat.
+      </p>
+      <div>
+        <p className="text-[11px] font-medium text-slate-600">URL</p>
+        <div className="mt-1 flex gap-2">
+          <code className="flex-1 overflow-x-auto rounded bg-white px-2 py-1 text-[10px] text-slate-700">{apiConfig.url}</code>
+          <Button variant="secondary" onClick={() => copyText(apiConfig.url, 'URL copied')}>Copy</Button>
+        </div>
+      </div>
+      <div>
+        <p className="text-[11px] font-medium text-slate-600">Authorization</p>
+        <div className="mt-1 flex gap-2">
+          <code className="flex-1 overflow-x-auto rounded bg-white px-2 py-1 text-[10px] text-slate-700">{apiConfig.headers?.Authorization}</code>
+          <Button variant="secondary" onClick={() => copyText(apiConfig.headers?.Authorization || '', 'Token copied')}>Copy</Button>
+        </div>
+      </div>
+      <div>
+        <p className="text-[11px] font-medium text-slate-600">Request body</p>
+        <pre className="mt-1 max-h-40 overflow-auto rounded bg-white p-2 text-[10px] text-slate-700">{JSON.stringify(apiConfig.body, null, 2)}</pre>
+        <Button variant="secondary" className="mt-2" onClick={() => copyText(JSON.stringify(apiConfig.body, null, 2), 'Body copied')}>
+          Copy body
+        </Button>
+      </div>
+      {curl && (
+        <div>
+          <p className="text-[11px] font-medium text-slate-600">cURL</p>
+          <pre className="mt-1 max-h-32 overflow-auto rounded bg-white p-2 text-[10px] text-slate-700">{curl}</pre>
+          <Button variant="secondary" className="mt-2" onClick={() => copyText(curl, 'cURL copied')}>
+            Copy cURL
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function buildCurlFromApi(apiConfig) {
+  if (!apiConfig?.url) return '';
+  const headers = Object.entries(apiConfig.headers || {})
+    .map(([k, v]) => `-H "${k}: ${v}"`)
+    .join(' \\\n  ');
+  return [
+    `curl -X ${apiConfig.method || 'POST'} "${apiConfig.url}" \\`,
+    `  ${headers} \\`,
+    `  -d '${JSON.stringify(apiConfig.body || {}, null, 2)}'`,
+  ].join('\n');
+}
+
 export default function WorkflowBuilder() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -62,6 +137,7 @@ export default function WorkflowBuilder() {
   const [deleting, setDeleting] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [leadApiLoading, setLeadApiLoading] = useState(false);
 
   const loadWorkflow = useCallback(async () => {
     const { data } = await api.get(`/workflows/${id}`);
@@ -116,7 +192,9 @@ export default function WorkflowBuilder() {
         ...(type === 'collect_input'
           ? { field: 'answer', question: 'Please share your answer.' }
           : {}),
-        ...(type === 'save_lead' ? { label: 'Save Lead', notes: '' } : {}),
+        ...(type === 'save_lead'
+          ? { label: 'Save Lead', notes: '', collected_fields: [], summary: 'Saves lead to WhatsFlow Leads' }
+          : {}),
       },
     };
     setNodes((nds) => [...nds, newNode]);
@@ -132,6 +210,35 @@ export default function WorkflowBuilder() {
       )
     );
     setSelectedNode((prev) => ({ ...prev, data: { ...prev.data, ...updates } }));
+  };
+
+  const collectInputFields = nodes
+    .filter((n) => n.data?.nodeType === 'collect_input' && n.data?.field)
+    .map((n) => n.data.field);
+
+  const refreshLeadApiConfig = async () => {
+    if (!selectedNode?.data) return;
+    setLeadApiLoading(true);
+    try {
+      const fields = selectedNode.data.collected_fields?.length
+        ? selectedNode.data.collected_fields
+        : collectInputFields;
+      const { data } = await api.get('/leads/integration', {
+        params: {
+          notes: selectedNode.data.notes || undefined,
+          collected_fields: fields.join(','),
+        },
+      });
+      updateSelectedNodeData({
+        api: data.api,
+        collected_fields: fields,
+      });
+      toast.success('Lead API credentials updated');
+    } catch {
+      toast.error('Could not load lead API credentials');
+    } finally {
+      setLeadApiLoading(false);
+    }
   };
 
   const buildDefinition = () => ({
@@ -243,6 +350,8 @@ export default function WorkflowBuilder() {
     }
 
     if (type === 'save_lead') {
+      const apiConfig = selectedData.api;
+      const curl = buildCurlFromApi(apiConfig);
       return (
         <div className="space-y-3">
           <p className="text-xs text-slate-500">
@@ -258,6 +367,12 @@ export default function WorkflowBuilder() {
               placeholder="e.g. Real estate enquiry from WhatsApp"
             />
           </div>
+          <SaveLeadApiPanel
+            apiConfig={apiConfig}
+            curl={curl}
+            loading={leadApiLoading}
+            onRefresh={refreshLeadApiConfig}
+          />
         </div>
       );
     }
