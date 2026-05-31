@@ -18,6 +18,8 @@ export async function fetchSetupProgress(api) {
       hasWorkflows: workflows.length > 0,
       whatsappConnected: !!stats.whatsapp_connected,
       whatsappDisplay: stats.whatsapp_display || null,
+      instagramConnected: !!stats.instagram_connected,
+      instagramUsername: stats.instagram_username || null,
       hasLive,
       stats,
       profile,

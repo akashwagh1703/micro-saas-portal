@@ -7,6 +7,21 @@ import TestBotCard from '../components/onboarding/TestBotCard';
 import api from '../services/api';
 import { fetchSetupProgress } from '../utils/setupProgress';
 
+function contactPrimaryLabel(contact) {
+  if (!contact) return '?';
+  if (contact.name) return contact.name;
+  if (contact.username) return contact.username.startsWith('@') ? contact.username : `@${contact.username}`;
+  return contact.phone || '?';
+}
+
+function contactSecondaryLabel(contact) {
+  if (!contact) return '';
+  if (contact.channel === 'instagram') {
+    return contact.username ? `@${contact.username.replace(/^@/, '')}` : 'Instagram DM';
+  }
+  return contact.phone || '';
+}
+
 export default function Inbox() {
   const [conversations, setConversations] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -53,20 +68,30 @@ export default function Inbox() {
     e.preventDefault();
     if (!message.trim() || !selected) return;
     try {
-      await api.post(`/inbox/conversations/${selected}/send`, { content: message });
+      const { data } = await api.post(`/inbox/conversations/${selected}/send`, { content: message });
+      if (!data.success) {
+        toast.error(data.error || 'Failed to send message');
+        return;
+      }
       setMessage('');
       fetchMessages(selected);
       fetchConversations();
-    } catch {
-      toast.error('Failed to send message');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to send message');
     }
   };
+
+  const selectedConversation = conversations.find((c) => c.id === selected);
+  const replyPlaceholder =
+    selectedConversation?.channel === 'instagram'
+      ? 'Reply on Instagram…'
+      : 'Type a reply…';
 
   return (
     <div className="flex h-[calc(100vh-3rem)] flex-col">
       <div className="mb-4">
         <h1 className="text-2xl font-bold text-slate-900">Customer messages</h1>
-        <p className="text-sm text-slate-500">Chats from WhatsApp — auto-replies appear here too</p>
+        <p className="text-sm text-slate-500">Chats from WhatsApp and Instagram — auto-replies appear here too</p>
       </div>
 
       {progress?.hasLive && (
@@ -106,16 +131,19 @@ export default function Inbox() {
                   }`}
                 >
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
-                    {(conv.contact?.name || conv.contact?.phone || '?')[0].toUpperCase()}
+                    {contactPrimaryLabel(conv.contact)[0]?.toUpperCase() || '?'}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex justify-between">
-                      <p className="truncate text-sm font-medium">{conv.contact?.name || conv.contact?.phone}</p>
+                    <div className="flex justify-between gap-2">
+                      <p className="truncate text-sm font-medium">{contactPrimaryLabel(conv.contact)}</p>
+                      {conv.channel === 'instagram' && (
+                        <span className="shrink-0 rounded bg-pink-100 px-1.5 text-[10px] font-medium text-pink-700">IG</span>
+                      )}
                       {conv.unread_count > 0 && (
                         <span className="rounded-full bg-emerald-600 px-1.5 text-xs text-white">{conv.unread_count}</span>
                       )}
                     </div>
-                    <p className="truncate text-xs text-slate-500">{conv.contact?.phone}</p>
+                    <p className="truncate text-xs text-slate-500">{contactSecondaryLabel(conv.contact)}</p>
                   </div>
                 </button>
               ))
@@ -127,8 +155,8 @@ export default function Inbox() {
           {selected ? (
             <>
               <div className="border-b px-4 py-3">
-                <p className="font-semibold">{contact?.name || contact?.phone}</p>
-                <p className="text-xs text-slate-500">{contact?.phone}</p>
+                <p className="font-semibold">{contactPrimaryLabel(contact)}</p>
+                <p className="text-xs text-slate-500">{contactSecondaryLabel(contact)}</p>
               </div>
               <div className="flex-1 space-y-3 overflow-y-auto bg-[#e5ddd5] p-4">
                 {messages.map((m) => (
@@ -149,7 +177,7 @@ export default function Inbox() {
               <form onSubmit={sendMessage} className="flex gap-2 border-t p-3">
                 <input
                   className="flex-1 rounded-full border border-slate-200 px-4 py-2 text-sm"
-                  placeholder="Type a reply..."
+                  placeholder={replyPlaceholder}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                 />
@@ -174,7 +202,11 @@ export default function Inbox() {
           <div className="hidden w-64 flex-shrink-0 border-l border-slate-100 p-4 xl:block">
             <h3 className="mb-2 font-semibold">Contact</h3>
             <p className="text-sm"><span className="text-slate-500">Name:</span> {contact.name || '—'}</p>
-            <p className="mt-1 text-sm"><span className="text-slate-500">Phone:</span> {contact.phone}</p>
+            {contact.channel === 'instagram' ? (
+              <p className="mt-1 text-sm"><span className="text-slate-500">Instagram:</span> {contact.username ? `@${contact.username.replace(/^@/, '')}` : '—'}</p>
+            ) : (
+              <p className="mt-1 text-sm"><span className="text-slate-500">Phone:</span> {contact.phone || '—'}</p>
+            )}
             {contact.email && <p className="mt-1 text-sm"><span className="text-slate-500">Email:</span> {contact.email}</p>}
           </div>
         )}

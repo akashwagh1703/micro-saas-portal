@@ -24,7 +24,7 @@ const nodeTypesList = [
   { type: 'save_lead', label: 'Save lead', color: 'bg-rose-500' },
   { type: 'api', label: 'Call external API', color: 'bg-purple-500' },
   { type: 'ai', label: 'Smart reply', color: 'bg-violet-500' },
-  { type: 'send_message', label: 'Send WhatsApp message', color: 'bg-emerald-500' },
+  { type: 'send_message', label: 'Send message', color: 'bg-emerald-500' },
 ];
 
 function CustomNode({ data, selected }) {

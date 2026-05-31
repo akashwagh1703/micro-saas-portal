@@ -9,7 +9,7 @@ import PlanBillingTab from '../components/billing/PlanBillingTab';
 import api from '../services/api';
 import { useSelector } from 'react-redux';
 
-const VALID_TABS = ['profile', 'password', 'billing', 'whatsapp', 'ai'];
+const VALID_TABS = ['profile', 'password', 'billing', 'whatsapp', 'instagram', 'ai'];
 
 const META_CONSOLE = 'https://developers.facebook.com/apps';
 
@@ -34,8 +34,11 @@ export default function Settings() {
   const [profile, setProfile] = useState({ name: '', email: '' });
   const [password, setPassword] = useState({ current_password: '', password: '', password_confirmation: '' });
   const [whatsapp, setWhatsapp] = useState({});
+  const [instagram, setInstagram] = useState({});
+  const [igSetup, setIgSetup] = useState(null);
   const [integrations, setIntegrations] = useState({});
   const [webhookUrl, setWebhookUrl] = useState('');
+  const [igWebhookUrl, setIgWebhookUrl] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -54,6 +57,11 @@ export default function Settings() {
       setWhatsapp(r.data.account || {});
       setWebhookUrl(r.data.webhook_url || '');
     });
+    api.get('/instagram').then((r) => {
+      setInstagram(r.data.account || {});
+      setIgWebhookUrl(r.data.webhook_url || '');
+      setIgSetup(r.data.setup || null);
+    }).catch(() => {});
     api.get('/settings/integrations').then((r) => setIntegrations(r.data));
   }, [user]);
 
@@ -61,6 +69,12 @@ export default function Settings() {
     if (!webhookUrl) return;
     navigator.clipboard.writeText(webhookUrl);
     toast.success('Link copied — paste in Meta Developer Console');
+  };
+
+  const copyIgWebhook = () => {
+    if (!igWebhookUrl) return;
+    navigator.clipboard.writeText(igWebhookUrl);
+    toast.success('Instagram webhook copied');
   };
 
   const saveProfile = async () => {
@@ -116,6 +130,44 @@ export default function Settings() {
     setWhatsapp({ ...whatsapp, is_connected: false });
   };
 
+  const saveInstagram = async () => {
+    setLoading(true);
+    try {
+      await api.put('/instagram', instagram);
+      toast.success('Saved! Now click Test connection below.');
+    } catch {
+      toast.error('Failed to save');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const testInstagram = async () => {
+    try {
+      const { data } = await api.post('/instagram/test');
+      if (data.success) {
+        toast.success(`Connected${data.data?.username ? ` as @${data.data.username}` : ''}!`);
+        setInstagram((prev) => ({
+          ...prev,
+          is_connected: true,
+          username: data.data?.username ?? prev.username,
+          instagram_user_id: data.data?.instagram_user_id ?? prev.instagram_user_id,
+          display_name: data.data?.display_name ?? prev.display_name,
+        }));
+      } else {
+        toast.error(data.message || 'Connection failed — check your credentials');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Test failed');
+    }
+  };
+
+  const disconnectInstagram = async () => {
+    await api.post('/instagram/disconnect');
+    toast.success('Instagram disconnected');
+    setInstagram({ ...instagram, is_connected: false });
+  };
+
   const saveIntegrations = async () => {
     setLoading(true);
     try {
@@ -133,6 +185,7 @@ export default function Settings() {
     { id: 'password', label: 'Password' },
     { id: 'billing', label: 'Plan & billing' },
     { id: 'whatsapp', label: 'WhatsApp' },
+    { id: 'instagram', label: 'Instagram' },
     { id: 'ai', label: 'Smart replies (AI)' },
   ];
 
@@ -140,11 +193,16 @@ export default function Settings() {
   const hasPhoneId = !!whatsapp.phone_number_id;
   const hasWebhook = !!webhookUrl;
 
+  const hasIgToken = instagram.has_access_token || instagram.access_token;
+  const hasIgPageId = !!instagram.page_id;
+  const hasIgWebhook = !!igWebhookUrl;
+  const igHandle = instagram.username ? `@${instagram.username.replace(/^@/, '')}` : null;
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="text-sm text-slate-500">Connect WhatsApp and customize smart replies</p>
+        <p className="text-sm text-slate-500">Connect WhatsApp, Instagram, and customize smart replies</p>
       </div>
 
       <div className="flex flex-wrap gap-2 border-b border-slate-200">
@@ -274,6 +332,141 @@ export default function Settings() {
           <p className="text-center text-xs text-slate-400">
             Stuck? Search YouTube for &quot;Meta WhatsApp Cloud API setup&quot; — takes about 10 minutes.
           </p>
+        </div>
+      )}
+
+      {tab === 'instagram' && (
+        <div className="space-y-4">
+          <div
+            className={`rounded-xl border p-4 ${
+              instagram.is_connected ? 'border-pink-200 bg-pink-50' : 'border-amber-200 bg-amber-50'
+            }`}
+          >
+            <p className={`text-sm font-medium ${instagram.is_connected ? 'text-pink-900' : 'text-amber-900'}`}>
+              {instagram.is_connected ? 'Instagram connected' : 'Instagram not connected yet'}
+            </p>
+            {igHandle && <p className="mt-1 text-sm text-pink-800">{igHandle}</p>}
+            <p className="mt-2 text-xs text-slate-600">
+              Auto-reply to Instagram DMs from the same dashboard. Incoming messages work after webhook setup (Phase 3).
+            </p>
+          </div>
+
+          {igSetup && (
+            <Card title="Before you start (Meta setup)">
+              <p className="mb-3 text-sm text-slate-600">{igSetup.summary}</p>
+              <ul className="mb-4 space-y-2">
+                {igSetup.steps?.slice(0, 3).map((step) => (
+                  <li key={step.id} className="flex gap-2 text-xs text-slate-600">
+                    <span className="font-medium text-slate-800">{step.title}:</span>
+                    {step.description}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={igSetup.meta_console_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-pink-700 hover:underline"
+                >
+                  Meta Developer Console <ExternalLink size={14} />
+                </a>
+                <a
+                  href={igSetup.meta_business_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-pink-700 hover:underline"
+                >
+                  Business Suite <ExternalLink size={14} />
+                </a>
+              </div>
+              {igSetup.required_permissions?.length > 0 && (
+                <p className="mt-3 text-[11px] text-slate-500">
+                  Permissions: {igSetup.required_permissions.join(', ')}
+                </p>
+              )}
+            </Card>
+          )}
+
+          <Card>
+            <div className="space-y-6">
+              <div className="flex gap-3">
+                <StepBadge n={1} done />
+                <div>
+                  <p className="text-sm font-medium text-slate-900">Link Instagram to your Facebook Page</p>
+                  <p className="mt-1 text-xs text-slate-500">Business or Creator account required.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <StepBadge n={2} done={!!hasIgToken && hasIgPageId} />
+                <div className="flex-1 space-y-3">
+                  <p className="text-sm font-medium text-slate-900">Paste Page credentials</p>
+                  <p className="text-xs text-slate-500">Page access token + Page ID from Meta Graph API / Business Suite</p>
+                  <Input
+                    label="Page Access Token"
+                    type="password"
+                    placeholder={instagram.has_access_token ? '••••••••' : 'Long-lived Page token'}
+                    onChange={(e) => setInstagram({ ...instagram, access_token: e.target.value })}
+                  />
+                  <Input
+                    label="Facebook Page ID"
+                    value={instagram.page_id || ''}
+                    onChange={(e) => setInstagram({ ...instagram, page_id: e.target.value })}
+                  />
+                  <Input
+                    label="Verify Token"
+                    type="password"
+                    placeholder={instagram.has_verify_token ? '••••••••' : 'Any secret word you choose'}
+                    onChange={(e) => setInstagram({ ...instagram, verify_token: e.target.value })}
+                  />
+                  <Input
+                    label="App Secret"
+                    type="password"
+                    placeholder={instagram.has_app_secret ? '••••••••' : 'From Meta app settings'}
+                    onChange={(e) => setInstagram({ ...instagram, app_secret: e.target.value })}
+                  />
+                  <Button onClick={saveInstagram} loading={loading}>Save credentials</Button>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <StepBadge n={3} done={hasIgWebhook && hasIgPageId} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-900">Add webhook in Meta</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Instagram / Messenger webhooks for your Page. Same verify token as above. Subscribe to messages.
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <p className="flex-1 rounded-lg bg-slate-50 p-3 text-xs font-mono break-all">{igWebhookUrl || '—'}</p>
+                    {igWebhookUrl && (
+                      <button type="button" onClick={copyIgWebhook} className="rounded-lg border border-slate-200 px-3 text-slate-600 hover:bg-slate-50" title="Copy">
+                        <Copy size={18} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <StepBadge n={4} done={instagram.is_connected} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-900">Test connection</p>
+                  <p className="mt-1 text-xs text-slate-500">Loads your @username and Instagram business account ID.</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button variant="secondary" onClick={testInstagram}>Test connection</Button>
+                    {instagram.is_connected && (
+                      <Button variant="danger" onClick={disconnectInstagram}>Disconnect</Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {igSetup?.app_review_note && (
+            <p className="text-center text-xs text-slate-400">{igSetup.app_review_note}</p>
+          )}
         </div>
       )}
 

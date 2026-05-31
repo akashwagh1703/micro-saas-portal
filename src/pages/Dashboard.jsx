@@ -64,16 +64,31 @@ export default function Dashboard() {
             ))}
           </div>
 
-          <Card title="WhatsApp status">
-            <div className="flex items-center gap-3">
-              <div className={`rounded-full p-2 ${stats?.whatsapp_connected ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
-                <Wifi size={20} />
+          <Card title="Channel status">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className={`rounded-full p-2 ${stats?.whatsapp_connected ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                  <Wifi size={20} />
+                </div>
+                <div>
+                  <p className="font-medium">WhatsApp {stats?.whatsapp_connected ? 'connected' : 'not connected'}</p>
+                  <p className="text-sm text-slate-500">
+                    {stats?.whatsapp_display || 'Connect in Settings → WhatsApp'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-medium">{stats?.whatsapp_connected ? 'Connected' : 'Not connected'}</p>
-                <p className="text-sm text-slate-500">
-                  {stats?.whatsapp_display || 'Connect in Settings → WhatsApp'}
-                </p>
+              <div className="flex items-center gap-3 border-t border-slate-100 pt-4">
+                <div className={`rounded-full p-2 ${stats?.instagram_connected ? 'bg-pink-50 text-pink-600' : 'bg-slate-100 text-slate-400'}`}>
+                  <Wifi size={20} />
+                </div>
+                <div>
+                  <p className="font-medium">Instagram {stats?.instagram_connected ? 'connected' : 'not connected'}</p>
+                  <p className="text-sm text-slate-500">
+                    {stats?.instagram_username
+                      ? `@${stats.instagram_username.replace(/^@/, '')}`
+                      : 'Connect in Settings → Instagram'}
+                  </p>
+                </div>
               </div>
             </div>
           </Card>
