@@ -1,4 +1,4 @@
-/** Tracks the 4-step journey for non-technical users. */
+/** Tracks the setup journey for non-technical users. */
 export async function fetchSetupProgress(api) {
   try {
     const [profileRes, statsRes, workflowsRes] = await Promise.all([
@@ -10,21 +10,26 @@ export async function fetchSetupProgress(api) {
     const workflows = workflowsRes.data?.data || [];
     const stats = statsRes.data || {};
     const profile = profileRes.data || {};
+    const whatsappConnected = !!stats.whatsapp_connected;
+    const instagramConnected = !!stats.instagram_connected;
+    const channelConnected = whatsappConnected || instagramConnected;
     const hasLive =
       workflows.some((w) => w.status === 'published') || (stats.active_workflows ?? 0) > 0;
 
     return {
       businessConfigured: !!profile.configured,
       hasWorkflows: workflows.length > 0,
-      whatsappConnected: !!stats.whatsapp_connected,
+      whatsappConnected,
       whatsappDisplay: stats.whatsapp_display || null,
-      instagramConnected: !!stats.instagram_connected,
+      instagramConnected,
       instagramUsername: stats.instagram_username || null,
+      channelConnected,
       hasLive,
       stats,
       profile,
       workflows,
-      complete: !!profile.configured && workflows.length > 0 && stats.whatsapp_connected && hasLive,
+      complete:
+        !!profile.configured && workflows.length > 0 && channelConnected && hasLive,
     };
   } catch {
     return {
@@ -32,6 +37,9 @@ export async function fetchSetupProgress(api) {
       hasWorkflows: false,
       whatsappConnected: false,
       whatsappDisplay: null,
+      instagramConnected: false,
+      instagramUsername: null,
+      channelConnected: false,
       hasLive: false,
       stats: null,
       profile: null,
@@ -60,12 +68,12 @@ export function buildSetupSteps(progress) {
       action: 'Create auto-replies',
     },
     {
-      id: 'whatsapp',
-      title: 'Connect WhatsApp',
-      description: 'Link your Meta WhatsApp number — takes about 5 minutes.',
-      done: progress.whatsappConnected,
-      href: '/settings?tab=whatsapp',
-      action: 'Connect WhatsApp',
+      id: 'channels',
+      title: 'Connect WhatsApp or Instagram',
+      description: 'Link at least one channel in Settings — add the other anytime.',
+      done: progress.channelConnected,
+      href: '/settings',
+      action: 'Connect a channel',
     },
     {
       id: 'live',

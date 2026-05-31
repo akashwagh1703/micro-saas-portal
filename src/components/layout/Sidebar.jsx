@@ -21,7 +21,7 @@ const navItems = [
   { to: '/inbox', icon: Inbox, label: 'Messages', hint: 'Customer chats' },
   { to: '/contacts', icon: Users, label: 'Contacts', hint: 'People who messaged you' },
   { to: '/leads', icon: UserPlus, label: 'Leads', hint: 'Captured from auto-replies' },
-  { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, billing & AI' },
+  { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, Instagram & AI' },
 ];
 
 export default function Sidebar({ billing }) {
@@ -47,7 +47,7 @@ export default function Sidebar({ billing }) {
         </div>
         <div>
           <p className="text-sm font-bold text-slate-900">WhatsFlow</p>
-          <p className="text-xs text-slate-500">WhatsApp auto-replies</p>
+          <p className="text-xs text-slate-500">WhatsApp & Instagram auto-replies</p>
           <BillingSidebarBadge billing={billing} />
         </div>
       </div>

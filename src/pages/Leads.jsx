@@ -34,10 +34,17 @@ function statusBadgeClass(status) {
   return map[status] || 'bg-slate-100 text-slate-600';
 }
 
+const CHANNEL_OPTIONS = [
+  { value: '', label: 'All channels' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'instagram', label: 'Instagram' },
+];
+
 export default function Leads() {
   const [leads, setLeads] = useState([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [channelFilter, setChannelFilter] = useState('');
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -46,7 +53,7 @@ export default function Leads() {
 
   const fetchLeads = () => {
     setLoading(true);
-    api.get('/leads', { params: { search, status: statusFilter || undefined } })
+    api.get('/leads', { params: { search, status: statusFilter || undefined, channel: channelFilter || undefined } })
       .then((r) => setLeads(r.data.data || []))
       .finally(() => setLoading(false));
   };
@@ -58,7 +65,7 @@ export default function Leads() {
   useEffect(() => {
     const t = setTimeout(fetchLeads, 300);
     return () => clearTimeout(t);
-  }, [search, statusFilter]);
+  }, [search, statusFilter, channelFilter]);
 
   const openDetail = async (lead) => {
     setSelected(lead);
@@ -100,7 +107,7 @@ export default function Leads() {
   const exportCsv = async () => {
     try {
       const response = await api.get('/leads/export', {
-        params: { status: statusFilter || undefined },
+        params: { status: statusFilter || undefined, channel: channelFilter || undefined },
         responseType: 'blob',
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -125,7 +132,7 @@ export default function Leads() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Leads</h1>
-          <p className="text-sm text-slate-500">Leads captured from WhatsApp auto-replies</p>
+          <p className="text-sm text-slate-500">Leads captured from WhatsApp and Instagram auto-replies</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" onClick={exportCsv}>
@@ -140,6 +147,11 @@ export default function Leads() {
           <Card className="!p-4">
             <p className="text-2xl font-bold">{stats.total}</p>
             <p className="text-xs text-slate-500">Total leads</p>
+            {(stats.whatsapp > 0 || stats.instagram > 0) && (
+              <p className="mt-1 text-[10px] text-slate-400">
+                WA {stats.whatsapp ?? 0} · IG {stats.instagram ?? 0}
+              </p>
+            )}
           </Card>
           <Card className="!p-4">
             <p className="text-2xl font-bold">{stats.this_week}</p>
@@ -166,6 +178,15 @@ export default function Leads() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <select
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          value={channelFilter}
+          onChange={(e) => setChannelFilter(e.target.value)}
+        >
+          {CHANNEL_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
         <select
           className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
           value={statusFilter}
@@ -195,7 +216,7 @@ export default function Leads() {
               <thead>
                 <tr className="border-b text-left text-slate-500">
                   <th className="pb-3 font-medium">Name</th>
-                  <th className="pb-3 font-medium">Phone</th>
+                  <th className="pb-3 font-medium">Contact</th>
                   <th className="pb-3 font-medium">Status</th>
                   <th className="pb-3 font-medium">Channel</th>
                   <th className="pb-3 font-medium">Captured</th>
@@ -206,7 +227,7 @@ export default function Leads() {
                 {leads.map((lead) => (
                   <tr key={lead.id} className="border-b border-slate-50 hover:bg-slate-50">
                     <td className="py-3 font-medium">{lead.name || '—'}</td>
-                    <td className="py-3">{lead.phone || '—'}</td>
+                    <td className="py-3">{lead.phone || (lead.username ? `@${lead.username.replace(/^@/, '')}` : '—')}</td>
                     <td className="py-3">
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeClass(lead.status)}`}>
                         {STATUS_LABELS[lead.status] || lead.status}
@@ -231,12 +252,16 @@ export default function Leads() {
         <div className="fixed inset-0 z-50 flex justify-end bg-black/30" onClick={() => setSelected(null)}>
           <div className="h-full w-full max-w-md overflow-y-auto bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold">{detail.name || detail.phone || 'Lead'}</h2>
+              <h2 className="text-lg font-bold">{detail.name || detail.phone || detail.username || 'Lead'}</h2>
               <button type="button" onClick={() => setSelected(null)}><X size={20} /></button>
             </div>
 
             <div className="mb-4 space-y-2 text-sm">
+              {detail.channel && (
+                <p><span className="text-slate-500">Channel:</span> <span className="capitalize">{detail.channel}</span></p>
+              )}
               {detail.phone && <p><span className="text-slate-500">Phone:</span> {detail.phone}</p>}
+              {detail.username && <p><span className="text-slate-500">Username:</span> @{detail.username.replace(/^@/, '')}</p>}
               {detail.source_message && (
                 <p><span className="text-slate-500">First message:</span> {detail.source_message}</p>
               )}

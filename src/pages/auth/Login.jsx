@@ -50,7 +50,7 @@ export default function Login() {
   };
 
   return (
-    <AuthLayout title="Sign in" subtitle="Access your WhatsApp automation dashboard">
+    <AuthLayout title="Sign in" subtitle="Access your WhatsApp and Instagram automation dashboard">
       <form onSubmit={handleSubmit} className="space-y-4">
         <AuthField
           label="Email"

@@ -195,6 +195,9 @@ export default function WorkflowBuilder() {
         ...(type === 'save_lead'
           ? { label: 'Save Lead', notes: '', collected_fields: [], summary: 'Saves lead to WhatsFlow Leads' }
           : {}),
+        ...(type === 'trigger'
+          ? { channel: 'both', summary: 'WhatsApp or Instagram DMs' }
+          : {}),
       },
     };
     setNodes((nds) => [...nds, newNode]);
@@ -216,6 +219,9 @@ export default function WorkflowBuilder() {
     .filter((n) => n.data?.nodeType === 'collect_input' && n.data?.field)
     .map((n) => n.data.field);
 
+  const triggerChannel =
+    nodes.find((n) => n.data?.nodeType === 'trigger')?.data?.channel || 'both';
+
   const refreshLeadApiConfig = async () => {
     if (!selectedNode?.data) return;
     setLeadApiLoading(true);
@@ -227,6 +233,7 @@ export default function WorkflowBuilder() {
         params: {
           notes: selectedNode.data.notes || undefined,
           collected_fields: fields.join(','),
+          channel: triggerChannel,
         },
       });
       updateSelectedNodeData({
@@ -424,9 +431,29 @@ export default function WorkflowBuilder() {
     }
 
     if (type === 'trigger') {
+      const channelLabels = {
+        both: 'WhatsApp or Instagram DMs',
+        whatsapp: 'WhatsApp messages only',
+        instagram: 'Instagram DMs only',
+      };
       return (
         <div className="space-y-3">
           <p className="text-sm text-slate-500">Fires on incoming messages. Leave keywords empty to run on every message.</p>
+          <div>
+            <label className="text-sm font-medium">Channel</label>
+            <select
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              value={selectedData.channel || 'both'}
+              onChange={(e) => updateSelectedNodeData({
+                channel: e.target.value,
+                summary: channelLabels[e.target.value] || channelLabels.both,
+              })}
+            >
+              <option value="both">WhatsApp + Instagram</option>
+              <option value="whatsapp">WhatsApp only</option>
+              <option value="instagram">Instagram only</option>
+            </select>
+          </div>
           <Input
             label="Keywords (comma separated)"
             value={selectedData.keywords || ''}

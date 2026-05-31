@@ -119,8 +119,8 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
               <StatusBadge status={status} />
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              One platform fee — full access to auto-replies, inbox, and contacts.
-              WhatsApp and AI costs are billed separately by Meta and your AI provider.
+              One platform fee — full access to WhatsApp and Instagram auto-replies, unified inbox, leads, and contacts.
+              Meta messaging and AI costs are billed separately in your own accounts.
             </p>
           </div>
         </div>
@@ -173,6 +173,9 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
             </p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
               <li className="flex items-center gap-2">
+                <CheckCircle2 size={14} className="text-emerald-600" /> WhatsApp + Instagram channels
+              </li>
+              <li className="flex items-center gap-2">
                 <CheckCircle2 size={14} className="text-emerald-600" /> Full platform access
               </li>
               <li className="flex items-center gap-2">
@@ -196,6 +199,9 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
               <span className="text-base font-normal text-slate-500">/yr</span>
             </p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 size={14} className="text-emerald-600" /> WhatsApp + Instagram channels
+              </li>
               <li className="flex items-center gap-2">
                 <CheckCircle2 size={14} className="text-emerald-600" /> Everything in monthly
               </li>

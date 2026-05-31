@@ -21,7 +21,7 @@ export default function Register() {
     try {
       const { data } = await api.post('/auth/register', form);
       dispatch(setCredentials(data));
-      toast.success('Welcome! Let\'s set up your WhatsApp auto-replies.');
+      toast.success('Welcome! Let\'s set up your auto-replies.');
       navigate(await resolvePostAuthPath(api));
     } catch (err) {
       const errors = err.response?.data?.errors;
@@ -33,7 +33,7 @@ export default function Register() {
   };
 
   return (
-    <AuthLayout title="Create account" subtitle="Start automating your WhatsApp workflows">
+    <AuthLayout title="Create account" subtitle="Start automating WhatsApp and Instagram">
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
         <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />

@@ -10,7 +10,7 @@ import SetupChecklist from '../components/onboarding/SetupChecklist';
 import TestBotCard from '../components/onboarding/TestBotCard';
 import api from '../services/api';
 import { fetchSetupProgress, buildSetupSteps } from '../utils/setupProgress';
-import { describeTrigger } from '../utils/workflowKeywords';
+import { describeTrigger, getChannelBadge } from '../utils/workflowKeywords';
 import { actionErrorMessage } from '../utils/actionErrorMessage';
 
 const USE_CASE_LABELS = {
@@ -55,7 +55,7 @@ export default function Workflows() {
 
   const handleWizardCreated = () => {
     setWizardOpen(false);
-    toast.success('Auto-replies created! Connect WhatsApp, then go live.');
+    toast.success('Auto-replies created! Connect WhatsApp or Instagram, then go live.');
     refresh();
   };
 
@@ -76,7 +76,7 @@ export default function Workflows() {
         const firstLive = !localStorage.getItem(FIRST_LIVE_KEY);
         if (firstLive) {
           localStorage.setItem(FIRST_LIVE_KEY, '1');
-          toast.success('You\'re live! Send a test WhatsApp message to see it work.', { duration: 5000 });
+          toast.success('You\'re live! Send a test message on WhatsApp or Instagram to see it work.', { duration: 5000 });
         } else {
           toast.success('Auto-reply is now live!');
         }
@@ -116,7 +116,7 @@ export default function Workflows() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Auto-replies</h1>
           <p className="text-sm text-slate-500">
-            Bots that answer customers on WhatsApp — turn on when you&apos;re ready
+            Bots that answer customers on WhatsApp and Instagram — turn on when you&apos;re ready
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -163,7 +163,11 @@ export default function Workflows() {
       )}
 
       {progress?.hasLive && (
-        <TestBotCard whatsappDisplay={progress.whatsappDisplay} workflows={workflows} />
+        <TestBotCard
+          whatsappDisplay={progress.whatsappDisplay}
+          instagramUsername={progress.instagramUsername}
+          workflows={workflows}
+        />
       )}
 
       <section>
@@ -184,6 +188,7 @@ export default function Workflows() {
             <div className="divide-y divide-slate-100">
               {workflows.map((wf) => {
                 const isLive = wf.status === 'published';
+                const channelBadge = getChannelBadge(wf.definition);
                 return (
                   <div key={wf.id} className="p-5">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -207,6 +212,9 @@ export default function Workflows() {
                               {USE_CASE_LABELS[wf.use_case] || wf.use_case}
                             </span>
                           )}
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${channelBadge.className}`}>
+                            {channelBadge.label}
+                          </span>
                         </div>
                         <p className="mt-1 text-sm text-slate-500">{describeTrigger(wf.definition)}</p>
                         {!isLive && (

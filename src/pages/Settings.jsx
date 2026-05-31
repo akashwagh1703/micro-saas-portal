@@ -347,7 +347,8 @@ export default function Settings() {
             </p>
             {igHandle && <p className="mt-1 text-sm text-pink-800">{igHandle}</p>}
             <p className="mt-2 text-xs text-slate-600">
-              Auto-reply to Instagram DMs from the same dashboard. Incoming messages work after webhook setup (Phase 3).
+              Auto-reply to Instagram DMs from the same dashboard. Replies must be sent within
+              {' '}<strong>24 hours</strong> of the customer&apos;s last message (Meta policy).
             </p>
           </div>
 

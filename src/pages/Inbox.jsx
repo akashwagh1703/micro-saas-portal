@@ -6,21 +6,7 @@ import EmptyState from '../components/ui/EmptyState';
 import TestBotCard from '../components/onboarding/TestBotCard';
 import api from '../services/api';
 import { fetchSetupProgress } from '../utils/setupProgress';
-
-function contactPrimaryLabel(contact) {
-  if (!contact) return '?';
-  if (contact.name) return contact.name;
-  if (contact.username) return contact.username.startsWith('@') ? contact.username : `@${contact.username}`;
-  return contact.phone || '?';
-}
-
-function contactSecondaryLabel(contact) {
-  if (!contact) return '';
-  if (contact.channel === 'instagram') {
-    return contact.username ? `@${contact.username.replace(/^@/, '')}` : 'Instagram DM';
-  }
-  return contact.phone || '';
-}
+import { contactPrimaryLabel, contactSecondaryLabel } from '../utils/contactDisplay';
 
 export default function Inbox() {
   const [conversations, setConversations] = useState([]);
@@ -29,11 +15,14 @@ export default function Inbox() {
   const [contact, setContact] = useState(null);
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
+  const [channelFilter, setChannelFilter] = useState('');
   const [progress, setProgress] = useState(null);
   const messagesEndRef = useRef(null);
 
   const fetchConversations = () => {
-    api.get('/inbox/conversations', { params: { search } }).then((r) => {
+    api.get('/inbox/conversations', {
+      params: { search, channel: channelFilter || undefined },
+    }).then((r) => {
       setConversations(r.data.data || []);
     });
   };
@@ -53,7 +42,7 @@ export default function Inbox() {
       if (selected) fetchMessages(selected);
     }, 5000);
     return () => clearInterval(interval);
-  }, [search, selected]);
+  }, [search, channelFilter, selected]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -96,13 +85,17 @@ export default function Inbox() {
 
       {progress?.hasLive && (
         <div className="mb-4">
-          <TestBotCard whatsappDisplay={progress.whatsappDisplay} workflows={progress.workflows} />
+          <TestBotCard
+            whatsappDisplay={progress.whatsappDisplay}
+            instagramUsername={progress.instagramUsername}
+            workflows={progress.workflows}
+          />
         </div>
       )}
 
       <div className="flex flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="flex w-80 flex-shrink-0 flex-col border-r border-slate-100">
-          <div className="border-b p-3">
+          <div className="border-b p-3 space-y-2">
             <div className="relative">
               <Search className="absolute left-3 top-2.5 text-slate-400" size={14} />
               <input
@@ -112,13 +105,22 @@ export default function Inbox() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+            <select
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              value={channelFilter}
+              onChange={(e) => setChannelFilter(e.target.value)}
+            >
+              <option value="">All channels</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="instagram">Instagram</option>
+            </select>
           </div>
           <div className="flex-1 overflow-y-auto">
             {conversations.length === 0 ? (
               <div className="p-6 text-center">
                 <InboxIcon className="mx-auto mb-2 text-slate-300" size={32} />
                 <p className="text-sm text-slate-500">No messages yet</p>
-                <p className="mt-1 text-xs text-slate-400">Send a test WhatsApp to your business number</p>
+                <p className="mt-1 text-xs text-slate-400">Messages from WhatsApp or Instagram will appear here</p>
               </div>
             ) : (
               conversations.map((conv) => (
@@ -136,8 +138,10 @@ export default function Inbox() {
                   <div className="min-w-0 flex-1">
                     <div className="flex justify-between gap-2">
                       <p className="truncate text-sm font-medium">{contactPrimaryLabel(conv.contact)}</p>
-                      {conv.channel === 'instagram' && (
+                      {conv.channel === 'instagram' ? (
                         <span className="shrink-0 rounded bg-pink-100 px-1.5 text-[10px] font-medium text-pink-700">IG</span>
+                      ) : (
+                        <span className="shrink-0 rounded bg-emerald-100 px-1.5 text-[10px] font-medium text-emerald-700">WA</span>
                       )}
                       {conv.unread_count > 0 && (
                         <span className="rounded-full bg-emerald-600 px-1.5 text-xs text-white">{conv.unread_count}</span>
@@ -190,10 +194,16 @@ export default function Inbox() {
             <EmptyState
               icon={InboxIcon}
               title="Select a conversation"
-              description="Choose a chat on the left, or send a test message to your WhatsApp business number to see it here."
-              actionLabel={progress?.hasLive ? undefined : 'Connect WhatsApp'}
-              actionHref={progress?.hasLive ? undefined : '/settings?tab=whatsapp'}
-              hint={progress?.whatsappDisplay ? `Your number: ${progress.whatsappDisplay}` : undefined}
+              description="Choose a chat on the left, or send a test message on WhatsApp or Instagram to see it here."
+              actionLabel={progress?.channelConnected ? undefined : 'Connect a channel'}
+              actionHref={progress?.channelConnected ? undefined : '/settings'}
+              hint={
+                progress?.whatsappDisplay
+                  ? `WhatsApp: ${progress.whatsappDisplay}`
+                  : progress?.instagramUsername
+                    ? `Instagram: @${progress.instagramUsername.replace(/^@/, '')}`
+                    : undefined
+              }
             />
           )}
         </div>

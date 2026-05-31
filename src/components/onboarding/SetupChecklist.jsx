@@ -26,8 +26,8 @@ export default function SetupChecklist({ steps, userName, compact = false }) {
             </h2>
             <p className="mt-0.5 text-sm text-slate-600">
               {allDone
-                ? 'Your WhatsApp auto-replies are ready. Send a test message to see them in action.'
-                : 'Complete these steps to start answering customers on WhatsApp automatically.'}
+                ? 'Your auto-replies are ready. Send a test message on WhatsApp or Instagram.'
+                : 'Complete these steps to start answering customers automatically.'}
             </p>
           </div>
         </div>
