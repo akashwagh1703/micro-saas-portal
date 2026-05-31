@@ -135,6 +135,8 @@ export default function Settings() {
     try {
       await api.put('/instagram', instagram);
       toast.success('Saved! Now click Test connection below.');
+      const { data } = await api.get('/instagram');
+      setInstagram((prev) => ({ ...prev, ...data.account, webhook_url: data.webhook_url }));
     } catch {
       toast.error('Failed to save');
     } finally {
@@ -144,6 +146,9 @@ export default function Settings() {
 
   const testInstagram = async () => {
     try {
+      if (instagram.access_token || instagram.page_id || instagram.verify_token || instagram.app_secret) {
+        await api.put('/instagram', instagram);
+      }
       const { data } = await api.post('/instagram/test');
       if (data.success) {
         toast.success(`Connected${data.data?.username ? ` as @${data.data.username}` : ''}!`);
@@ -404,6 +409,9 @@ export default function Settings() {
                 <div className="flex-1 space-y-3">
                   <p className="text-sm font-medium text-slate-900">Paste Page credentials</p>
                   <p className="text-xs text-slate-500">Page access token + Page ID from Meta Graph API / Business Suite</p>
+                  <p className="text-[11px] text-amber-700">
+                    Use a long-lived <strong>Page</strong> access token (not User or App token). Paste only the token — no &quot;Bearer&quot; prefix.
+                  </p>
                   <Input
                     label="Page Access Token"
                     type="password"

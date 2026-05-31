@@ -44,6 +44,14 @@ export default function Register() {
           Already have an account?{' '}
           <Link to="/login" className="font-medium text-emerald-600 hover:underline">Sign in</Link>
         </p>
+
+        <p className="text-center text-xs leading-relaxed text-slate-400">
+          By creating an account, you agree to our{' '}
+          <Link to="/privacy" className="font-medium text-emerald-700 hover:underline">
+            Privacy Policy
+          </Link>
+          .
+        </p>
       </form>
     </AuthLayout>
   );

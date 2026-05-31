@@ -88,6 +88,14 @@ export default function Login() {
             Create account
           </Link>
         </p>
+
+        <p className="text-center text-xs leading-relaxed text-slate-400">
+          By signing in, you agree to our{' '}
+          <Link to="/privacy" className="font-medium text-emerald-700 hover:underline">
+            Privacy Policy
+          </Link>
+          .
+        </p>
       </form>
     </AuthLayout>
   );
