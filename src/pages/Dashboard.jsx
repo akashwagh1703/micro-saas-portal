@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { MessageSquare, Bot, Inbox, Users, Wifi } from 'lucide-react';
+import { MessageSquare, Bot, Inbox, Users, Wifi, UserPlus } from 'lucide-react';
 import Card from '../components/ui/Card';
 import SetupChecklist from '../components/onboarding/SetupChecklist';
 import TestBotCard from '../components/onboarding/TestBotCard';
@@ -12,6 +12,7 @@ const statConfig = [
   { key: 'active_workflows', label: 'Auto-replies live', icon: Bot, color: 'text-purple-600 bg-purple-50' },
   { key: 'inbox_conversations', label: 'Customer chats', icon: Inbox, color: 'text-amber-600 bg-amber-50' },
   { key: 'contacts_count', label: 'Contacts', icon: Users, color: 'text-emerald-600 bg-emerald-50' },
+  { key: 'leads_count', label: 'Leads captured', icon: UserPlus, color: 'text-rose-600 bg-rose-50' },
 ];
 
 export default function Dashboard() {

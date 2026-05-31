@@ -5,6 +5,7 @@ import {
   Workflow,
   Inbox,
   Users,
+  UserPlus,
   Settings,
   LogOut,
   MessageCircle,
@@ -19,6 +20,7 @@ const navItems = [
   { to: '/workflows', icon: Workflow, label: 'Auto-replies', hint: 'Turn bots on or off' },
   { to: '/inbox', icon: Inbox, label: 'Messages', hint: 'Customer chats' },
   { to: '/contacts', icon: Users, label: 'Contacts', hint: 'People who messaged you' },
+  { to: '/leads', icon: UserPlus, label: 'Leads', hint: 'Captured from auto-replies' },
   { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, billing & AI' },
 ];
 

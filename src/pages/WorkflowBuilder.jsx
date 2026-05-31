@@ -21,6 +21,7 @@ const nodeTypesList = [
   { type: 'trigger', label: 'When message arrives', color: 'bg-blue-500' },
   { type: 'condition', label: 'If message contains…', color: 'bg-amber-500' },
   { type: 'collect_input', label: 'Ask a question', color: 'bg-cyan-500' },
+  { type: 'save_lead', label: 'Save lead', color: 'bg-rose-500' },
   { type: 'api', label: 'Call external API', color: 'bg-purple-500' },
   { type: 'ai', label: 'Smart reply', color: 'bg-violet-500' },
   { type: 'send_message', label: 'Send WhatsApp message', color: 'bg-emerald-500' },
@@ -115,6 +116,7 @@ export default function WorkflowBuilder() {
         ...(type === 'collect_input'
           ? { field: 'answer', question: 'Please share your answer.' }
           : {}),
+        ...(type === 'save_lead' ? { label: 'Save Lead', notes: '' } : {}),
       },
     };
     setNodes((nds) => [...nds, newNode]);
@@ -234,6 +236,26 @@ export default function WorkflowBuilder() {
               value={selectedData.question || ''}
               onChange={(e) => updateSelectedNodeData({ question: e.target.value })}
               placeholder="What is your budget range?"
+            />
+          </div>
+        </div>
+      );
+    }
+
+    if (type === 'save_lead') {
+      return (
+        <div className="space-y-3">
+          <p className="text-xs text-slate-500">
+            Saves contact info and collected answers to your Leads page. Place after Ask a question steps.
+          </p>
+          <div>
+            <label className="text-sm font-medium">Internal notes (optional)</label>
+            <textarea
+              className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-sm"
+              rows={2}
+              value={selectedData.notes || ''}
+              onChange={(e) => updateSelectedNodeData({ notes: e.target.value })}
+              placeholder="e.g. Real estate enquiry from WhatsApp"
             />
           </div>
         </div>

@@ -9,6 +9,7 @@ import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import Contacts from './pages/Contacts';
+import Leads from './pages/Leads';
 import Inbox from './pages/Inbox';
 import Workflows from './pages/Workflows';
 import WorkflowBuilder from './pages/WorkflowBuilder';
@@ -29,6 +30,7 @@ export default function App() {
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/contacts" element={<Contacts />} />
+              <Route path="/leads" element={<Leads />} />
               <Route path="/inbox" element={<Inbox />} />
               <Route path="/workflows" element={<Workflows />} />
               <Route path="/workflows/:id/edit" element={<WorkflowBuilder />} />
