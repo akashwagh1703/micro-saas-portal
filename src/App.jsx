@@ -16,6 +16,7 @@ import Workflows from './pages/Workflows';
 import WorkflowBuilder from './pages/WorkflowBuilder';
 import WorkflowExecutions from './pages/WorkflowExecutions';
 import Settings from './pages/Settings';
+import CareerAI from './pages/CareerAI';
 
 export default function App() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
               <Route path="/workflows/:id/edit" element={<WorkflowBuilder />} />
               <Route path="/workflows/:id/executions" element={<WorkflowExecutions />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/career-ai" element={<CareerAI />} />
             </Route>
           </Route>
 

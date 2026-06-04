@@ -60,6 +60,12 @@ const BUSINESS_OPTIONS = [
     example: 'Users report issues or ask how to use your product.',
   },
   {
+    key: 'career_ai',
+    label: 'CareerAI Bot',
+    hint: 'AI career assistant — resumes, job matching, applications on WhatsApp.',
+    example: 'Job seekers upload resumes, get daily job digests and tailored applications.',
+  },
+  {
     key: 'other',
     label: 'Other business',
     hint: 'Any business not listed above — we generate a custom flow.',
@@ -295,9 +301,16 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
       if (isOther) payload.business_description = businessDescription.trim();
 
       const { data } = await api.post('/workflows/setup-business', payload);
+      if (business === 'career_ai') {
+        await api.post('/career/setup');
+      }
       const count = data.workflows?.length ?? 0;
       toast.success(
-        count === 1 ? '1 workflow ready for your business' : `${count} workflows ready for your business`,
+        business === 'career_ai'
+          ? 'CareerAI Bot is ready — job seekers can message your WhatsApp'
+          : count === 1
+            ? '1 workflow ready for your business'
+            : `${count} workflows ready for your business`,
       );
       onCreated?.(data);
     } catch (err) {

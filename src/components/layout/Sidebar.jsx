@@ -6,6 +6,7 @@ import {
   Inbox,
   Users,
   UserPlus,
+  Briefcase,
   Settings,
   LogOut,
   MessageCircle,
@@ -21,6 +22,7 @@ const navItems = [
   { to: '/inbox', icon: Inbox, label: 'Messages', hint: 'Customer chats' },
   { to: '/contacts', icon: Users, label: 'Contacts', hint: 'People who messaged you' },
   { to: '/leads', icon: UserPlus, label: 'Leads', hint: 'Captured from auto-replies' },
+  { to: '/career-ai', icon: Briefcase, label: 'CareerAI', hint: 'Jobs, resumes & applications' },
   { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, Instagram & AI' },
 ];
 
