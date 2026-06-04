@@ -422,7 +422,11 @@ export default function Settings() {
                     label="Facebook Page ID"
                     value={instagram.page_id || ''}
                     onChange={(e) => setInstagram({ ...instagram, page_id: e.target.value })}
+                    placeholder="Numeric Facebook Page ID (not Instagram ID)"
                   />
+                  <p className="text-[11px] text-slate-500">
+                    Find in Page Settings → About, or Graph API Explorer when you select your Page. Optional if your Page token is correct — Test can auto-detect the Page.
+                  </p>
                   <Input
                     label="Verify Token"
                     type="password"
