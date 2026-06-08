@@ -432,14 +432,14 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
                               ? ` · ${new Date(v.createdAt).toLocaleDateString()}`
                               : ''}
                           </span>
-                          {v.filePath && (
+                          {(v.filePathDocx || v.filePath) && (
                             <span className="flex shrink-0 gap-2">
                               <button
                                 type="button"
                                 onClick={() =>
                                   downloadCareerFile(
                                     `/career/resume-versions/${v.id}/download`,
-                                    `${v.title || 'resume'}.txt`,
+                                    `${v.title || 'resume'}.docx`,
                                   )
                                 }
                                 className="text-xs font-medium text-violet-700 hover:underline"
@@ -491,7 +491,7 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
                               onClick={() =>
                                 downloadCareerFile(
                                   `/career/cover-letters/${cl.id}/download`,
-                                  `cover-letter-${cl.id}.txt`,
+                                  `cover-letter-${cl.id}.docx`,
                                 )
                               }
                               className="text-xs font-medium text-violet-700 hover:underline"
