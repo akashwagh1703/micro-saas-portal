@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Briefcase,
   Users,
@@ -11,6 +12,7 @@ import {
   ExternalLink,
   RefreshCw,
   Bell,
+  Shield,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
@@ -25,11 +27,13 @@ const TABS = [
   { id: 'matches', label: 'Matches', icon: Target },
   { id: 'applications', label: 'Applications', icon: FileText },
   { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'audit', label: 'Audit log', icon: Shield },
 ];
 
 const APPLICATION_STATUSES = [
   { value: 'saved', label: 'Saved' },
   { value: 'applied', label: 'Applied' },
+  { value: 'auto_apply_queued', label: 'Auto-apply queued' },
   { value: 'interview', label: 'Interview' },
   { value: 'rejected', label: 'Rejected' },
   { value: 'offer', label: 'Offer' },
@@ -54,7 +58,83 @@ function formatJsonList(items, renderItem) {
   );
 }
 
-function ProfileDetailModal({ profile, loading, onClose }) {
+function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted }) {
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [form, setForm] = useState({});
+
+  useEffect(() => {
+    if (profile) {
+      setForm({
+        full_name: profile.fullName || '',
+        email: profile.email || '',
+        current_location: profile.currentLocation || '',
+        preferred_locations: asList(profile.preferredLocations).join(', '),
+        current_salary: profile.currentSalary || '',
+        expected_salary: profile.expectedSalary || '',
+        notice_period: profile.noticePeriod || '',
+        work_preference: profile.workPreference || '',
+        preferred_roles: asList(profile.preferredRoles).join(', '),
+        auto_apply_consent: !!profile.autoApplyConsent,
+      });
+      setEditing(false);
+    }
+  }, [profile]);
+
+  const saveProfile = async () => {
+    if (!profile?.id) return;
+    setSaving(true);
+    try {
+      const { data } = await api.patch(`/career/profiles/${profile.id}`, {
+        full_name: form.full_name,
+        email: form.email,
+        current_location: form.current_location,
+        preferred_locations: form.preferred_locations
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        current_salary: form.current_salary,
+        expected_salary: form.expected_salary,
+        notice_period: form.notice_period,
+        work_preference: form.work_preference,
+        preferred_roles: form.preferred_roles
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        auto_apply_consent: form.auto_apply_consent,
+      });
+      toast.success('Profile updated');
+      setEditing(false);
+      onSaved?.(data);
+    } catch {
+      toast.error('Could not save profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteProfile = async () => {
+    if (!profile?.id) return;
+    if (
+      !window.confirm(
+        'Permanently delete this job seeker profile, resumes, applications, and generated documents? This cannot be undone.',
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await api.delete(`/career/profiles/${profile.id}`);
+      toast.success('Profile and all related data deleted');
+      onDeleted?.();
+    } catch {
+      toast.error('Could not delete profile');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (!profile && !loading) return null;
 
   return (
@@ -79,6 +159,25 @@ function ProfileDetailModal({ profile, loading, onClose }) {
             <X size={20} />
           </button>
         </div>
+
+        {!loading && profile && (
+          <div className="border-b border-slate-100 px-5 py-2">
+            {editing ? (
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={() => setEditing(false)} disabled={saving}>
+                  Cancel
+                </Button>
+                <Button onClick={saveProfile} disabled={saving}>
+                  {saving ? 'Saving…' : 'Save changes'}
+                </Button>
+              </div>
+            ) : (
+              <Button variant="secondary" onClick={() => setEditing(true)}>
+                Edit profile
+              </Button>
+            )}
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {loading ? (
@@ -105,10 +204,50 @@ function ProfileDetailModal({ profile, loading, onClose }) {
                     Digest opted out
                   </span>
                 )}
+                {profile.autoApplyConsent && (
+                  <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs text-violet-800">
+                    Auto-apply on
+                  </span>
+                )}
               </div>
+
+              {profile.interviewPreferences?.requested_slot && (
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Interview preference
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-700">
+                    {profile.interviewPreferences.requested_slot}
+                    {profile.interviewPreferences.requested_at
+                      ? ` · requested ${new Date(profile.interviewPreferences.requested_at).toLocaleString()}`
+                      : ''}
+                  </p>
+                </section>
+              )}
 
               <section>
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Location & salary</h3>
+                {editing ? (
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <Input label="Full name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+                    <Input label="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                    <Input label="Current location" value={form.current_location} onChange={(e) => setForm({ ...form, current_location: e.target.value })} />
+                    <Input label="Preferred locations (comma-separated)" value={form.preferred_locations} onChange={(e) => setForm({ ...form, preferred_locations: e.target.value })} />
+                    <Input label="Current salary" value={form.current_salary} onChange={(e) => setForm({ ...form, current_salary: e.target.value })} />
+                    <Input label="Expected salary" value={form.expected_salary} onChange={(e) => setForm({ ...form, expected_salary: e.target.value })} />
+                    <Input label="Notice period" value={form.notice_period} onChange={(e) => setForm({ ...form, notice_period: e.target.value })} />
+                    <Input label="Work preference" value={form.work_preference} onChange={(e) => setForm({ ...form, work_preference: e.target.value })} />
+                    <Input className="sm:col-span-2" label="Preferred roles (comma-separated)" value={form.preferred_roles} onChange={(e) => setForm({ ...form, preferred_roles: e.target.value })} />
+                    <label className="flex items-center gap-2 sm:col-span-2 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={!!form.auto_apply_consent}
+                        onChange={(e) => setForm({ ...form, auto_apply_consent: e.target.checked })}
+                      />
+                      Assisted auto-apply (queue APPLY actions for operator submission)
+                    </label>
+                  </div>
+                ) : (
                 <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
                   <div>
                     <dt className="text-slate-500">Current location</dt>
@@ -137,6 +276,7 @@ function ProfileDetailModal({ profile, loading, onClose }) {
                     <dd className="font-medium">{asList(profile.preferredRoles).join(', ') || '—'}</dd>
                   </div>
                 </dl>
+                )}
               </section>
 
               <section>
@@ -240,6 +380,86 @@ function ProfileDetailModal({ profile, loading, onClose }) {
                   </ul>
                 )}
               </section>
+
+              <section>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Generated resumes
+                </h3>
+                {asList(profile.resumes).flatMap((r) => asList(r.versions)).length === 0 ? (
+                  <p className="mt-2 text-sm text-slate-400">No tailored resumes yet</p>
+                ) : (
+                  <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                    {profile.resumes.flatMap((r) =>
+                      asList(r.versions).map((v) => (
+                        <li key={v.id} className="flex items-center justify-between gap-2">
+                          <span>
+                            {v.title || 'Tailored resume'}
+                            {v.job?.title ? ` · ${v.job.title}` : ''}
+                            {v.createdAt
+                              ? ` · ${new Date(v.createdAt).toLocaleDateString()}`
+                              : ''}
+                          </span>
+                          {v.filePath && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                downloadCareerFile(
+                                  `/career/resume-versions/${v.id}/download`,
+                                  `${v.title || 'resume'}.txt`,
+                                )
+                              }
+                              className="shrink-0 text-xs font-medium text-violet-700 hover:underline"
+                            >
+                              Download
+                            </button>
+                          )}
+                        </li>
+                      )),
+                    )}
+                  </ul>
+                )}
+              </section>
+
+              <section>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cover letters</h3>
+                {asList(profile.coverLetters).length === 0 ? (
+                  <p className="mt-2 text-sm text-slate-400">No cover letters yet</p>
+                ) : (
+                  <ul className="mt-2 space-y-3">
+                    {profile.coverLetters.map((cl) => (
+                      <li key={cl.id} className="rounded-lg border border-slate-100 p-3">
+                        <p className="text-sm font-medium text-slate-900">
+                          {cl.job?.title ? `${cl.job.title} @ ${cl.job.company}` : 'Cover letter'}
+                          {cl.createdAt
+                            ? ` · ${new Date(cl.createdAt).toLocaleDateString()}`
+                            : ''}
+                        </p>
+                        <p className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs text-slate-600">
+                          {cl.content}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              <section className="rounded-lg border border-red-100 bg-red-50/50 p-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-red-700">
+                  Data deletion (GDPR / DPDP)
+                </h3>
+                <p className="mt-2 text-xs text-red-800">
+                  Permanently removes this profile, resume files, matches, applications, cover letters, and
+                  notifications. Use when a job seeker requests erasure.
+                </p>
+                <Button
+                  variant="secondary"
+                  className="mt-3 border-red-200 text-red-700 hover:bg-red-100"
+                  onClick={deleteProfile}
+                  disabled={deleting || editing}
+                >
+                  {deleting ? 'Deleting…' : 'Delete all profile data'}
+                </Button>
+              </section>
             </div>
           ) : (
             <p className="text-sm text-red-600">Profile not found</p>
@@ -267,6 +487,7 @@ async function downloadCareerFile(path, fileName) {
 }
 
 export default function CareerAI() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState('overview');
   const [analytics, setAnalytics] = useState(null);
   const [profiles, setProfiles] = useState([]);
@@ -286,17 +507,23 @@ export default function CareerAI() {
   const [profileLoading, setProfileLoading] = useState(false);
 
   const [updatingAppId, setUpdatingAppId] = useState(null);
+  const [storageStatus, setStorageStatus] = useState(null);
+  const [auditLog, setAuditLog] = useState([]);
+  const [jobSources, setJobSources] = useState([]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [a, p, j, m, apps, notifs] = await Promise.all([
+      const [a, p, j, m, apps, notifs, storage, audit, sources] = await Promise.all([
         api.get('/career/analytics'),
         api.get('/career/profiles'),
         api.get('/career/jobs'),
         api.get('/career/matches'),
         api.get('/career/applications'),
         api.get('/career/notifications'),
+        api.get('/career/storage/status').catch(() => ({ data: null })),
+        api.get('/career/audit-log').catch(() => ({ data: { items: [] } })),
+        api.get('/career/job-sources').catch(() => ({ data: { sources: [] } })),
       ]);
       setAnalytics(a.data);
       setProfiles(p.data.items ?? []);
@@ -304,6 +531,9 @@ export default function CareerAI() {
       setMatches(m.data ?? []);
       setApplications(apps.data ?? []);
       setNotifications(notifs.data ?? []);
+      setStorageStatus(storage.data);
+      setAuditLog(audit.data?.items ?? []);
+      setJobSources(sources.data?.sources ?? []);
     } catch {
       toast.error('Could not load CareerAI data');
     } finally {
@@ -314,6 +544,17 @@ export default function CareerAI() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    api
+      .get('/settings/business-profile')
+      .then((r) => {
+        if (r.data?.business_category !== 'career_ai') {
+          navigate('/dashboard', { replace: true });
+        }
+      })
+      .catch(() => navigate('/dashboard', { replace: true }));
+  }, [navigate]);
 
   const openProfile = async (id) => {
     setSelectedProfileId(id);
@@ -426,6 +667,21 @@ export default function CareerAI() {
         </div>
       </div>
 
+      {storageStatus && !storageStatus.ok && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <strong>Resume storage warning:</strong>{' '}
+          {storageStatus.backend === 'local'
+            ? 'Files are stored on local disk only — they may be lost on redeploy. Set MINIO_* env vars on the API server.'
+            : `MinIO bucket "${storageStatus.bucket}" is not reachable. ${storageStatus.error || 'Check MINIO_ENDPOINT uses port 9000 (API), not 9001 (console).'}`}
+        </div>
+      )}
+
+      {storageStatus?.ok && storageStatus.backend === 'object' && (
+        <p className="text-xs text-emerald-700">
+          Resume storage: MinIO bucket <span className="font-medium">{storageStatus.bucket}</span> connected
+        </p>
+      )}
+
       <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
@@ -455,6 +711,10 @@ export default function CareerAI() {
                 ['Active jobs', analytics.jobs],
                 ['Matches', analytics.matches],
                 ['Applications', analytics.applications],
+                [
+                  'AI tokens (this month)',
+                  analytics.ai_usage?.total_tokens ?? 0,
+                ],
               ].map(([label, value]) => (
                 <Card key={label}>
                   <p className="text-xs text-slate-500">{label}</p>
@@ -511,9 +771,35 @@ export default function CareerAI() {
           {tab === 'jobs' && (
             <div className="space-y-4">
               <Card>
-                <p className="mb-3 text-sm font-medium text-slate-900">Fetch real jobs (Adzuna)</p>
+                <p className="mb-3 text-sm font-medium text-slate-900">Job sources</p>
+                <ul className="space-y-2">
+                  {jobSources.length === 0 ? (
+                    <li className="text-xs text-slate-500">Loading sources…</li>
+                  ) : (
+                    jobSources.map((s) => (
+                      <li
+                        key={s.id}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 px-3 py-2 text-sm"
+                      >
+                        <span className="font-medium text-slate-900">{s.name}</span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs ${
+                            s.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {s.enabled ? 'Connected' : 'Not configured'}
+                        </span>
+                        <p className="w-full text-xs text-slate-500">{s.message}</p>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </Card>
+
+              <Card>
+                <p className="mb-3 text-sm font-medium text-slate-900">Fetch jobs</p>
                 <p className="mb-4 text-xs text-slate-500">
-                  Requires ADZUNA_APP_ID and ADZUNA_APP_KEY on the API server. Jobs are stored and matched against profiles.
+                  Fetches from all connected sources (Adzuna, Naukri, LinkedIn). Jobs are stored and matched against profiles.
                 </p>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                   <div className="flex-1">
@@ -723,6 +1009,43 @@ export default function CareerAI() {
               </div>
             </Card>
           )}
+
+          {tab === 'audit' && (
+            <Card>
+              <p className="mb-3 text-xs text-slate-500">
+                Operator actions and compliance events (status changes, deletions, retention purges).
+              </p>
+              <div className="divide-y divide-slate-100">
+                {auditLog.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-slate-500">No audit events yet</p>
+                ) : (
+                  auditLog.map((entry) => (
+                    <div key={entry.id} className="py-3">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <p className="text-sm font-medium text-slate-900">
+                          {entry.action.replace(/_/g, ' ')}
+                        </p>
+                        <span className="text-xs text-slate-500">
+                          {entry.createdAt ? new Date(entry.createdAt).toLocaleString() : ''}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-600">
+                        {entry.actorType}
+                        {entry.actorLabel ? ` · ${entry.actorLabel}` : ''}
+                        {entry.profileId ? ` · profile #${entry.profileId}` : ''}
+                        {entry.applicationId ? ` · app #${entry.applicationId}` : ''}
+                      </p>
+                      {entry.details && (
+                        <pre className="mt-2 max-h-24 overflow-auto rounded bg-slate-50 p-2 text-[11px] text-slate-600">
+                          {JSON.stringify(entry.details, null, 2)}
+                        </pre>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+          )}
         </>
       )}
 
@@ -731,13 +1054,21 @@ export default function CareerAI() {
           profile={profileDetail}
           loading={profileLoading}
           onClose={closeProfile}
+          onSaved={(data) => {
+            setProfileDetail(data);
+            load();
+          }}
+          onDeleted={() => {
+            closeProfile();
+            load();
+          }}
         />
       )}
 
       <Card className="border-violet-100 bg-violet-50/50">
         <p className="text-sm font-medium text-violet-900">WhatsApp commands (job seekers)</p>
         <p className="mt-2 text-xs text-violet-800">
-          FIND JOBS · VIEW JOBS · SHOW APPLICATIONS · GENERATE RESUME · CAREER ADVICE · STOP DIGEST · START DIGEST
+          FIND JOBS · VIEW JOBS · SHOW APPLICATIONS · GENERATE RESUME · SALARY BENCHMARK · ENABLE AUTO APPLY · DELETE MY DATA · STOP DIGEST · START DIGEST
         </p>
       </Card>
     </div>

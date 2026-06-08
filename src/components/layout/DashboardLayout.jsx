@@ -6,6 +6,7 @@ import api from '../../services/api';
 
 export default function DashboardLayout() {
   const [billing, setBilling] = useState(null);
+  const [businessCategory, setBusinessCategory] = useState(null);
 
   const refreshBilling = useCallback(async () => {
     try {
@@ -18,11 +19,15 @@ export default function DashboardLayout() {
 
   useEffect(() => {
     refreshBilling();
+    api
+      .get('/settings/business-profile')
+      .then((r) => setBusinessCategory(r.data?.business_category ?? null))
+      .catch(() => setBusinessCategory(null));
   }, [refreshBilling]);
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar billing={billing} />
+      <Sidebar billing={billing} businessCategory={businessCategory} />
       <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
         <BillingBanner billing={billing} onRefresh={refreshBilling} />
         <Outlet context={{ billing, refreshBilling }} />

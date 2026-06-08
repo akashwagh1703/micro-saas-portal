@@ -27,9 +27,13 @@ const navItems = [
   { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, Instagram & AI' },
 ];
 
-export default function Sidebar({ billing }) {
+export default function Sidebar({ billing, businessCategory }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const visibleNavItems = navItems.filter(
+    (item) => item.to !== '/career-ai' || businessCategory === 'career_ai',
+  );
 
   const handleLogout = async () => {
     try {
@@ -52,7 +56,7 @@ export default function Sidebar({ billing }) {
       </div>
 
       <nav className="flex-1 space-y-1 p-3">
-        {navItems.map(({ to, icon: Icon, label, hint }) => (
+        {visibleNavItems.map(({ to, icon: Icon, label, hint }) => (
           <NavLink
             key={to}
             to={to}

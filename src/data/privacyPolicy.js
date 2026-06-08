@@ -2,7 +2,7 @@
 
 export const privacyPolicy = {
   title: 'Privacy Policy',
-  updated: 'May 30, 2026',
+  updated: 'June 8, 2026',
   intro:
     'AutoWave ("we", "us", "our") operates the AutoWave platform and customer portal (the "Service"). This Privacy Policy explains how we collect, use, store, and protect your information when you use our Service. By registering or using AutoWave, you agree to this policy.',
   contactEmail: 'hello@autowave.in',
@@ -97,22 +97,32 @@ export const privacyPolicy = {
       ],
     },
     {
+      id: 'career-ai',
+      title: '10. CareerAI job seeker data',
+      paragraphs: [
+        'If you enable the CareerAI business type, job seekers who message your WhatsApp number may upload resumes (PDF/DOCX), salary and location preferences, and receive AI-generated career content.',
+        'As the business operator, you are the data controller for your job seekers\' data. AutoWave stores resumes in encrypted object storage (MinIO/S3 when configured), parses resume text with your configured AI provider, and retains extracted text according to your API retention settings.',
+        'Job seekers can reply DELETE MY DATA on WhatsApp to permanently erase their CareerAI profile, or you can delete a profile from the CareerAI portal. Deletion removes database records and stored resume files.',
+        'You must provide job seekers with a clear privacy notice explaining what you collect, how long you keep it, and how they can request deletion.',
+      ],
+    },
+    {
       id: 'cookies',
-      title: '10. Cookies & local storage',
+      title: '11. Cookies & local storage',
       paragraphs: [
         'The portal uses local storage and session tokens to keep you logged in. We do not use third-party advertising cookies on the Service.',
       ],
     },
     {
       id: 'changes',
-      title: '11. Changes to this policy',
+      title: '12. Changes to this policy',
       paragraphs: [
         'We may update this Privacy Policy from time to time. We will post the revised policy with an updated date. Continued use of the Service after changes constitutes acceptance.',
       ],
     },
     {
       id: 'contact',
-      title: '12. Contact us',
+      title: '13. Contact us',
       paragraphs: ['For privacy questions or data requests: hello@autowave.in'],
     },
   ],
