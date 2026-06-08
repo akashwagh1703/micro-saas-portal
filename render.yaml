@@ -12,7 +12,7 @@ services:
         value: /
       # Deployed API base, including the /api prefix.
       - key: VITE_API_URL
-        value: https://micro-saas-api-at7p.onrender.com/api
+        value: https://api.autowave.playltp.in/api
     # SPA fallback: let React Router handle client-side routes.
     routes:
       - type: rewrite
