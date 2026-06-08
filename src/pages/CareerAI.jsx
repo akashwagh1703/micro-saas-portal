@@ -58,10 +58,12 @@ function formatJsonList(items, renderItem) {
   );
 }
 
-function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted }) {
+function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onRematched }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [rematching, setRematching] = useState(false);
+  const [sendingId, setSendingId] = useState(null);
   const [form, setForm] = useState({});
 
   useEffect(() => {
@@ -135,6 +137,32 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted }) {
     }
   };
 
+  const rematchProfile = async () => {
+    if (!profile?.id) return;
+    setRematching(true);
+    try {
+      const { data } = await api.post(`/career/profiles/${profile.id}/rematch`);
+      toast.success(data.message || 'Profile re-matched');
+      onRematched?.();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Re-match failed');
+    } finally {
+      setRematching(false);
+    }
+  };
+
+  const sendToWhatsApp = async (path, label) => {
+    setSendingId(path);
+    try {
+      const { data } = await api.post(path);
+      toast.success(data.message || `${label} sent on WhatsApp`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || `Could not send ${label.toLowerCase()} — check WhatsApp connection`);
+    } finally {
+      setSendingId(null);
+    }
+  };
+
   if (!profile && !loading) return null;
 
   return (
@@ -172,9 +200,14 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted }) {
                 </Button>
               </div>
             ) : (
-              <Button variant="secondary" onClick={() => setEditing(true)}>
-                Edit profile
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" onClick={() => setEditing(true)}>
+                  Edit profile
+                </Button>
+                <Button variant="secondary" onClick={rematchProfile} loading={rematching}>
+                  Re-match jobs
+                </Button>
+              </div>
             )}
           </div>
         )}
@@ -400,18 +433,35 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted }) {
                               : ''}
                           </span>
                           {v.filePath && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                downloadCareerFile(
-                                  `/career/resume-versions/${v.id}/download`,
-                                  `${v.title || 'resume'}.txt`,
-                                )
-                              }
-                              className="shrink-0 text-xs font-medium text-violet-700 hover:underline"
-                            >
-                              Download
-                            </button>
+                            <span className="flex shrink-0 gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  downloadCareerFile(
+                                    `/career/resume-versions/${v.id}/download`,
+                                    `${v.title || 'resume'}.txt`,
+                                  )
+                                }
+                                className="text-xs font-medium text-violet-700 hover:underline"
+                              >
+                                Download
+                              </button>
+                              <button
+                                type="button"
+                                disabled={sendingId === `/career/resume-versions/${v.id}/send`}
+                                onClick={() =>
+                                  sendToWhatsApp(
+                                    `/career/resume-versions/${v.id}/send`,
+                                    'Resume',
+                                  )
+                                }
+                                className="text-xs font-medium text-emerald-700 hover:underline disabled:opacity-50"
+                              >
+                                {sendingId === `/career/resume-versions/${v.id}/send`
+                                  ? 'Sending…'
+                                  : 'Send on WhatsApp'}
+                              </button>
+                            </span>
                           )}
                         </li>
                       )),
@@ -428,12 +478,40 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted }) {
                   <ul className="mt-2 space-y-3">
                     {profile.coverLetters.map((cl) => (
                       <li key={cl.id} className="rounded-lg border border-slate-100 p-3">
-                        <p className="text-sm font-medium text-slate-900">
-                          {cl.job?.title ? `${cl.job.title} @ ${cl.job.company}` : 'Cover letter'}
-                          {cl.createdAt
-                            ? ` · ${new Date(cl.createdAt).toLocaleDateString()}`
-                            : ''}
-                        </p>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-medium text-slate-900">
+                            {cl.job?.title ? `${cl.job.title} @ ${cl.job.company}` : 'Cover letter'}
+                            {cl.createdAt
+                              ? ` · ${new Date(cl.createdAt).toLocaleDateString()}`
+                              : ''}
+                          </p>
+                          <span className="flex shrink-0 gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                downloadCareerFile(
+                                  `/career/cover-letters/${cl.id}/download`,
+                                  `cover-letter-${cl.id}.txt`,
+                                )
+                              }
+                              className="text-xs font-medium text-violet-700 hover:underline"
+                            >
+                              Download
+                            </button>
+                            <button
+                              type="button"
+                              disabled={sendingId === `/career/cover-letters/${cl.id}/send`}
+                              onClick={() =>
+                                sendToWhatsApp(`/career/cover-letters/${cl.id}/send`, 'Cover letter')
+                              }
+                              className="text-xs font-medium text-emerald-700 hover:underline disabled:opacity-50"
+                            >
+                              {sendingId === `/career/cover-letters/${cl.id}/send`
+                                ? 'Sending…'
+                                : 'Send on WhatsApp'}
+                            </button>
+                          </span>
+                        </div>
                         <p className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs text-slate-600">
                           {cl.content}
                         </p>
@@ -877,6 +955,10 @@ export default function CareerAI() {
 
           {tab === 'matches' && (
             <Card>
+              <p className="mb-3 text-xs text-slate-500">
+                Matches scoring skills (40%), experience (20%), salary (15%), location (15%), and role title (10%).
+                Only 40%+ matches are shown to job seekers on WhatsApp.
+              </p>
               <div className="divide-y divide-slate-100">
                 {matches.length === 0 ? (
                   <p className="py-6 text-center text-sm text-slate-500">No matches yet.</p>
@@ -1062,13 +1144,17 @@ export default function CareerAI() {
             closeProfile();
             load();
           }}
+          onRematched={() => {
+            openProfile(selectedProfileId);
+            load();
+          }}
         />
       )}
 
       <Card className="border-violet-100 bg-violet-50/50">
         <p className="text-sm font-medium text-violet-900">WhatsApp commands (job seekers)</p>
         <p className="mt-2 text-xs text-violet-800">
-          FIND JOBS · VIEW JOBS · SHOW APPLICATIONS · GENERATE RESUME · SALARY BENCHMARK · ENABLE AUTO APPLY · DELETE MY DATA · STOP DIGEST · START DIGEST
+          FIND JOBS · VIEW JOBS · APPLY 1 · RESUME 2 · COVER LETTER 1 · SHOW APPLICATIONS · SALARY BENCHMARK · ENABLE AUTO APPLY · DELETE MY DATA · STOP DIGEST
         </p>
       </Card>
     </div>
