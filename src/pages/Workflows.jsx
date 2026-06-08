@@ -22,7 +22,7 @@ const USE_CASE_LABELS = {
   ai_chat: 'Smart chat',
 };
 
-const FIRST_LIVE_KEY = 'whatsflow_first_go_live';
+const FIRST_LIVE_KEY = 'autowave_first_go_live';
 
 export default function Workflows() {
   const [workflows, setWorkflows] = useState([]);

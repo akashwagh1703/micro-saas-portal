@@ -218,12 +218,23 @@ function ProfileDetailModal({ profile, loading, onClose }) {
                 ) : (
                   <ul className="mt-2 space-y-1 text-sm text-slate-700">
                     {profile.resumes.map((r) => (
-                      <li key={r.id}>
-                        {r.fileName || r.type}
-                        {r.isMaster ? ' (master)' : ''}
-                        {r.createdAt
-                          ? ` · ${new Date(r.createdAt).toLocaleDateString()}`
-                          : ''}
+                      <li key={r.id} className="flex items-center justify-between gap-2">
+                        <span>
+                          {r.fileName || r.type}
+                          {r.isMaster ? ' (master)' : ''}
+                          {r.createdAt
+                            ? ` · ${new Date(r.createdAt).toLocaleDateString()}`
+                            : ''}
+                        </span>
+                        {r.filePath && (
+                          <button
+                            type="button"
+                            onClick={() => downloadCareerFile(`/career/resumes/${r.id}/download`, r.fileName || 'resume')}
+                            className="shrink-0 text-xs font-medium text-violet-700 hover:underline"
+                          >
+                            Download
+                          </button>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -237,6 +248,22 @@ function ProfileDetailModal({ profile, loading, onClose }) {
       </div>
     </div>
   );
+}
+
+async function downloadCareerFile(path, fileName) {
+  try {
+    const res = await api.get(path, { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName || 'download';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch {
+    toast.error('Download failed');
+  }
 }
 
 export default function CareerAI() {

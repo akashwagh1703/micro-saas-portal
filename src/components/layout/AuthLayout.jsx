@@ -1,5 +1,5 @@
-import { MessageSquare } from 'lucide-react';
 import AuthShowcase from '../auth/AuthShowcase';
+import { AutoWaveMark } from '../brand/AutoWaveBrand';
 
 export default function AuthLayout({ children, title, subtitle }) {
   return (
@@ -10,11 +10,8 @@ export default function AuthLayout({ children, title, subtitle }) {
 
       <div className="relative flex h-full flex-1 flex-col items-center justify-center bg-slate-50 p-4 sm:p-8">
         <div className="w-full max-w-[400px]">
-          <div className="mb-6 flex items-center gap-2.5 lg:hidden">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-700 text-white">
-              <MessageSquare size={18} strokeWidth={1.5} />
-            </div>
-            <span className="text-lg font-semibold text-slate-900">WhatsFlow</span>
+          <div className="mb-6 lg:hidden">
+            <AutoWaveMark />
           </div>
 
           <div className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-8">

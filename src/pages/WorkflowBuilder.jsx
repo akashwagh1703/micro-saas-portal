@@ -193,7 +193,7 @@ export default function WorkflowBuilder() {
           ? { field: 'answer', question: 'Please share your answer.' }
           : {}),
         ...(type === 'save_lead'
-          ? { label: 'Save Lead', notes: '', collected_fields: [], summary: 'Saves lead to WhatsFlow Leads' }
+          ? { label: 'Save Lead', notes: '', collected_fields: [], summary: 'Saves lead to AutoWave Leads' }
           : {}),
         ...(type === 'trigger'
           ? { channel: 'both', summary: 'WhatsApp or Instagram DMs' }

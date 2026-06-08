@@ -4,15 +4,15 @@ export const privacyPolicy = {
   title: 'Privacy Policy',
   updated: 'May 30, 2026',
   intro:
-    'WhatsFlow ("we", "us", "our") operates the WhatsFlow platform and customer portal (the "Service"). This Privacy Policy explains how we collect, use, store, and protect your information when you use our Service. By registering or using WhatsFlow, you agree to this policy.',
-  contactEmail: 'hello@whatsflow.in',
+    'AutoWave ("we", "us", "our") operates the AutoWave platform and customer portal (the "Service"). This Privacy Policy explains how we collect, use, store, and protect your information when you use our Service. By registering or using AutoWave, you agree to this policy.',
+  contactEmail: 'hello@autowave.in',
   sections: [
     {
       id: 'who-we-are',
       title: '1. Who we are',
       paragraphs: [
-        'WhatsFlow is a software platform that helps small businesses automate customer conversations on WhatsApp and Instagram using auto-reply workflows, a unified inbox, contact management, and lead capture.',
-        'For privacy-related questions, contact us at hello@whatsflow.in.',
+        'AutoWave is a software platform that helps small businesses automate customer conversations on WhatsApp and Instagram using auto-reply workflows, a unified inbox, contact management, and lead capture.',
+        'For privacy-related questions, contact us at hello@autowave.in.',
       ],
     },
     {
@@ -35,7 +35,7 @@ export const privacyPolicy = {
     {
       id: 'how-we-use',
       title: '3. How we use your information',
-      paragraphs: ['We use collected information solely to operate and improve WhatsFlow:'],
+      paragraphs: ['We use collected information solely to operate and improve AutoWave:'],
       list: [
         'Authenticate your account and maintain your session.',
         'Connect to Meta APIs on your behalf to receive and send WhatsApp and Instagram messages.',
@@ -85,14 +85,14 @@ export const privacyPolicy = {
       id: 'your-rights',
       title: '8. Your rights',
       paragraphs: [
-        'You may request access, correction, deletion, or export of your personal data by emailing hello@whatsflow.in from your registered email. We will respond within 30 days where applicable under law.',
+        'You may request access, correction, deletion, or export of your personal data by emailing hello@autowave.in from your registered email. We will respond within 30 days where applicable under law.',
       ],
     },
     {
       id: 'customer-data',
       title: '9. Your customers\' data',
       paragraphs: [
-        'When you use WhatsFlow, you may process personal data of your customers (phone numbers, Instagram usernames, names, message content). You are the data controller; WhatsFlow acts as a data processor on your instructions.',
+        'When you use AutoWave, you may process personal data of your customers (phone numbers, Instagram usernames, names, message content). You are the data controller; AutoWave acts as a data processor on your instructions.',
         'You must comply with Meta WhatsApp Business Policy, Instagram Platform Policy, and applicable privacy laws, including obtaining consent where required and honouring opt-out requests.',
       ],
     },
@@ -113,7 +113,7 @@ export const privacyPolicy = {
     {
       id: 'contact',
       title: '12. Contact us',
-      paragraphs: ['For privacy questions or data requests: hello@whatsflow.in'],
+      paragraphs: ['For privacy questions or data requests: hello@autowave.in'],
     },
   ],
 };

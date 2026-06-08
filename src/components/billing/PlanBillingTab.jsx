@@ -71,7 +71,7 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
       const rzp = new Razorpay({
         key: data.key_id,
         subscription_id: data.subscription_id,
-        name: 'WhatsFlow',
+        name: 'AutoWave',
         description: planType === 'yearly' ? 'Platform — Yearly' : 'Platform — Monthly',
         prefill: {},
         theme: { color: '#059669' },

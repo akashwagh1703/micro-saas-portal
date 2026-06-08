@@ -15,6 +15,7 @@ import api from '../../services/api';
 import { logout } from '../../store/authSlice';
 import toast from 'react-hot-toast';
 import { BillingSidebarBadge } from '../billing/BillingBanner';
+import { AutoWaveMark } from '../brand/AutoWaveBrand';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Home', hint: 'Your setup progress' },
@@ -43,13 +44,9 @@ export default function Sidebar({ billing }) {
 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-white">
-      <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white">
-          <MessageCircle size={18} />
-        </div>
-        <div>
-          <p className="text-sm font-bold text-slate-900">WhatsFlow</p>
-          <p className="text-xs text-slate-500">WhatsApp & Instagram auto-replies</p>
+      <div className="border-b border-slate-100 px-5 py-5">
+        <AutoWaveMark showTagline />
+        <div className="mt-2">
           <BillingSidebarBadge billing={billing} />
         </div>
       </div>

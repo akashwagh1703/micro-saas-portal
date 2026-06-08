@@ -13,6 +13,7 @@ import {
   Users,
   BarChart3,
 } from 'lucide-react';
+import { AutoWaveLogoDark } from '../brand/AutoWaveBrand';
 
 const SLIDE_INTERVAL_MS = 7000;
 
@@ -20,7 +21,7 @@ const SLIDES = [
   {
     step: 1,
     icon: MessageSquare,
-    title: 'WhatsApp Bot Manager',
+    title: 'AutoWave',
     subtitle: 'Automate customer conversations on WhatsApp — without writing code.',
     points: [
       'Built for small businesses and teams',
@@ -109,7 +110,7 @@ function OverviewVisual() {
         </div>
         <div className="flex flex-1 flex-col items-center rounded-lg bg-emerald-500/20 py-4 ring-1 ring-emerald-400/25">
           <Bot size={28} strokeWidth={1.5} className="text-emerald-100" />
-          <span className="mt-2 text-[11px] font-medium text-white/80">WhatsFlow</span>
+          <span className="mt-2 text-[11px] font-medium text-white/80">AutoWave</span>
         </div>
       </div>
     </Mockup>
@@ -314,14 +315,9 @@ export default function AuthShowcase() {
 
       <div className="relative z-10 flex h-full flex-col px-8 py-7 lg:px-10 lg:py-8">
         <header className="flex shrink-0 items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/20 ring-1 ring-emerald-400/20">
-              <MessageSquare size={18} strokeWidth={1.5} />
-            </div>
-            <div>
-              <p className="text-base font-semibold tracking-tight">WhatsFlow</p>
-              <p className="text-[11px] text-white/45">Product overview</p>
-            </div>
+          <div>
+            <AutoWaveLogoDark className="h-10 object-contain sm:h-11" />
+            <p className="mt-1 text-[11px] text-white/45">Product overview</p>
           </div>
         </header>
 

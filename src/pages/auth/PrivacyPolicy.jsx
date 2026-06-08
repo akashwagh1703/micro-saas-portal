@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { MessageCircle, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import LegalDocument from '../../components/legal/LegalDocument';
 import { privacyPolicy } from '../../data/privacyPolicy';
+import { AutoWaveMark } from '../../components/brand/AutoWaveBrand';
 
 export default function PrivacyPolicy() {
   return (
@@ -12,12 +13,7 @@ export default function PrivacyPolicy() {
             <ArrowLeft size={16} />
             Back to sign in
           </Link>
-          <div className="flex items-center gap-2 text-slate-900">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
-              <MessageCircle size={16} />
-            </div>
-            <span className="text-sm font-semibold">WhatsFlow</span>
-          </div>
+          <AutoWaveMark />
         </div>
       </header>
 
