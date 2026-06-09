@@ -699,10 +699,18 @@ export default function CareerAI() {
     setRefreshing(true);
     try {
       const { data } = await api.post('/career/jobs/refresh');
-      toast.success(data.message || 'Job refresh complete');
-      load();
-    } catch {
-      toast.error('Refresh failed — check Adzuna and JSearch API keys in server .env');
+      toast.success(data.message || 'Job refresh started');
+      if (data.status === 'started') {
+        window.setTimeout(() => load(), 45_000);
+        window.setTimeout(() => load(), 90_000);
+      } else {
+        load();
+      }
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message ||
+          'Refresh failed — check Adzuna and JSearch API keys in server .env',
+      );
     } finally {
       setRefreshing(false);
     }
