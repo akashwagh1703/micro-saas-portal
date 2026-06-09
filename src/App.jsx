@@ -19,6 +19,7 @@ const WorkflowBuilder = lazy(() => import('./pages/WorkflowBuilder'));
 const WorkflowExecutions = lazy(() => import('./pages/WorkflowExecutions'));
 const Settings = lazy(() => import('./pages/Settings'));
 const CareerAI = lazy(() => import('./pages/CareerAI'));
+const CareerSeekerPortal = lazy(() => import('./pages/CareerSeekerPortal'));
 
 function PageLoader() {
   return (
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/career/seeker" element={<CareerSeekerPortal />} />
 
           <Route element={<ProtectedRoute />}>
             <Route element={<DashboardLayout />}>

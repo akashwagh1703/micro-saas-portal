@@ -6,6 +6,7 @@ import {
   FileText,
   Send,
   BarChart3,
+  Bell,
   X,
   ChevronRight,
   ExternalLink,
@@ -25,6 +26,7 @@ const TABS = [
   { id: 'profiles', label: 'Job seekers', icon: Users },
   { id: 'jobs', label: 'Jobs & matches', icon: Briefcase },
   { id: 'applications', label: 'Applications', icon: FileText },
+  { id: 'alerts', label: 'Alerts', icon: Bell },
 ];
 
 const APPLICATION_STATUSES = [
@@ -55,11 +57,20 @@ function formatJsonList(items, renderItem) {
   );
 }
 
-function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onRematched }) {
+function findLatestGuidance(history, type) {
+  const list = asList(history);
+  return list.find((entry) => entry.type === type) ?? null;
+}
+
+function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onRematched, onGuidanceGenerated }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [rematching, setRematching] = useState(false);
+  const [generatingGuidance, setGeneratingGuidance] = useState(null);
+  const [savingAlerts, setSavingAlerts] = useState(false);
+  const [sendingPortal, setSendingPortal] = useState(false);
+  const [alertPrefs, setAlertPrefs] = useState({ whatsapp: true, email: true, in_app: true });
   const [sendingId, setSendingId] = useState(null);
   const [form, setForm] = useState({});
 
@@ -78,6 +89,11 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
         auto_apply_consent: !!profile.autoApplyConsent,
       });
       setEditing(false);
+      setAlertPrefs({
+        whatsapp: profile.alert_preferences?.whatsapp !== false,
+        email: profile.alert_preferences?.email !== false,
+        in_app: profile.alert_preferences?.in_app !== false,
+      });
     }
   }, [profile]);
 
@@ -147,6 +163,58 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
       setRematching(false);
     }
   };
+
+  const saveAlertPreferences = async () => {
+    if (!profile?.id) return;
+    setSavingAlerts(true);
+    try {
+      await api.patch(`/career/profiles/${profile.id}/alert-preferences`, alertPrefs);
+      toast.success('Alert preferences saved');
+      onSaved?.({ ...profile, alert_preferences: alertPrefs });
+    } catch {
+      toast.error('Could not save alert preferences');
+    } finally {
+      setSavingAlerts(false);
+    }
+  };
+
+  const sendPortalLink = async () => {
+    if (!profile?.id) return;
+    setSendingPortal(true);
+    try {
+      const { data } = await api.post(`/career/profiles/${profile.id}/portal-link`);
+      toast.success(data.message || 'Portal link sent');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not send portal link');
+    } finally {
+      setSendingPortal(false);
+    }
+  };
+
+  const generateGuidance = async (kind) => {
+    if (!profile?.id) return;
+    setGeneratingGuidance(kind);
+    try {
+      const path =
+        kind === 'full'
+          ? `/career/profiles/${profile.id}/guidance/full`
+          : `/career/profiles/${profile.id}/guidance/${kind}`;
+      const { data } = await api.post(path);
+      toast.success(data.message || 'Guidance generated');
+      onGuidanceGenerated?.();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not generate guidance');
+    } finally {
+      setGeneratingGuidance(null);
+    }
+  };
+
+  const guidanceHistory = asList(profile?.guidance_history ?? profile?.guidanceHistory);
+  const latestRoadmap = findLatestGuidance(guidanceHistory, 'roadmap') ?? findLatestGuidance(guidanceHistory, 'full');
+  const latestSkillGap = findLatestGuidance(guidanceHistory, 'skill_gap') ?? findLatestGuidance(guidanceHistory, 'full');
+  const latestCerts =
+    findLatestGuidance(guidanceHistory, 'certifications') ?? findLatestGuidance(guidanceHistory, 'full');
+  const latestSalary = findLatestGuidance(guidanceHistory, 'salary');
 
   const sendToWhatsApp = async (path, label) => {
     setSendingId(path);
@@ -254,6 +322,226 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
                   </p>
                 </section>
               )}
+
+              {asList(profile.interview_sessions ?? profile.interviewSessions).length > 0 && (
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Mock interview history
+                  </h3>
+                  <ul className="mt-3 space-y-3">
+                    {asList(profile.interview_sessions ?? profile.interviewSessions).map((session) => (
+                      <li
+                        key={session.id}
+                        className="rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-medium text-slate-800">
+                            {session.typeLabel ?? session.type} — {session.role}
+                          </span>
+                          <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800">
+                            {session.readinessScore}/100 · {session.readinessLabel}
+                          </span>
+                        </div>
+                        {session.jobTitle && (
+                          <p className="mt-1 text-xs text-slate-500">
+                            Job: {session.jobTitle}
+                            {session.company ? ` @ ${session.company}` : ''}
+                          </p>
+                        )}
+                        <p className="mt-1 text-xs text-slate-500">
+                          {session.questionCount} questions · avg {session.avgAnswerScore}/100
+                          {session.completedAt
+                            ? ` · ${new Date(session.completedAt).toLocaleString()}`
+                            : ''}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              <section>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Career guidance
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="secondary"
+                      className="px-3 py-1.5 text-xs"
+                      loading={generatingGuidance === 'roadmap'}
+                      onClick={() => generateGuidance('roadmap')}
+                    >
+                      Roadmap
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="px-3 py-1.5 text-xs"
+                      loading={generatingGuidance === 'skill-gap'}
+                      onClick={() => generateGuidance('skill-gap')}
+                    >
+                      Skill gap
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="px-3 py-1.5 text-xs"
+                      loading={generatingGuidance === 'certifications'}
+                      onClick={() => generateGuidance('certifications')}
+                    >
+                      Certifications
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="px-3 py-1.5 text-xs"
+                      loading={generatingGuidance === 'salary'}
+                      onClick={() => generateGuidance('salary')}
+                    >
+                      Salary
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="px-3 py-1.5 text-xs"
+                      loading={generatingGuidance === 'full'}
+                      onClick={() => generateGuidance('full')}
+                    >
+                      Full pack
+                    </Button>
+                  </div>
+                </div>
+
+                {!latestRoadmap?.roadmap &&
+                !latestSkillGap?.skillGap &&
+                !latestCerts?.certifications &&
+                !latestSalary?.salary ? (
+                  <p className="mt-2 text-sm text-slate-400">
+                    No guidance generated yet. Use the buttons above or WhatsApp commands like CAREER ROADMAP.
+                  </p>
+                ) : (
+                  <div className="mt-3 space-y-4">
+                    {(latestRoadmap?.roadmap || latestRoadmap?.type === 'full') && latestRoadmap?.roadmap && (
+                      <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm">
+                        <p className="font-medium text-slate-800">Career roadmap</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Current: {latestRoadmap.roadmap.currentRole}
+                          {latestRoadmap.generatedAt
+                            ? ` · ${new Date(latestRoadmap.generatedAt).toLocaleString()}`
+                            : ''}
+                        </p>
+                        <ol className="mt-2 space-y-1 text-slate-700">
+                          {asList(latestRoadmap.roadmap.steps).map((step, i) => (
+                            <li key={i}>
+                              {i + 1}. {step.role}
+                              {step.timeframe ? ` (${step.timeframe})` : ''}
+                              {step.focus ? ` — ${step.focus}` : ''}
+                            </li>
+                          ))}
+                        </ol>
+                        {latestRoadmap.roadmap.summary && (
+                          <p className="mt-2 text-xs text-slate-600">{latestRoadmap.roadmap.summary}</p>
+                        )}
+                      </div>
+                    )}
+
+                    {(latestSkillGap?.skillGap || latestSkillGap?.type === 'full') && latestSkillGap?.skillGap && (
+                      <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm">
+                        <p className="font-medium text-slate-800">Skill gap plan</p>
+                        {asList(latestSkillGap.skillGap.missingSkills).length > 0 && (
+                          <p className="mt-1 text-xs text-slate-500">
+                            Gaps: {latestSkillGap.skillGap.missingSkills.slice(0, 8).join(', ')}
+                          </p>
+                        )}
+                        <ul className="mt-2 space-y-2">
+                          {asList(latestSkillGap.skillGap.priorities)
+                            .slice(0, 4)
+                            .map((p, i) => (
+                              <li key={i} className="text-slate-700">
+                                <span className="font-medium">{p.skill}</span>
+                                {p.why ? ` — ${p.why}` : ''}
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {(latestCerts?.certifications || latestCerts?.type === 'full') &&
+                      latestCerts?.certifications && (
+                      <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm">
+                        <p className="font-medium text-slate-800">Certifications</p>
+                        <ul className="mt-2 space-y-2">
+                          {asList(latestCerts.certifications.recommendations)
+                            .slice(0, 4)
+                            .map((rec, i) => (
+                              <li key={i} className="text-slate-700">
+                                <span className="font-medium">{rec.name}</span>
+                                {rec.provider ? ` (${rec.provider})` : ''}
+                                {rec.reason ? ` — ${rec.reason}` : ''}
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {latestSalary?.salary && (
+                      <div className="rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm">
+                        <p className="font-medium text-slate-800">Salary insights</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {latestSalary.salary.roles} · {latestSalary.salary.location}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600">
+                          {latestSalary.salary.juniorRange && <span>Junior: {latestSalary.salary.juniorRange}</span>}
+                          {latestSalary.salary.midRange && <span>Mid: {latestSalary.salary.midRange}</span>}
+                          {latestSalary.salary.seniorRange && <span>Senior: {latestSalary.salary.seniorRange}</span>}
+                        </div>
+                        <p className="mt-2 text-slate-700">{latestSalary.salary.insight}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
+
+              <section>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Alert channels
+                </h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  Multi-channel job alerts (WhatsApp, email, candidate portal). STOP DIGEST on WhatsApp pauses all.
+                </p>
+                <div className="mt-3 space-y-2 text-sm text-slate-700">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!alertPrefs.whatsapp}
+                      onChange={(e) => setAlertPrefs({ ...alertPrefs, whatsapp: e.target.checked })}
+                    />
+                    WhatsApp alerts
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!alertPrefs.email}
+                      disabled={!profile.email}
+                      onChange={(e) => setAlertPrefs({ ...alertPrefs, email: e.target.checked })}
+                    />
+                    Email alerts{!profile.email ? ' (no email on profile)' : ''}
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!alertPrefs.in_app}
+                      onChange={(e) => setAlertPrefs({ ...alertPrefs, in_app: e.target.checked })}
+                    />
+                    In-app portal notifications
+                  </label>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button variant="secondary" loading={savingAlerts} onClick={saveAlertPreferences}>
+                    Save alert settings
+                  </Button>
+                  <Button variant="secondary" loading={sendingPortal} onClick={sendPortalLink}>
+                    Send portal link
+                  </Button>
+                </div>
+              </section>
 
               <section>
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Location & salary</h3>
@@ -585,12 +873,13 @@ export default function CareerAI() {
   const [updatingAppId, setUpdatingAppId] = useState(null);
   const [storageStatus, setStorageStatus] = useState(null);
   const [jobSources, setJobSources] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
-      const [a, p, j, m, apps, storage, sources] = await Promise.all([
+      const [a, p, j, m, apps, storage, sources, notifs] = await Promise.all([
         api.get('/career/analytics'),
         api.get('/career/profiles'),
         api.get('/career/jobs'),
@@ -598,6 +887,7 @@ export default function CareerAI() {
         api.get('/career/applications'),
         api.get('/career/storage/status').catch(() => ({ data: null })),
         api.get('/career/job-sources').catch(() => ({ data: { sources: [] } })),
+        api.get('/career/notifications').catch(() => ({ data: [] })),
       ]);
       setAnalytics(a.data);
       setProfiles(p.data.items ?? []);
@@ -606,6 +896,7 @@ export default function CareerAI() {
       setApplications(apps.data ?? []);
       setStorageStatus(storage.data);
       setJobSources(sources.data?.sources ?? []);
+      setNotifications(Array.isArray(notifs.data) ? notifs.data : []);
     } catch (err) {
       const message = err.response?.data?.message || 'Could not load CareerAI data';
       setLoadError(message);
@@ -1100,6 +1391,61 @@ export default function CareerAI() {
             </Card>
           )}
 
+          {tab === 'alerts' && (
+            <Card title="Job alert history">
+              <p className="mb-3 text-xs text-slate-500">
+                Instant alerts, daily digests, and delivery status across WhatsApp, email, and candidate portal.
+              </p>
+              <div className="divide-y divide-slate-100">
+                {notifications.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-slate-500">No alerts recorded yet.</p>
+                ) : (
+                  notifications.map((n) => {
+                    const channels = n.payload?.channels;
+                    const channelParts = [];
+                    if (channels?.whatsapp === 'sent') channelParts.push('WhatsApp');
+                    if (channels?.email === 'sent') channelParts.push('Email');
+                    if (channels?.in_app === 'sent') channelParts.push('Portal');
+                    return (
+                      <div key={n.id} className="py-3">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <p className="font-medium text-slate-900">
+                              {n.payload?.title || n.type}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {n.profile?.fullName || n.profile?.contact?.phone || 'Profile'}
+                              {n.sentAt || n.createdAt
+                                ? ` · ${new Date(n.sentAt || n.createdAt).toLocaleString()}`
+                                : ''}
+                            </p>
+                            {n.payload?.summary && (
+                              <p className="mt-1 text-sm text-slate-600">{n.payload.summary}</p>
+                            )}
+                            {channelParts.length > 0 && (
+                              <p className="mt-1 text-xs text-slate-400">Delivered: {channelParts.join(', ')}</p>
+                            )}
+                          </div>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
+                              n.status === 'sent'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : n.status === 'failed'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {n.status}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </Card>
+          )}
+
         </>
       )}
 
@@ -1119,6 +1465,9 @@ export default function CareerAI() {
           onRematched={() => {
             openProfile(selectedProfileId);
             load();
+          }}
+          onGuidanceGenerated={() => {
+            openProfile(selectedProfileId);
           }}
         />
       )}
