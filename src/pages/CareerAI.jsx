@@ -672,8 +672,20 @@ export default function CareerAI() {
         location: fetchLocation.trim() || 'india',
       });
       toast.success(data.message || `Fetched ${data.count} jobs`);
+      if (data.by_source) {
+        const zeroSources = Object.entries(data.by_source)
+          .filter(([, n]) => n === 0)
+          .map(([id]) => id);
+        if (zeroSources.length > 0 && data.count === 0) {
+          toast.error(`No jobs stored — check: ${zeroSources.join(', ')}`);
+        }
+      }
       if (data.errors && Object.keys(data.errors).length > 0) {
-        toast.error(Object.values(data.errors).join(' · '));
+        toast.error(
+          Object.entries(data.errors)
+            .map(([src, err]) => `${src}: ${err}`)
+            .join(' · '),
+        );
       }
       load();
     } catch (err) {
