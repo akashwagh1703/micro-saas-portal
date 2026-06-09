@@ -43,7 +43,14 @@ export default function Login() {
       toast.success('Welcome back!');
       navigate(await resolvePostAuthPath(api));
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
+      if (!err.response) {
+        toast.error(
+          'API server unreachable — the backend is down (nginx 502). Rebuild and restart PM2 on the server.',
+          { duration: 7000 },
+        );
+      } else {
+        toast.error(err.response?.data?.message || 'Login failed');
+      }
     } finally {
       setLoading(false);
     }
