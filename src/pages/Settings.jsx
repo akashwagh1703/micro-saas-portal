@@ -126,9 +126,13 @@ export default function Settings() {
   };
 
   const disconnectWhatsapp = async () => {
-    await api.post('/whatsapp/disconnect');
-    toast.success('Disconnected');
-    setWhatsapp({ ...whatsapp, is_connected: false });
+    try {
+      await api.post('/whatsapp/disconnect');
+      toast.success('Disconnected');
+      setWhatsapp({ ...whatsapp, is_connected: false });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Disconnect failed');
+    }
   };
 
   const saveInstagram = async () => {
@@ -169,9 +173,13 @@ export default function Settings() {
   };
 
   const disconnectInstagram = async () => {
-    await api.post('/instagram/disconnect');
-    toast.success('Instagram disconnected');
-    setInstagram({ ...instagram, is_connected: false });
+    try {
+      await api.post('/instagram/disconnect');
+      toast.success('Instagram disconnected');
+      setInstagram({ ...instagram, is_connected: false });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Disconnect failed');
+    }
   };
 
   const saveIntegrations = async () => {

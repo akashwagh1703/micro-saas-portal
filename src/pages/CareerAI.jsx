@@ -571,6 +571,7 @@ export default function CareerAI() {
   const [matches, setMatches] = useState([]);
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
   const [fetchKeyword, setFetchKeyword] = useState('');
   const [fetchLocation, setFetchLocation] = useState('india');
@@ -587,6 +588,7 @@ export default function CareerAI() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [a, p, j, m, apps, storage, sources] = await Promise.all([
         api.get('/career/analytics'),
@@ -604,8 +606,10 @@ export default function CareerAI() {
       setApplications(apps.data ?? []);
       setStorageStatus(storage.data);
       setJobSources(sources.data?.sources ?? []);
-    } catch {
-      toast.error('Could not load CareerAI data');
+    } catch (err) {
+      const message = err.response?.data?.message || 'Could not load CareerAI data';
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -769,6 +773,16 @@ export default function CareerAI() {
           </div>
         </div>
       </div>
+
+      {loadError && !loading && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-900">
+          <p className="font-medium">Could not load CareerAI</p>
+          <p className="mt-1">{loadError}</p>
+          <Button className="mt-3" variant="secondary" onClick={load}>
+            Retry
+          </Button>
+        </div>
+      )}
 
       {storageStatus && !storageStatus.ok && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
