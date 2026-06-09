@@ -6,6 +6,12 @@ import api from '../services/api';
 
 const BUSINESS_OPTIONS = [
   {
+    key: 'career_ai',
+    label: 'CareerAI Bot',
+    hint: 'Job seekers on WhatsApp — resumes, 70%+ matches, tailored DOCX.',
+    example: 'Upload resume → matched jobs → apply with tailored CV.',
+  },
+  {
     key: 'farmer',
     label: 'Farmer / Agriculture',
     hint: 'Sell seeds, fertilizers, or advise on crops and seasons.',
@@ -58,12 +64,6 @@ const BUSINESS_OPTIONS = [
     label: 'Customer Support Team',
     hint: 'Resolve tickets, FAQs, and follow-ups on WhatsApp.',
     example: 'Users report issues or ask how to use your product.',
-  },
-  {
-    key: 'career_ai',
-    label: 'CareerAI Bot',
-    hint: 'AI career assistant — resumes, job matching, applications on WhatsApp.',
-    example: 'Job seekers upload resumes, get daily job digests and tailored applications.',
   },
   {
     key: 'other',
@@ -122,6 +122,7 @@ const RECOMMENDED_USE_CASES = {
   insurance: ['lead_generation', 'customer_support'],
   ca_accountant: ['appointment_booking', 'customer_support'],
   support: ['customer_support', 'faq_bot'],
+  career_ai: ['ai_chat'],
   other: ['ai_chat', 'customer_support'],
 };
 
@@ -230,6 +231,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
   );
 
   const selectedBusinessLabel = BUSINESS_OPTIONS.find((o) => o.key === business)?.label;
+  const isCareerAi = business === 'career_ai';
 
   useEffect(() => {
     if (initialProfile) return;
@@ -284,8 +286,9 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
     toast.success('Recommended use cases selected');
   };
 
-  const finish = async () => {
-    if (!business || useCases.length === 0) return;
+  const finish = async (overrideUseCases) => {
+    const cases = overrideUseCases ?? useCases;
+    if (!business || cases.length === 0) return;
     if (isOther && !businessDescription.trim()) {
       toast.error('Please describe your business');
       return;
@@ -297,7 +300,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
 
     setSubmitting(true);
     try {
-      const payload = { business_category: business, use_cases: useCases };
+      const payload = { business_category: business, use_cases: cases };
       if (isOther) payload.business_description = businessDescription.trim();
 
       const { data } = await api.post('/workflows/setup-business', payload);
@@ -307,7 +310,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
       const count = data.workflows?.length ?? 0;
       toast.success(
         business === 'career_ai'
-          ? 'CareerAI Bot is ready — job seekers can message your WhatsApp'
+          ? 'CareerAI is ready — connect WhatsApp, then fetch jobs'
           : count === 1
             ? '1 workflow ready for your business'
             : `${count} workflows ready for your business`,
@@ -321,6 +324,12 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
       else toast.error(err.response?.data?.message || 'Failed to set up workflows');
       setSubmitting(false);
     }
+  };
+
+  const activateCareerAi = () => {
+    if (!business || blockBusinessChange) return;
+    setUseCases(['ai_chat']);
+    finish(['ai_chat']);
   };
 
   const handleBusinessSelect = (key) => {
@@ -368,10 +377,14 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
         </div>
 
         {!profile?.configured && (
-          <div className="border-b border-emerald-100 bg-emerald-50 px-6 py-4">
-            <p className="text-sm font-medium text-emerald-900">Set up your business workflows</p>
-            <p className="mt-1 text-xs leading-relaxed text-emerald-800">
-              Pick your industry and use cases — we&apos;ll create ready-made workflows for you.
+          <div className="border-b border-emerald-100 bg-gradient-to-r from-emerald-50 to-white px-6 py-4">
+            <p className="text-sm font-semibold text-emerald-900">
+              {isCareerAi ? 'Activate CareerAI in one step' : 'Set up your business'}
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-emerald-800/90">
+              {isCareerAi
+                ? 'WhatsApp bot for resumes, 70%+ job matches, and tailored DOCX — no workflow builder needed.'
+                : 'Pick your industry and use cases — we create ready-made workflows for you.'}
             </p>
           </div>
         )}
@@ -379,8 +392,12 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
         <div className="px-6 py-5">
           <div className="mb-4 flex items-center gap-2 text-xs text-slate-400">
             <span className={step === 1 ? 'font-semibold text-emerald-600' : ''}>1. Your business</span>
-            <span>›</span>
-            <span className={step === 2 ? 'font-semibold text-emerald-600' : ''}>2. What to automate</span>
+            {!isCareerAi && (
+              <>
+                <span>›</span>
+                <span className={step === 2 ? 'font-semibold text-emerald-600' : ''}>2. What to automate</span>
+              </>
+            )}
           </div>
 
           {profile?.configured && !profile.can_change_business && step === 1 && (
@@ -422,6 +439,16 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
               )}
               {!business && (
                 <p className="mt-3 text-xs text-amber-700">Select one option above to continue.</p>
+              )}
+              {isCareerAi && (
+                <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/90 p-4">
+                  <p className="text-sm font-semibold text-emerald-900">CareerAI on WhatsApp</p>
+                  <ul className="mt-2 space-y-1.5 text-xs text-emerald-800">
+                    <li>• Job seekers upload resume → profile built automatically</li>
+                    <li>• Jobs matched by role, skills, location (70%+ only)</li>
+                    <li>• Tailored resume & cover letter sent as DOCX</li>
+                  </ul>
+                </div>
               )}
             </>
           ) : (
@@ -495,14 +522,24 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
             <span />
           )}
           {step === 1 ? (
-            <Button
-              onClick={goToUseCases}
-              disabled={!business || descriptionRequired || blockBusinessChange}
-            >
-              Continue
-            </Button>
+            isCareerAi ? (
+              <Button
+                onClick={activateCareerAi}
+                loading={submitting}
+                disabled={!business || blockBusinessChange}
+              >
+                Activate CareerAI
+              </Button>
+            ) : (
+              <Button
+                onClick={goToUseCases}
+                disabled={!business || descriptionRequired || blockBusinessChange}
+              >
+                Continue
+              </Button>
+            )
           ) : (
-            <Button onClick={finish} loading={submitting} disabled={useCases.length === 0}>
+            <Button onClick={() => finish()} loading={submitting} disabled={useCases.length === 0}>
               Create {useCases.length > 1 ? `${useCases.length} auto-replies` : 'auto-reply'}
             </Button>
           )}

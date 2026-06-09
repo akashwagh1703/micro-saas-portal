@@ -9,7 +9,6 @@ import {
   Briefcase,
   Settings,
   LogOut,
-  MessageCircle,
 } from 'lucide-react';
 import api from '../../services/api';
 import { logout } from '../../store/authSlice';
@@ -17,23 +16,33 @@ import toast from 'react-hot-toast';
 import { BillingSidebarBadge } from '../billing/BillingBanner';
 import { AutoWaveMark } from '../brand/AutoWaveBrand';
 
-const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Home', hint: 'Your setup progress' },
+const defaultNavItems = [
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Home', hint: 'Setup & overview' },
   { to: '/workflows', icon: Workflow, label: 'Auto-replies', hint: 'Turn bots on or off' },
   { to: '/inbox', icon: Inbox, label: 'Messages', hint: 'Customer chats' },
   { to: '/contacts', icon: Users, label: 'Contacts', hint: 'People who messaged you' },
   { to: '/leads', icon: UserPlus, label: 'Leads', hint: 'Captured from auto-replies' },
-  { to: '/career-ai', icon: Briefcase, label: 'CareerAI', hint: 'Jobs, resumes & applications' },
-  { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, Instagram & AI' },
+  { to: '/career-ai', icon: Briefcase, label: 'CareerAI', hint: 'Jobs & job seekers' },
+  { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, AI & billing' },
+];
+
+const careerNavItems = [
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Home', hint: 'Setup progress' },
+  { to: '/career-ai', icon: Briefcase, label: 'CareerAI', hint: 'Jobs & candidates' },
+  { to: '/inbox', icon: Inbox, label: 'Messages', hint: 'WhatsApp chats' },
+  { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp & AI keys' },
 ];
 
 export default function Sidebar({ billing, businessCategory }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const isCareerAi = businessCategory === 'career_ai';
 
-  const visibleNavItems = navItems.filter(
-    (item) => item.to !== '/career-ai' || businessCategory === 'career_ai',
-  );
+  const visibleNavItems = isCareerAi
+    ? careerNavItems
+    : defaultNavItems.filter(
+        (item) => item.to !== '/career-ai' || businessCategory === 'career_ai',
+      );
 
   const handleLogout = async () => {
     try {
@@ -47,9 +56,14 @@ export default function Sidebar({ billing, businessCategory }) {
   };
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-white">
+    <aside className="flex h-full w-64 flex-col border-r border-slate-200/80 bg-white shadow-sm">
       <div className="border-b border-slate-100 px-5 py-5">
-        <AutoWaveMark showTagline />
+        <AutoWaveMark showTagline={!isCareerAi} />
+        {isCareerAi && (
+          <p className="mt-2 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[11px] font-medium text-emerald-800">
+            CareerAI · Job seeker bot
+          </p>
+        )}
         <div className="mt-2">
           <BillingSidebarBadge billing={billing} />
         </div>
@@ -61,9 +75,9 @@ export default function Sidebar({ billing, businessCategory }) {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `block rounded-lg px-3 py-2.5 transition ${
+              `block rounded-xl px-3 py-2.5 transition ${
                 isActive
-                  ? 'bg-emerald-50 text-emerald-800'
+                  ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/20'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`
             }
@@ -71,10 +85,14 @@ export default function Sidebar({ billing, businessCategory }) {
             {({ isActive }) => (
               <>
                 <div className="flex items-center gap-3">
-                  <Icon size={18} className={isActive ? 'text-emerald-600' : ''} />
+                  <Icon size={18} className={isActive ? 'text-white' : 'text-slate-500'} />
                   <span className="text-sm font-medium">{label}</span>
                 </div>
-                <p className={`mt-0.5 pl-9 text-[11px] ${isActive ? 'text-emerald-600/80' : 'text-slate-400'}`}>
+                <p
+                  className={`mt-0.5 pl-9 text-[11px] ${
+                    isActive ? 'text-emerald-100' : 'text-slate-400'
+                  }`}
+                >
                   {hint}
                 </p>
               </>
@@ -87,7 +105,7 @@ export default function Sidebar({ billing, businessCategory }) {
         <button
           type="button"
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600"
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600"
         >
           <LogOut size={18} />
           Log out

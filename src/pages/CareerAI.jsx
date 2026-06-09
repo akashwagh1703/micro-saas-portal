@@ -4,30 +4,25 @@ import {
   Briefcase,
   Users,
   FileText,
-  Target,
   Send,
   BarChart3,
   X,
   ChevronRight,
   ExternalLink,
   RefreshCw,
-  Bell,
-  Shield,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import { AutoWaveMark } from '../components/brand/AutoWaveBrand';
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: BarChart3 },
-  { id: 'profiles', label: 'Profiles', icon: Users },
-  { id: 'jobs', label: 'Jobs', icon: Briefcase },
-  { id: 'matches', label: 'Matches', icon: Target },
+  { id: 'profiles', label: 'Job seekers', icon: Users },
+  { id: 'jobs', label: 'Jobs & matches', icon: Briefcase },
   { id: 'applications', label: 'Applications', icon: FileText },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'audit', label: 'Audit log', icon: Shield },
 ];
 
 const APPLICATION_STATUSES = [
@@ -238,7 +233,7 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
                   </span>
                 )}
                 {profile.autoApplyConsent && (
-                  <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs text-violet-800">
+                  <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs text-emerald-800">
                     Auto-apply on
                   </span>
                 )}
@@ -321,7 +316,7 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
                     asList(profile.skills).map((s, i) => (
                       <span
                         key={i}
-                        className="rounded-md bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-800"
+                        className="rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800"
                       >
                         {String(s)}
                       </span>
@@ -375,7 +370,7 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
                             {m.job?.location || '—'} · {m.job?.salaryText || '—'}
                           </p>
                         </div>
-                        <span className="shrink-0 text-sm font-bold text-violet-700">
+                        <span className="shrink-0 text-sm font-bold text-emerald-700">
                           {Math.round(m.score)}%
                         </span>
                       </div>
@@ -403,7 +398,7 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
                           <button
                             type="button"
                             onClick={() => downloadCareerFile(`/career/resumes/${r.id}/download`, r.fileName || 'resume')}
-                            className="shrink-0 text-xs font-medium text-violet-700 hover:underline"
+                            className="shrink-0 text-xs font-medium text-emerald-700 hover:underline"
                           >
                             Download
                           </button>
@@ -442,7 +437,7 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
                                     `${v.title || 'resume'}.docx`,
                                   )
                                 }
-                                className="text-xs font-medium text-violet-700 hover:underline"
+                                className="text-xs font-medium text-emerald-700 hover:underline"
                               >
                                 Download
                               </button>
@@ -494,7 +489,7 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
                                   `cover-letter-${cl.id}.docx`,
                                 )
                               }
-                              className="text-xs font-medium text-violet-700 hover:underline"
+                              className="text-xs font-medium text-emerald-700 hover:underline"
                             >
                               Download
                             </button>
@@ -572,7 +567,6 @@ export default function CareerAI() {
   const [jobs, setJobs] = useState([]);
   const [matches, setMatches] = useState([]);
   const [applications, setApplications] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [fetchKeyword, setFetchKeyword] = useState('');
@@ -586,21 +580,18 @@ export default function CareerAI() {
 
   const [updatingAppId, setUpdatingAppId] = useState(null);
   const [storageStatus, setStorageStatus] = useState(null);
-  const [auditLog, setAuditLog] = useState([]);
   const [jobSources, setJobSources] = useState([]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [a, p, j, m, apps, notifs, storage, audit, sources] = await Promise.all([
+      const [a, p, j, m, apps, storage, sources] = await Promise.all([
         api.get('/career/analytics'),
         api.get('/career/profiles'),
         api.get('/career/jobs'),
         api.get('/career/matches'),
         api.get('/career/applications'),
-        api.get('/career/notifications'),
         api.get('/career/storage/status').catch(() => ({ data: null })),
-        api.get('/career/audit-log').catch(() => ({ data: { items: [] } })),
         api.get('/career/job-sources').catch(() => ({ data: { sources: [] } })),
       ]);
       setAnalytics(a.data);
@@ -608,9 +599,7 @@ export default function CareerAI() {
       setJobs(j.data ?? []);
       setMatches(m.data ?? []);
       setApplications(apps.data ?? []);
-      setNotifications(notifs.data ?? []);
       setStorageStatus(storage.data);
-      setAuditLog(audit.data?.items ?? []);
       setJobSources(sources.data?.sources ?? []);
     } catch {
       toast.error('Could not load CareerAI data');
@@ -628,6 +617,10 @@ export default function CareerAI() {
       .get('/settings/business-profile')
       .then((r) => {
         if (r.data?.business_category !== 'career_ai') {
+          navigate('/dashboard', { replace: true });
+          return;
+        }
+        if (!r.data?.configured) {
           navigate('/dashboard', { replace: true });
         }
       })
@@ -726,22 +719,28 @@ export default function CareerAI() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">CareerAI Bot</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Manage job seekers, resumes, matching, and WhatsApp career assistant flows.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={seedJobs}>
-            Seed sample jobs
-          </Button>
-          <Button variant="secondary" onClick={runDigest}>
-            <Send size={16} className="mr-1 inline" />
-            Run daily digest
-          </Button>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex min-w-0 items-start gap-4">
+            <AutoWaveMark />
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">CareerAI</p>
+              <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Job seeker operations</h1>
+              <p className="mt-1 text-sm text-slate-500">
+                WhatsApp bot · 70%+ matches · tailored DOCX
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={runDigest}>
+              <Send size={16} className="mr-1 inline" />
+              Run digest
+            </Button>
+            <Button variant="secondary" onClick={seedJobs}>
+              Sample jobs
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -760,14 +759,16 @@ export default function CareerAI() {
         </p>
       )}
 
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
+      <div className="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
             onClick={() => setTab(id)}
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${
-              tab === id ? 'bg-violet-100 text-violet-900' : 'text-slate-600 hover:bg-slate-50'
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
+              tab === id
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
             <Icon size={16} />
@@ -781,30 +782,58 @@ export default function CareerAI() {
       ) : (
         <>
           {tab === 'overview' && analytics && (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                ['Profiles', analytics.profiles],
-                ['Complete profiles', analytics.complete_profiles],
-                ['Resumes', analytics.resumes],
-                ['Active jobs', analytics.jobs],
-                ['Matches', analytics.matches],
-                ['Applications', analytics.applications],
-                [
-                  'AI tokens (this month)',
-                  analytics.ai_usage?.total_tokens ?? 0,
-                ],
-              ].map(([label, value]) => (
-                <Card key={label}>
-                  <p className="text-xs text-slate-500">{label}</p>
-                  <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
-                </Card>
-              ))}
-            </div>
+            <>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  ['Job seekers', analytics.profiles],
+                  ['Ready profiles', analytics.complete_profiles],
+                  ['Active jobs', analytics.jobs],
+                  ['70%+ matches', analytics.matches],
+                  ['Applications', analytics.applications],
+                  ['AI tokens (month)', analytics.ai_usage?.total_tokens ?? 0],
+                ].map(([label, value]) => (
+                  <Card key={label} className="!border-emerald-50">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+                    <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
+                  </Card>
+                ))}
+              </div>
+              <Card title="Quick actions">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="flex-1">
+                    <Input
+                      label="Fetch jobs"
+                      placeholder="e.g. React Developer"
+                      value={fetchKeyword}
+                      onChange={(e) => setFetchKeyword(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && fetchJobs()}
+                    />
+                  </div>
+                  <div className="w-full sm:w-36">
+                    <Input
+                      label="Location"
+                      placeholder="india"
+                      value={fetchLocation}
+                      onChange={(e) => setFetchLocation(e.target.value)}
+                    />
+                  </div>
+                  <Button onClick={fetchJobs} loading={fetching}>
+                    Fetch
+                  </Button>
+                  <Button variant="secondary" onClick={refreshAllJobs} loading={refreshing}>
+                    <RefreshCw size={16} className="mr-1 inline" />
+                    Refresh
+                  </Button>
+                </div>
+              </Card>
+            </>
           )}
 
           {tab === 'profiles' && (
             <Card>
-              <p className="mb-3 text-xs text-slate-500">Click a profile to view skills, experience, and matches.</p>
+              <p className="mb-3 text-xs text-slate-500">
+                Candidates appear when they message your WhatsApp number.
+              </p>
               <div className="divide-y divide-slate-100">
                 {profiles.length === 0 ? (
                   <p className="py-6 text-center text-sm text-slate-500">
@@ -876,9 +905,6 @@ export default function CareerAI() {
 
               <Card>
                 <p className="mb-3 text-sm font-medium text-slate-900">Fetch jobs</p>
-                <p className="mb-4 text-xs text-slate-500">
-                  Fetches from all connected sources (Adzuna, Naukri, LinkedIn). Jobs are stored and matched against profiles.
-                </p>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                   <div className="flex-1">
                     <Input
@@ -938,7 +964,7 @@ export default function CareerAI() {
                                 href={j.applyUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-xs text-violet-700 hover:underline"
+                                className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:underline"
                               >
                                 Apply <ExternalLink size={12} />
                               </a>
@@ -950,50 +976,44 @@ export default function CareerAI() {
                   )}
                 </div>
               </Card>
-            </div>
-          )}
 
-          {tab === 'matches' && (
-            <Card>
-              <p className="mb-3 text-xs text-slate-500">
-                Matches scoring skills (40%), experience (20%), salary (15%), location (15%), and role title (10%).
-                Only 40%+ matches are shown to job seekers on WhatsApp.
-              </p>
-              <div className="divide-y divide-slate-100">
-                {matches.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-slate-500">No matches yet.</p>
-                ) : (
-                  matches.slice(0, 50).map((m) => (
-                    <div key={m.id} className="flex items-center justify-between gap-3 py-3">
-                      <div className="min-w-0">
-                        <p className="font-medium text-slate-900">{m.job?.title}</p>
-                        <p className="text-xs text-slate-500">
-                          {m.profile?.fullName || m.profile?.contact?.phone}
-                          {m.job?.company ? ` · ${m.job.company}` : ''}
-                        </p>
-                        {asList(m.matchFactors).length > 0 && (
-                          <p className="mt-0.5 truncate text-[11px] text-emerald-700">
-                            {asList(m.matchFactors).slice(0, 2).join(' · ')}
+              <Card title="70%+ matches">
+                <p className="mb-3 text-xs text-slate-500">
+                  Shown to job seekers on WhatsApp when score is 70% or higher.
+                </p>
+                <div className="divide-y divide-slate-100">
+                  {matches.length === 0 ? (
+                    <p className="py-6 text-center text-sm text-slate-500">No matches yet — fetch jobs first.</p>
+                  ) : (
+                    matches.slice(0, 30).map((m) => (
+                      <div key={m.id} className="flex items-center justify-between gap-3 py-3">
+                        <div className="min-w-0">
+                          <p className="font-medium text-slate-900">{m.job?.title}</p>
+                          <p className="text-xs text-slate-500">
+                            {m.profile?.fullName || m.profile?.contact?.phone}
+                            {m.job?.company ? ` · ${m.job.company}` : ''}
                           </p>
-                        )}
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-sm font-bold text-emerald-800">
+                            {Math.round(m.score)}%
+                          </span>
+                          {m.profileId && (
+                            <button
+                              type="button"
+                              onClick={() => openProfile(m.profileId)}
+                              className="text-xs text-emerald-700 hover:underline"
+                            >
+                              Profile
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <span className="font-bold text-violet-700">{Math.round(m.score)}%</span>
-                        {m.profileId && (
-                          <button
-                            type="button"
-                            onClick={() => openProfile(m.profileId)}
-                            className="text-xs text-violet-600 hover:underline"
-                          >
-                            Profile
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </Card>
+                    ))
+                  )}
+                </div>
+              </Card>
+            </div>
           )}
 
           {tab === 'applications' && (
@@ -1023,7 +1043,7 @@ export default function CareerAI() {
                         value={a.status}
                         disabled={updatingAppId === a.id}
                         onChange={(e) => updateApplicationStatus(a.id, e.target.value)}
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-50"
                       >
                         {APPLICATION_STATUSES.map(({ value, label }) => (
                           <option key={value} value={value}>
@@ -1038,96 +1058,6 @@ export default function CareerAI() {
             </Card>
           )}
 
-          {tab === 'notifications' && (
-            <Card>
-              <p className="mb-3 text-xs text-slate-500">
-                Daily digest delivery log — sent, skipped (no matches), or failed.
-              </p>
-              <div className="divide-y divide-slate-100">
-                {notifications.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-slate-500">
-                    No notifications yet. Run a digest or wait for the daily cron job.
-                  </p>
-                ) : (
-                  notifications.map((n) => {
-                    const name =
-                      n.profile?.fullName ||
-                      n.profile?.contact?.name ||
-                      n.profile?.contact?.phone ||
-                      `Profile #${n.profileId}`;
-                    const statusColor =
-                      n.status === 'sent'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : n.status === 'failed'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-slate-100 text-slate-600';
-                    const when = n.sentAt || n.createdAt;
-                    const payload = n.payload || {};
-                    return (
-                      <div key={n.id} className="flex flex-wrap items-start justify-between gap-3 py-3">
-                        <div className="min-w-0">
-                          <p className="font-medium text-slate-900">{name}</p>
-                          <p className="text-xs text-slate-500">
-                            {n.type.replace(/_/g, ' ')}
-                            {when ? ` · ${new Date(when).toLocaleString()}` : ''}
-                          </p>
-                          {payload.matchCount != null && (
-                            <p className="mt-0.5 text-[11px] text-slate-500">
-                              {payload.matchCount} matches
-                              {payload.reason ? ` · ${payload.reason}` : ''}
-                            </p>
-                          )}
-                          {payload.error && (
-                            <p className="mt-0.5 text-[11px] text-red-600">{String(payload.error)}</p>
-                          )}
-                        </div>
-                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${statusColor}`}>
-                          {n.status}
-                        </span>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </Card>
-          )}
-
-          {tab === 'audit' && (
-            <Card>
-              <p className="mb-3 text-xs text-slate-500">
-                Operator actions and compliance events (status changes, deletions, retention purges).
-              </p>
-              <div className="divide-y divide-slate-100">
-                {auditLog.length === 0 ? (
-                  <p className="py-6 text-center text-sm text-slate-500">No audit events yet</p>
-                ) : (
-                  auditLog.map((entry) => (
-                    <div key={entry.id} className="py-3">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <p className="text-sm font-medium text-slate-900">
-                          {entry.action.replace(/_/g, ' ')}
-                        </p>
-                        <span className="text-xs text-slate-500">
-                          {entry.createdAt ? new Date(entry.createdAt).toLocaleString() : ''}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-slate-600">
-                        {entry.actorType}
-                        {entry.actorLabel ? ` · ${entry.actorLabel}` : ''}
-                        {entry.profileId ? ` · profile #${entry.profileId}` : ''}
-                        {entry.applicationId ? ` · app #${entry.applicationId}` : ''}
-                      </p>
-                      {entry.details && (
-                        <pre className="mt-2 max-h-24 overflow-auto rounded bg-slate-50 p-2 text-[11px] text-slate-600">
-                          {JSON.stringify(entry.details, null, 2)}
-                        </pre>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </Card>
-          )}
         </>
       )}
 
@@ -1150,13 +1080,6 @@ export default function CareerAI() {
           }}
         />
       )}
-
-      <Card className="border-violet-100 bg-violet-50/50">
-        <p className="text-sm font-medium text-violet-900">WhatsApp commands (job seekers)</p>
-        <p className="mt-2 text-xs text-violet-800">
-          FIND JOBS · VIEW JOBS · APPLY 1 · RESUME 2 · COVER LETTER 1 · SHOW APPLICATIONS · SALARY BENCHMARK · ENABLE AUTO APPLY · DELETE MY DATA · STOP DIGEST
-        </p>
-      </Card>
     </div>
   );
 }

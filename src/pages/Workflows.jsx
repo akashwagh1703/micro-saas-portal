@@ -48,6 +48,9 @@ export default function Workflows() {
     api
       .get('/settings/business-profile')
       .then((r) => {
+        if (r.data?.business_category === 'career_ai' && r.data?.configured) {
+          return;
+        }
         if (!r.data?.configured) setWizardOpen(true);
       })
       .catch(() => {});
@@ -107,6 +110,12 @@ export default function Workflows() {
       setDeletingId(null);
     }
   };
+
+  useEffect(() => {
+    if (profile?.business_category === 'career_ai' && profile?.configured) {
+      navigate('/career-ai', { replace: true });
+    }
+  }, [profile, navigate]);
 
   const steps = progress ? buildSetupSteps(progress) : [];
 

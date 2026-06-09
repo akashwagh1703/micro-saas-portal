@@ -17,20 +17,42 @@ export default function DashboardLayout() {
     }
   }, []);
 
+  const refreshBusinessProfile = useCallback(async () => {
+    try {
+      const { data } = await api.get('/settings/business-profile');
+      setBusinessCategory(data?.business_category ?? null);
+    } catch {
+      setBusinessCategory(null);
+    }
+  }, []);
+
   useEffect(() => {
     refreshBilling();
-    api
-      .get('/settings/business-profile')
-      .then((r) => setBusinessCategory(r.data?.business_category ?? null))
-      .catch(() => setBusinessCategory(null));
-  }, [refreshBilling]);
+    refreshBusinessProfile();
+  }, [refreshBilling, refreshBusinessProfile]);
+
+  const isCareerAi = businessCategory === 'career_ai';
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-slate-100">
       <Sidebar billing={billing} businessCategory={businessCategory} />
-      <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
+      <main
+        className={`flex-1 overflow-y-auto p-4 sm:p-6 ${
+          isCareerAi
+            ? 'bg-gradient-to-br from-slate-50 via-white to-emerald-50/40'
+            : 'bg-slate-50'
+        }`}
+      >
         <BillingBanner billing={billing} onRefresh={refreshBilling} />
-        <Outlet context={{ billing, refreshBilling }} />
+        <Outlet
+          context={{
+            billing,
+            refreshBilling,
+            businessCategory,
+            refreshBusinessProfile,
+            isCareerAi,
+          }}
+        />
       </main>
     </div>
   );
