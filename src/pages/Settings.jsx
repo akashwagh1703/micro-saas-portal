@@ -6,6 +6,7 @@ import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import PlanBillingTab from '../components/billing/PlanBillingTab';
+import BusinessTypeCard from '../components/BusinessTypeCard';
 import api from '../services/api';
 import { useSelector } from 'react-redux';
 
@@ -27,7 +28,7 @@ function StepBadge({ n, done }) {
 
 export default function Settings() {
   const user = useSelector((state) => state.auth.user);
-  const { billing, refreshBilling } = useOutletContext() ?? {};
+  const { billing, refreshBilling, refreshBusinessProfile } = useOutletContext() ?? {};
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = VALID_TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'profile';
   const [tab, setTab] = useState(initialTab);
@@ -226,13 +227,16 @@ export default function Settings() {
       </div>
 
       {tab === 'profile' && (
-        <Card>
-          <div className="space-y-4">
-            <Input label="Name" value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
-            <Input label="Email" type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} />
-            <Button onClick={saveProfile} loading={loading}>Save profile</Button>
-          </div>
-        </Card>
+        <div className="space-y-4">
+          <Card>
+            <div className="space-y-4">
+              <Input label="Name" value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
+              <Input label="Email" type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} />
+              <Button onClick={saveProfile} loading={loading}>Save profile</Button>
+            </div>
+          </Card>
+          <BusinessTypeCard onChanged={() => refreshBusinessProfile?.()} />
+        </div>
       )}
 
       {tab === 'password' && (

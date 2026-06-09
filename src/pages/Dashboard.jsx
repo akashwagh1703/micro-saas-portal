@@ -17,6 +17,7 @@ import Card from '../components/ui/Card';
 import SetupChecklist from '../components/onboarding/SetupChecklist';
 import TestBotCard from '../components/onboarding/TestBotCard';
 import BusinessWizard from '../components/BusinessWizard';
+import BusinessTypeCard from '../components/BusinessTypeCard';
 import ChannelAnalytics from '../components/dashboard/ChannelAnalytics';
 import api from '../services/api';
 import { fetchSetupProgress, buildSetupSteps } from '../utils/setupProgress';
@@ -110,6 +111,8 @@ export default function Dashboard() {
 
         {progress && <SetupChecklist steps={steps} userName={user?.name} />}
 
+        <BusinessTypeCard compact onChanged={() => refreshBusinessProfile?.()} />
+
         {progress?.whatsappConnected && progress?.stats?.whatsapp_display && (
           <Card className="!border-emerald-100 !bg-emerald-50/30">
             <div className="flex items-center gap-3">
@@ -171,6 +174,8 @@ export default function Dashboard() {
       </div>
 
       {progress && <SetupChecklist steps={steps} userName={user?.name} />}
+
+      <BusinessTypeCard compact onChanged={() => refreshBusinessProfile?.()} />
 
       {progress && (progress.hasLive || progress.channelConnected) && (
         <TestBotCard

@@ -14,9 +14,11 @@ import {
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import Card from '../components/ui/Card';
+import BusinessTypeCard from '../components/BusinessTypeCard';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { AutoWaveMark } from '../components/brand/AutoWaveBrand';
+import { useOutletContext } from 'react-router-dom';
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: BarChart3 },
@@ -561,6 +563,7 @@ async function downloadCareerFile(path, fileName) {
 
 export default function CareerAI() {
   const navigate = useNavigate();
+  const { refreshBusinessProfile } = useOutletContext() ?? {};
   const [tab, setTab] = useState('overview');
   const [analytics, setAnalytics] = useState(null);
   const [profiles, setProfiles] = useState([]);
@@ -669,6 +672,9 @@ export default function CareerAI() {
         location: fetchLocation.trim() || 'india',
       });
       toast.success(data.message || `Fetched ${data.count} jobs`);
+      if (data.errors && Object.keys(data.errors).length > 0) {
+        toast.error(Object.values(data.errors).join(' · '));
+      }
       load();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Job fetch failed');
@@ -684,7 +690,7 @@ export default function CareerAI() {
       toast.success(data.message || 'Job refresh complete');
       load();
     } catch {
-      toast.error('Refresh failed — check Adzuna API keys');
+      toast.error('Refresh failed — check Adzuna and JSearch API keys in server .env');
     } finally {
       setRefreshing(false);
     }
@@ -758,6 +764,8 @@ export default function CareerAI() {
           Resume storage: MinIO bucket <span className="font-medium">{storageStatus.bucket}</span> connected
         </p>
       )}
+
+      <BusinessTypeCard compact onChanged={() => refreshBusinessProfile?.()} />
 
       <div className="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
         {TABS.map(({ id, label, icon: Icon }) => (

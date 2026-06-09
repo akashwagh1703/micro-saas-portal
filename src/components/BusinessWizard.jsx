@@ -364,7 +364,9 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <div className="flex items-center gap-2">
             <Sparkles size={18} className="text-emerald-600" />
-            <h2 className="font-semibold text-slate-900">Set up my business</h2>
+            <h2 className="font-semibold text-slate-900">
+              {profile?.configured ? 'Change business type' : 'Set up my business'}
+            </h2>
           </div>
           <button
             type="button"
@@ -385,6 +387,21 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
               {isCareerAi
                 ? 'WhatsApp bot for resumes, 70%+ job matches, and tailored DOCX — no workflow builder needed.'
                 : 'Pick your industry and use cases — we create ready-made workflows for you.'}
+            </p>
+          </div>
+        )}
+
+        {profile?.configured && (
+          <div className="border-b border-slate-100 bg-slate-50 px-6 py-3">
+            <p className="text-xs text-slate-600">
+              Current: <span className="font-medium text-slate-800">{profile.business_label}</span>
+              {isBusinessChange && business && (
+                <span className="text-emerald-700">
+                  {' '}
+                  → switching to{' '}
+                  {BUSINESS_OPTIONS.find((o) => o.key === business)?.label ?? business}
+                </span>
+              )}
             </p>
           </div>
         )}
