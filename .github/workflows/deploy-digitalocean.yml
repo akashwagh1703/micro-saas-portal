@@ -1,0 +1,48 @@
+name: Deploy Portal to DigitalOcean
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-portal-production
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install and build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: |
+          npm ci
+          npm run build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          port: ${{ secrets.DO_SSH_PORT || 22 }}
+          command_timeout: 15m
+          envs: VITE_API_URL
+          script: |
+            chmod +x /var/www/autowave/micro-saas-portal/scripts/deploy-digitalocean.sh
+            APP_DIR=/var/www/autowave/micro-saas-portal DEPLOY_BRANCH=${{ github.ref_name }} bash /var/www/autowave/micro-saas-portal/scripts/deploy-digitalocean.sh
