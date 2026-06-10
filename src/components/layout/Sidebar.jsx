@@ -23,7 +23,7 @@ const defaultNavItems = [
   { to: '/contacts', icon: Users, label: 'Contacts', hint: 'People who messaged you' },
   { to: '/leads', icon: UserPlus, label: 'Leads', hint: 'Captured from auto-replies' },
   { to: '/career-ai', icon: Briefcase, label: 'CareerAI', hint: 'Jobs & job seekers' },
-  { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, AI & billing' },
+  { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, CareerAI & billing' },
 ];
 
 const careerNavItems = [

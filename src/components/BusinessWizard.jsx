@@ -8,8 +8,8 @@ const BUSINESS_OPTIONS = [
   {
     key: 'career_ai',
     label: 'CareerAI Bot',
-    hint: 'Job seekers on WhatsApp — resumes, 70%+ matches, tailored DOCX.',
-    example: 'Upload resume → matched jobs → apply with tailored CV.',
+    hint: 'Job seekers on WhatsApp — resumes, 70%+ matches, cover letters.',
+    example: 'Upload resume → matched jobs → apply with cover letter.',
   },
   {
     key: 'farmer',
@@ -385,7 +385,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
             </p>
             <p className="mt-1 text-xs leading-relaxed text-emerald-800/90">
               {isCareerAi
-                ? 'WhatsApp bot for resumes, 70%+ job matches, and tailored DOCX — no workflow builder needed.'
+                ? 'WhatsApp bot for resumes, 70%+ job matches, and cover letters — no workflow builder needed.'
                 : 'Pick your industry and use cases — we create ready-made workflows for you.'}
             </p>
           </div>
@@ -463,7 +463,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
                   <ul className="mt-2 space-y-1.5 text-xs text-emerald-800">
                     <li>• Job seekers upload resume → profile built automatically</li>
                     <li>• Jobs matched by role, skills, location (70%+ only)</li>
-                    <li>• Tailored resume & cover letter sent as DOCX</li>
+                    <li>• Tailored cover letter sent as PDF/DOCX</li>
                   </ul>
                 </div>
               )}

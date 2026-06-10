@@ -23,12 +23,18 @@ export async function fetchSetupProgress(api) {
     const businessConfigured = !!profile.configured;
 
     let careerHasJobs = false;
+    let careerJobSourcesConfigured = false;
     if (careerAi && businessConfigured) {
       try {
-        const careerRes = await api.get('/career/analytics');
+        const [careerRes, sourcesRes] = await Promise.all([
+          api.get('/career/analytics'),
+          api.get('/career/job-sources'),
+        ]);
         careerHasJobs = (careerRes.data?.jobs ?? 0) > 0;
+        careerJobSourcesConfigured = (sourcesRes.data?.sources ?? []).some((s) => s.enabled);
       } catch {
         careerHasJobs = false;
+        careerJobSourcesConfigured = false;
       }
     }
 
@@ -46,6 +52,7 @@ export async function fetchSetupProgress(api) {
       workflows,
       isCareerAi: careerAi,
       careerHasJobs,
+      careerJobSourcesConfigured,
       complete: careerAi
         ? businessConfigured && whatsappConnected
         : businessConfigured && workflows.length > 0 && channelConnected && hasLive,
@@ -65,6 +72,7 @@ export async function fetchSetupProgress(api) {
       workflows: [],
       isCareerAi: false,
       careerHasJobs: false,
+      careerJobSourcesConfigured: false,
       complete: false,
     };
   }
@@ -96,6 +104,14 @@ export function buildSetupSteps(progress) {
         done: progress.careerHasJobs,
         href: '/career-ai',
         action: 'Fetch jobs',
+      },
+      {
+        id: 'career_settings',
+        title: 'Configure job sources',
+        description: 'Adzuna, JSearch, and seeker billing in Settings → CareerAI.',
+        done: progress.careerJobSourcesConfigured,
+        href: '/settings?tab=career',
+        action: 'Open CareerAI settings',
       },
     ];
   }

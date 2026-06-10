@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Briefcase,
   Users,
@@ -700,62 +700,6 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
               </section>
 
               <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Generated resumes
-                </h3>
-                {asList(profile.resumes).flatMap((r) => asList(r.versions)).length === 0 ? (
-                  <p className="mt-2 text-sm text-slate-400">No tailored resumes yet</p>
-                ) : (
-                  <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                    {profile.resumes.flatMap((r) =>
-                      asList(r.versions).map((v) => (
-                        <li key={v.id} className="flex items-center justify-between gap-2">
-                          <span>
-                            {v.title || 'Tailored resume'}
-                            {v.job?.title ? ` · ${v.job.title}` : ''}
-                            {v.createdAt
-                              ? ` · ${new Date(v.createdAt).toLocaleDateString()}`
-                              : ''}
-                          </span>
-                          {(v.filePathDocx || v.filePath) && (
-                            <span className="flex shrink-0 gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  downloadCareerFile(
-                                    `/career/resume-versions/${v.id}/download`,
-                                    `${v.title || 'resume'}.docx`,
-                                  )
-                                }
-                                className="text-xs font-medium text-emerald-700 hover:underline"
-                              >
-                                Download
-                              </button>
-                              <button
-                                type="button"
-                                disabled={sendingId === `/career/resume-versions/${v.id}/send`}
-                                onClick={() =>
-                                  sendToWhatsApp(
-                                    `/career/resume-versions/${v.id}/send`,
-                                    'Resume',
-                                  )
-                                }
-                                className="text-xs font-medium text-emerald-700 hover:underline disabled:opacity-50"
-                              >
-                                {sendingId === `/career/resume-versions/${v.id}/send`
-                                  ? 'Sending…'
-                                  : 'Send on WhatsApp'}
-                              </button>
-                            </span>
-                          )}
-                        </li>
-                      )),
-                    )}
-                  </ul>
-                )}
-              </section>
-
-              <section>
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cover letters</h3>
                 {asList(profile.coverLetters).length === 0 ? (
                   <p className="mt-2 text-sm text-slate-400">No cover letters yet</p>
@@ -1004,7 +948,7 @@ export default function CareerAI() {
     } catch (err) {
       toast.error(
         err.response?.data?.message ||
-          'Refresh failed — check Adzuna and JSearch API keys in server .env',
+          'Refresh failed — add job source keys in Settings → CareerAI',
       );
     } finally {
       setRefreshing(false);
@@ -1049,11 +993,14 @@ export default function CareerAI() {
               <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">CareerAI</p>
               <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Job seeker operations</h1>
               <p className="mt-1 text-sm text-slate-500">
-                WhatsApp bot · 70%+ matches · tailored DOCX
+                WhatsApp bot · 70%+ matches · cover letters
               </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Link to="/settings?tab=career">
+              <Button variant="secondary">CareerAI settings</Button>
+            </Link>
             <Button variant="secondary" onClick={runDigest}>
               <Send size={16} className="mr-1 inline" />
               Run digest
@@ -1211,7 +1158,15 @@ export default function CareerAI() {
           {tab === 'jobs' && (
             <div className="space-y-4">
               <Card>
-                <p className="mb-3 text-sm font-medium text-slate-900">Job sources</p>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-slate-900">Job sources</p>
+                  <Link
+                    to="/settings?tab=career"
+                    className="text-xs font-medium text-emerald-700 hover:underline"
+                  >
+                    Configure in Settings → CareerAI
+                  </Link>
+                </div>
                 <ul className="space-y-2">
                   {jobSources.length === 0 ? (
                     <li className="text-xs text-slate-500">Loading sources…</li>

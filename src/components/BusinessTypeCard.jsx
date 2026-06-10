@@ -80,7 +80,7 @@ export default function BusinessTypeCard({ compact = false, onChanged }) {
                   )}
                   {isCareerAi && (
                     <p className="mt-1 text-xs text-emerald-800">
-                      WhatsApp job seeker bot — resumes, matching, tailored DOCX
+                      WhatsApp job seeker bot — resumes, matching, cover letters
                     </p>
                   )}
                 </>

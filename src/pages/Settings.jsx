@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useSearchParams, useOutletContext } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams, useOutletContext, Link } from 'react-router-dom';
 import { Copy, ExternalLink, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
@@ -10,7 +10,7 @@ import BusinessTypeCard from '../components/BusinessTypeCard';
 import api from '../services/api';
 import { useSelector } from 'react-redux';
 
-const VALID_TABS = ['profile', 'password', 'billing', 'whatsapp', 'instagram', 'ai'];
+const VALID_TABS = ['profile', 'password', 'billing', 'whatsapp', 'instagram', 'ai', 'career'];
 
 const META_CONSOLE = 'https://developers.facebook.com/apps';
 
@@ -28,7 +28,7 @@ function StepBadge({ n, done }) {
 
 export default function Settings() {
   const user = useSelector((state) => state.auth.user);
-  const { billing, refreshBilling, refreshBusinessProfile } = useOutletContext() ?? {};
+  const { billing, refreshBilling, refreshBusinessProfile, isCareerAi } = useOutletContext() ?? {};
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = VALID_TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'profile';
   const [tab, setTab] = useState(initialTab);
@@ -38,9 +38,26 @@ export default function Settings() {
   const [instagram, setInstagram] = useState({});
   const [igSetup, setIgSetup] = useState(null);
   const [integrations, setIntegrations] = useState({});
+  const [careerSettings, setCareerSettings] = useState({
+    job_sources: {},
+    seeker_billing: {},
+  });
+  const [careerForm, setCareerForm] = useState({});
   const [webhookUrl, setWebhookUrl] = useState('');
   const [igWebhookUrl, setIgWebhookUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const [businessCategory, setBusinessCategory] = useState(null);
+
+  const loadBusinessProfile = useCallback(async () => {
+    try {
+      const { data } = await api.get('/settings/business-profile');
+      setBusinessCategory(data?.business_category ?? null);
+    } catch {
+      setBusinessCategory(null);
+    }
+  }, []);
+
+  const showCareerTab = businessCategory === 'career_ai' || isCareerAi === true;
 
   useEffect(() => {
     const urlTab = searchParams.get('tab');
@@ -54,6 +71,7 @@ export default function Settings() {
 
   useEffect(() => {
     setProfile({ name: user?.name || '', email: user?.email || '' });
+    loadBusinessProfile();
     api.get('/whatsapp').then((r) => {
       setWhatsapp(r.data.account || {});
       setWebhookUrl(r.data.webhook_url || '');
@@ -64,7 +82,13 @@ export default function Settings() {
       setIgSetup(r.data.setup || null);
     }).catch(() => {});
     api.get('/settings/integrations').then((r) => setIntegrations(r.data));
-  }, [user]);
+    if (showCareerTab) {
+      api.get('/career/settings').then((r) => {
+        setCareerSettings(r.data);
+        setCareerForm({});
+      }).catch(() => {});
+    }
+  }, [user, showCareerTab, loadBusinessProfile]);
 
   const copyWebhook = () => {
     if (!webhookUrl) return;
@@ -194,6 +218,28 @@ export default function Settings() {
     }
   };
 
+  const patchCareerField = (field, value) => {
+    setCareerForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const saveCareerSettings = async () => {
+    if (Object.keys(careerForm).length === 0) {
+      toast.success('Nothing to save');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data } = await api.patch('/career/settings', careerForm);
+      setCareerSettings(data);
+      setCareerForm({});
+      toast.success('CareerAI settings saved');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save CareerAI settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const tabs = [
     { id: 'profile', label: 'Profile' },
     { id: 'password', label: 'Password' },
@@ -201,6 +247,7 @@ export default function Settings() {
     { id: 'whatsapp', label: 'WhatsApp' },
     { id: 'instagram', label: 'Instagram' },
     { id: 'ai', label: 'Smart replies (AI)' },
+    ...(showCareerTab ? [{ id: 'career', label: 'CareerAI' }] : []),
   ];
 
   const hasToken = whatsapp.has_access_token || whatsapp.access_token;
@@ -216,7 +263,11 @@ export default function Settings() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="text-sm text-slate-500">Connect WhatsApp, Instagram, and customize smart replies</p>
+        <p className="text-sm text-slate-500">
+          {showCareerTab
+            ? 'Connect WhatsApp, job sources, seeker billing, and smart replies'
+            : 'Connect WhatsApp, Instagram, and customize smart replies'}
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-2 border-b border-slate-200">
@@ -243,7 +294,12 @@ export default function Settings() {
               <Button onClick={saveProfile} loading={loading}>Save profile</Button>
             </div>
           </Card>
-          <BusinessTypeCard onChanged={() => refreshBusinessProfile?.()} />
+          <BusinessTypeCard
+            onChanged={() => {
+              refreshBusinessProfile?.();
+              loadBusinessProfile();
+            }}
+          />
         </div>
       )}
 
@@ -514,6 +570,135 @@ export default function Settings() {
             <Button onClick={saveIntegrations} loading={loading}>Save smart reply settings</Button>
           </div>
         </Card>
+      )}
+
+      {tab === 'career' && showCareerTab && (
+        <div className="space-y-4">
+          <Card title="Job sources">
+            <p className="mb-4 text-sm text-slate-600">
+              Connect Adzuna and/or JSearch for your candidates. Keys are stored per account — same as WhatsApp credentials.
+            </p>
+            <div className="space-y-4">
+              <Input
+                label="Adzuna App ID"
+                value={careerForm.adzuna_app_id ?? careerSettings.job_sources?.adzuna_app_id ?? ''}
+                onChange={(e) => patchCareerField('adzuna_app_id', e.target.value)}
+              />
+              <Input
+                label="Adzuna App Key"
+                type="password"
+                placeholder={careerSettings.job_sources?.has_adzuna_app_key ? '••••••••' : 'From developer.adzuna.com'}
+                onChange={(e) => patchCareerField('adzuna_app_key', e.target.value)}
+              />
+              <Input
+                label="JSearch RapidAPI Key"
+                type="password"
+                placeholder={careerSettings.job_sources?.has_jsearch_rapidapi_key ? '••••••••' : 'From RapidAPI JSearch'}
+                onChange={(e) => patchCareerField('jsearch_rapidapi_key', e.target.value)}
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="JSearch country code"
+                  value={careerForm.jsearch_default_country ?? careerSettings.job_sources?.jsearch_default_country ?? 'in'}
+                  onChange={(e) => patchCareerField('jsearch_default_country', e.target.value)}
+                />
+                <Input
+                  label="JSearch max pages (1–3)"
+                  type="number"
+                  min={1}
+                  max={3}
+                  value={careerForm.jsearch_max_pages ?? careerSettings.job_sources?.jsearch_max_pages ?? 1}
+                  onChange={(e) => patchCareerField('jsearch_max_pages', parseInt(e.target.value, 10) || 1)}
+                />
+              </div>
+              <Input
+                label="LinkedIn jobs API URL (optional)"
+                value={careerForm.linkedin_jobs_api_url ?? careerSettings.job_sources?.linkedin_jobs_api_url ?? ''}
+                onChange={(e) => patchCareerField('linkedin_jobs_api_url', e.target.value)}
+              />
+              <Input
+                label="LinkedIn jobs API key (optional)"
+                type="password"
+                placeholder={careerSettings.job_sources?.has_linkedin_jobs_api_key ? '••••••••' : 'Custom feed key'}
+                onChange={(e) => patchCareerField('linkedin_jobs_api_key', e.target.value)}
+              />
+              <Input
+                label="Naukri jobs API URL (optional)"
+                value={careerForm.naukri_jobs_api_url ?? careerSettings.job_sources?.naukri_jobs_api_url ?? ''}
+                onChange={(e) => patchCareerField('naukri_jobs_api_url', e.target.value)}
+              />
+              <Input
+                label="Naukri jobs API key (optional)"
+                type="password"
+                placeholder={careerSettings.job_sources?.has_naukri_jobs_api_key ? '••••••••' : 'Custom feed key'}
+                onChange={(e) => patchCareerField('naukri_jobs_api_key', e.target.value)}
+              />
+            </div>
+          </Card>
+
+          <Card title="Job seeker subscription">
+            <p className="mb-4 text-sm text-slate-600">
+              Charge candidates separately from your platform plan. Create two Razorpay plans in your dashboard, then paste plan IDs below.
+            </p>
+            <div className="space-y-4">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={
+                    careerForm.seeker_billing_enabled !== undefined
+                      ? careerForm.seeker_billing_enabled
+                      : !!careerSettings.seeker_billing?.enabled
+                  }
+                  onChange={(e) => patchCareerField('seeker_billing_enabled', e.target.checked)}
+                />
+                Enable job seeker billing (trial then paid)
+              </label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Trial days"
+                  type="number"
+                  min={1}
+                  max={90}
+                  value={careerForm.seeker_trial_days ?? careerSettings.seeker_billing?.trial_days ?? 14}
+                  onChange={(e) => patchCareerField('seeker_trial_days', parseInt(e.target.value, 10) || 14)}
+                />
+                <Input
+                  label="Monthly price (₹)"
+                  type="number"
+                  min={1}
+                  value={careerForm.seeker_price_monthly_inr ?? careerSettings.seeker_billing?.price_monthly_inr ?? 199}
+                  onChange={(e) => patchCareerField('seeker_price_monthly_inr', parseInt(e.target.value, 10) || 199)}
+                />
+                <Input
+                  label="Yearly price (₹)"
+                  type="number"
+                  min={1}
+                  value={careerForm.seeker_price_yearly_inr ?? careerSettings.seeker_billing?.price_yearly_inr ?? 1999}
+                  onChange={(e) => patchCareerField('seeker_price_yearly_inr', parseInt(e.target.value, 10) || 1999)}
+                />
+              </div>
+              <Input
+                label="Razorpay plan ID — monthly"
+                value={careerForm.razorpay_plan_seeker_monthly ?? careerSettings.seeker_billing?.razorpay_plan_seeker_monthly ?? ''}
+                onChange={(e) => patchCareerField('razorpay_plan_seeker_monthly', e.target.value)}
+                placeholder="plan_..."
+              />
+              <Input
+                label="Razorpay plan ID — yearly"
+                value={careerForm.razorpay_plan_seeker_yearly ?? careerSettings.seeker_billing?.razorpay_plan_seeker_yearly ?? ''}
+                onChange={(e) => patchCareerField('razorpay_plan_seeker_yearly', e.target.value)}
+                placeholder="plan_..."
+              />
+              {!careerSettings.seeker_billing?.razorpay_configured && careerSettings.seeker_billing?.enabled && (
+                <p className="text-xs text-amber-700">
+                  Billing is enabled but Razorpay seeker plans are missing — add both plan IDs above.
+                </p>
+              )}
+            </div>
+          </Card>
+
+          <Button onClick={saveCareerSettings} loading={loading}>Save CareerAI settings</Button>
+        </div>
       )}
     </div>
   );

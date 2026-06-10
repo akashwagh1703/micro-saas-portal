@@ -1,12 +1,45 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { AutoWaveMark } from '../components/brand/AutoWaveBrand';
+import { loadRazorpay } from '../utils/loadRazorpay';
 
 const publicApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: { Accept: 'application/json' },
 });
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function StatusBadge({ status }) {
+  const styles = {
+    trial: 'bg-amber-100 text-amber-800',
+    active: 'bg-emerald-100 text-emerald-800',
+    expired: 'bg-red-100 text-red-800',
+    cancelled: 'bg-slate-100 text-slate-700',
+  };
+  const labels = {
+    trial: 'Free trial',
+    active: 'Active',
+    expired: 'Expired',
+    cancelled: 'Cancelled',
+  };
+  return (
+    <span
+      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${styles[status] || styles.expired}`}
+    >
+      {labels[status] || status}
+    </span>
+  );
+}
 
 function asList(value) {
   if (!value) return [];
@@ -29,16 +62,17 @@ export default function CareerSeekerPortal() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [paying, setPaying] = useState(null);
 
-  useEffect(() => {
+  const loadPortal = () => {
     if (!token) {
       setError('Missing portal link. Request a new link on WhatsApp with PORTAL LINK.');
       setLoading(false);
-      return;
+      return Promise.resolve();
     }
 
     setLoading(true);
-    publicApi
+    return publicApi
       .get('/career/public/portal', { params: { token } })
       .then((res) => {
         setData(res.data);
@@ -49,7 +83,64 @@ export default function CareerSeekerPortal() {
         setData(null);
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadPortal();
   }, [token]);
+
+  const billing = data?.billing;
+  const canSubscribe =
+    billing?.billing_enabled &&
+    billing?.status !== 'active' &&
+    billing?.razorpay_configured;
+
+  const startCheckout = async (planType) => {
+    setPaying(planType);
+    try {
+      const { data: checkout } = await publicApi.post('/career/public/billing/subscribe', {
+        token,
+        plan: planType,
+      });
+      const Razorpay = await loadRazorpay();
+
+      const rzp = new Razorpay({
+        key: checkout.key_id,
+        subscription_id: checkout.subscription_id,
+        name: 'CareerAI',
+        description: planType === 'yearly' ? 'CareerAI — Yearly' : 'CareerAI — Monthly',
+        theme: { color: '#059669' },
+        handler: async (response) => {
+          try {
+            await publicApi.post('/career/public/billing/verify', {
+              token,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_subscription_id: response.razorpay_subscription_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            toast.success('Subscription active! You can use CareerAI on WhatsApp.');
+            await loadPortal();
+          } catch {
+            toast.error('Payment received — refreshing status…');
+            await loadPortal();
+          }
+        },
+        modal: {
+          ondismiss: () => setPaying(null),
+        },
+      });
+
+      rzp.on('payment.failed', () => {
+        toast.error('Payment failed. Please try again.');
+        setPaying(null);
+      });
+
+      rzp.open();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not start checkout.');
+      setPaying(null);
+    }
+  };
 
   const profile = data?.profile;
 
@@ -95,6 +186,74 @@ export default function CareerSeekerPortal() {
                 </p>
               )}
             </section>
+
+            {billing?.billing_enabled && (
+              <section
+                id="subscribe"
+                className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-sm"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-emerald-800">
+                    Your CareerAI plan
+                  </h3>
+                  <StatusBadge status={billing.status} />
+                </div>
+
+                {billing.status === 'trial' && (
+                  <p className="mt-2 text-sm text-emerald-900">
+                    Free trial — {billing.days_left} day{billing.days_left === 1 ? '' : 's'} left
+                    {billing.trial_ends_at ? ` (ends ${formatDate(billing.trial_ends_at)})` : ''}
+                  </p>
+                )}
+
+                {billing.status === 'active' && (
+                  <p className="mt-2 text-sm text-emerald-900">
+                    {billing.plan === 'yearly' ? 'Yearly' : 'Monthly'} plan active
+                    {billing.current_period_end
+                      ? ` · renews ${formatDate(billing.current_period_end)}`
+                      : ''}
+                  </p>
+                )}
+
+                {(billing.status === 'expired' || billing.status === 'cancelled') && (
+                  <p className="mt-2 text-sm text-red-800">
+                    Subscribe to unlock job matching, mock interviews, and AI guidance on WhatsApp.
+                  </p>
+                )}
+
+                {canSubscribe && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={paying === 'monthly'}
+                      onClick={() => startCheckout('monthly')}
+                      className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {paying === 'monthly'
+                        ? 'Opening…'
+                        : `Monthly · ₹${billing.prices.monthly_inr}`}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={paying === 'yearly'}
+                      onClick={() => startCheckout('yearly')}
+                      className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-emerald-800 ring-1 ring-emerald-300 hover:bg-emerald-50 disabled:opacity-50"
+                    >
+                      {paying === 'yearly'
+                        ? 'Opening…'
+                        : `Yearly · ₹${billing.prices.yearly_inr}`}
+                    </button>
+                  </div>
+                )}
+
+                {canSubscribe && !billing.razorpay_configured && (
+                  <p className="mt-2 text-xs text-amber-800">
+                    Online payments are not configured yet. Reply SUBSCRIBE on WhatsApp or contact
+                    support.
+                  </p>
+                )}
+              </section>
+            )}
 
             <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">

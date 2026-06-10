@@ -96,7 +96,7 @@ export default function Dashboard() {
             {user?.name ? `Hi ${user.name.split(' ')[0]}` : 'Welcome'}
           </h1>
           <p className="mt-2 max-w-lg text-sm text-emerald-50/95">
-            Job seekers message your WhatsApp → resume parsed → 70%+ job matches → tailored DOCX on apply.
+            Job seekers message your WhatsApp → resume parsed → 70%+ job matches → cover letters on apply.
           </p>
           {progress?.complete && (
             <Link
