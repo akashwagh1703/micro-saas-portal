@@ -12,6 +12,35 @@ import { useSelector } from 'react-redux';
 
 const VALID_TABS = ['profile', 'password', 'billing', 'whatsapp', 'instagram', 'ai', 'career'];
 
+const CAREER_FIELD_RULES = {
+  jsearch_max_pages: { pattern: /^[1-3]$/, message: 'Enter 1, 2, or 3' },
+  seeker_trial_days: { pattern: /^([1-9]|[1-8][0-9]|90)$/, message: 'Enter a whole number from 1 to 90' },
+  seeker_price_monthly_inr: { pattern: /^[1-9]\d{0,7}$/, message: 'Enter a valid whole number (INR)' },
+  seeker_price_yearly_inr: { pattern: /^[1-9]\d{0,7}$/, message: 'Enter a valid whole number (INR)' },
+  razorpay_key_id: { pattern: /^rzp_(live|test)_[A-Za-z0-9]+$/, message: 'Format: rzp_test_... or rzp_live_...' },
+  razorpay_plan_seeker_monthly: { pattern: /^plan_[A-Za-z0-9]+$/, message: 'Format: plan_...' },
+  razorpay_plan_seeker_yearly: { pattern: /^plan_[A-Za-z0-9]+$/, message: 'Format: plan_...' },
+};
+
+function validateCareerFields(form) {
+  const errors = {};
+  for (const [field, rule] of Object.entries(CAREER_FIELD_RULES)) {
+    if (!(field in form)) continue;
+    const val = String(form[field] ?? '').trim();
+    if (!val) continue;
+    if (!rule.pattern.test(val)) {
+      errors[field] = rule.message;
+    }
+  }
+  if ('jsearch_default_country' in form) {
+    const cc = String(form.jsearch_default_country ?? '').trim();
+    if (cc && !/^[a-z]{2}$/i.test(cc)) {
+      errors.jsearch_default_country = 'Use a 2-letter country code (e.g. in)';
+    }
+  }
+  return errors;
+}
+
 const META_CONSOLE = 'https://developers.facebook.com/apps';
 
 function StepBadge({ n, done }) {
@@ -43,6 +72,7 @@ export default function Settings() {
     seeker_billing: {},
   });
   const [careerForm, setCareerForm] = useState({});
+  const [careerErrors, setCareerErrors] = useState({});
   const [webhookUrl, setWebhookUrl] = useState('');
   const [igWebhookUrl, setIgWebhookUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -100,6 +130,13 @@ export default function Settings() {
     if (!igWebhookUrl) return;
     navigator.clipboard.writeText(igWebhookUrl);
     toast.success('Instagram webhook copied');
+  };
+
+  const copyCareerRazorpayWebhook = () => {
+    const url = careerSettings.seeker_billing?.razorpay_webhook_url;
+    if (!url) return;
+    navigator.clipboard.writeText(url);
+    toast.success('Razorpay webhook URL copied');
   };
 
   const saveProfile = async () => {
@@ -220,6 +257,12 @@ export default function Settings() {
 
   const patchCareerField = (field, value) => {
     setCareerForm((prev) => ({ ...prev, [field]: value }));
+    setCareerErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
   };
 
   const saveCareerSettings = async () => {
@@ -227,13 +270,28 @@ export default function Settings() {
       toast.success('Nothing to save');
       return;
     }
+    const errors = validateCareerFields(careerForm);
+    if (Object.keys(errors).length > 0) {
+      setCareerErrors(errors);
+      toast.error('Fix the highlighted fields before saving');
+      return;
+    }
     setLoading(true);
     try {
       const { data } = await api.patch('/career/settings', careerForm);
       setCareerSettings(data);
       setCareerForm({});
+      setCareerErrors({});
       toast.success('CareerAI settings saved');
     } catch (err) {
+      const apiErrors = err.response?.data?.errors;
+      if (apiErrors && typeof apiErrors === 'object') {
+        const mapped = {};
+        for (const [key, msgs] of Object.entries(apiErrors)) {
+          mapped[key] = Array.isArray(msgs) ? msgs[0] : String(msgs);
+        }
+        setCareerErrors(mapped);
+      }
       toast.error(err.response?.data?.message || 'Failed to save CareerAI settings');
     } finally {
       setLoading(false);
@@ -601,14 +659,23 @@ export default function Settings() {
                   label="JSearch country code"
                   value={careerForm.jsearch_default_country ?? careerSettings.job_sources?.jsearch_default_country ?? 'in'}
                   onChange={(e) => patchCareerField('jsearch_default_country', e.target.value)}
+                  error={careerErrors.jsearch_default_country}
+                  placeholder="in"
+                  autoComplete="off"
                 />
                 <Input
                   label="JSearch max pages (1–3)"
-                  type="number"
-                  min={1}
-                  max={3}
-                  value={careerForm.jsearch_max_pages ?? careerSettings.job_sources?.jsearch_max_pages ?? 1}
-                  onChange={(e) => patchCareerField('jsearch_max_pages', parseInt(e.target.value, 10) || 1)}
+                  type="text"
+                  inputMode="numeric"
+                  value={
+                    careerForm.jsearch_max_pages !== undefined
+                      ? careerForm.jsearch_max_pages
+                      : String(careerSettings.job_sources?.jsearch_max_pages ?? 1)
+                  }
+                  onChange={(e) => patchCareerField('jsearch_max_pages', e.target.value)}
+                  error={careerErrors.jsearch_max_pages}
+                  placeholder="1"
+                  autoComplete="off"
                 />
               </div>
               <Input
@@ -638,7 +705,7 @@ export default function Settings() {
 
           <Card title="Job seeker subscription">
             <p className="mb-4 text-sm text-slate-600">
-              Charge candidates separately from your platform plan. Create two Razorpay plans in your dashboard, then paste plan IDs below.
+              Charge candidates with your own Razorpay account. Create two seeker plans in Razorpay, then paste credentials and plan IDs below.
             </p>
             <div className="space-y-4">
               <label className="flex items-center gap-2 text-sm">
@@ -653,45 +720,118 @@ export default function Settings() {
                 />
                 Enable job seeker billing (trial then paid)
               </label>
+
+              <Input
+                label="Razorpay Key ID"
+                type="text"
+                value={careerForm.razorpay_key_id ?? careerSettings.seeker_billing?.razorpay_key_id ?? ''}
+                onChange={(e) => patchCareerField('razorpay_key_id', e.target.value.trim())}
+                error={careerErrors.razorpay_key_id}
+                placeholder="rzp_test_..."
+                autoComplete="off"
+              />
+              <Input
+                label="Razorpay Key Secret"
+                type="password"
+                placeholder={careerSettings.seeker_billing?.has_razorpay_key_secret ? '••••••••' : 'From Razorpay Dashboard → API Keys'}
+                onChange={(e) => patchCareerField('razorpay_key_secret', e.target.value)}
+                autoComplete="off"
+              />
+              <Input
+                label="Razorpay Webhook Secret"
+                type="password"
+                placeholder={careerSettings.seeker_billing?.has_razorpay_webhook_secret ? '••••••••' : 'From Razorpay → Webhooks'}
+                onChange={(e) => patchCareerField('razorpay_webhook_secret', e.target.value)}
+                autoComplete="off"
+              />
+              <div>
+                <p className="text-sm font-medium text-slate-900">Razorpay webhook URL</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  In Razorpay Dashboard → Webhooks, paste this URL. Use the same Webhook Secret you entered above.
+                  Subscribe to subscription events (activated, charged, cancelled).
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <p className="flex-1 rounded-lg bg-slate-50 p-3 text-xs font-mono break-all">
+                    {careerSettings.seeker_billing?.razorpay_webhook_url || '—'}
+                  </p>
+                  {careerSettings.seeker_billing?.razorpay_webhook_url && (
+                    <button
+                      type="button"
+                      onClick={copyCareerRazorpayWebhook}
+                      className="rounded-lg border border-slate-200 px-3 text-slate-600 hover:bg-slate-50"
+                      title="Copy webhook URL"
+                    >
+                      <Copy size={18} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <Input
                   label="Trial days"
-                  type="number"
-                  min={1}
-                  max={90}
-                  value={careerForm.seeker_trial_days ?? careerSettings.seeker_billing?.trial_days ?? 14}
-                  onChange={(e) => patchCareerField('seeker_trial_days', parseInt(e.target.value, 10) || 14)}
+                  type="text"
+                  inputMode="numeric"
+                  value={
+                    careerForm.seeker_trial_days !== undefined
+                      ? careerForm.seeker_trial_days
+                      : String(careerSettings.seeker_billing?.trial_days ?? 14)
+                  }
+                  onChange={(e) => patchCareerField('seeker_trial_days', e.target.value)}
+                  error={careerErrors.seeker_trial_days}
+                  placeholder="14"
+                  autoComplete="off"
                 />
                 <Input
                   label="Monthly price (₹)"
-                  type="number"
-                  min={1}
-                  value={careerForm.seeker_price_monthly_inr ?? careerSettings.seeker_billing?.price_monthly_inr ?? 199}
-                  onChange={(e) => patchCareerField('seeker_price_monthly_inr', parseInt(e.target.value, 10) || 199)}
+                  type="text"
+                  inputMode="numeric"
+                  value={
+                    careerForm.seeker_price_monthly_inr !== undefined
+                      ? careerForm.seeker_price_monthly_inr
+                      : String(careerSettings.seeker_billing?.price_monthly_inr ?? 199)
+                  }
+                  onChange={(e) => patchCareerField('seeker_price_monthly_inr', e.target.value)}
+                  error={careerErrors.seeker_price_monthly_inr}
+                  placeholder="199"
+                  autoComplete="off"
                 />
                 <Input
                   label="Yearly price (₹)"
-                  type="number"
-                  min={1}
-                  value={careerForm.seeker_price_yearly_inr ?? careerSettings.seeker_billing?.price_yearly_inr ?? 1999}
-                  onChange={(e) => patchCareerField('seeker_price_yearly_inr', parseInt(e.target.value, 10) || 1999)}
+                  type="text"
+                  inputMode="numeric"
+                  value={
+                    careerForm.seeker_price_yearly_inr !== undefined
+                      ? careerForm.seeker_price_yearly_inr
+                      : String(careerSettings.seeker_billing?.price_yearly_inr ?? 1999)
+                  }
+                  onChange={(e) => patchCareerField('seeker_price_yearly_inr', e.target.value)}
+                  error={careerErrors.seeker_price_yearly_inr}
+                  placeholder="1999"
+                  autoComplete="off"
                 />
               </div>
               <Input
                 label="Razorpay plan ID — monthly"
+                type="text"
                 value={careerForm.razorpay_plan_seeker_monthly ?? careerSettings.seeker_billing?.razorpay_plan_seeker_monthly ?? ''}
-                onChange={(e) => patchCareerField('razorpay_plan_seeker_monthly', e.target.value)}
+                onChange={(e) => patchCareerField('razorpay_plan_seeker_monthly', e.target.value.trim())}
+                error={careerErrors.razorpay_plan_seeker_monthly}
                 placeholder="plan_..."
+                autoComplete="off"
               />
               <Input
                 label="Razorpay plan ID — yearly"
+                type="text"
                 value={careerForm.razorpay_plan_seeker_yearly ?? careerSettings.seeker_billing?.razorpay_plan_seeker_yearly ?? ''}
-                onChange={(e) => patchCareerField('razorpay_plan_seeker_yearly', e.target.value)}
+                onChange={(e) => patchCareerField('razorpay_plan_seeker_yearly', e.target.value.trim())}
+                error={careerErrors.razorpay_plan_seeker_yearly}
                 placeholder="plan_..."
+                autoComplete="off"
               />
               {!careerSettings.seeker_billing?.razorpay_configured && careerSettings.seeker_billing?.enabled && (
                 <p className="text-xs text-amber-700">
-                  Billing is enabled but Razorpay seeker plans are missing — add both plan IDs above.
+                  Billing is enabled but Razorpay is incomplete — add Key ID, Secret, Webhook secret, and both plan IDs.
                 </p>
               )}
             </div>
