@@ -1,75 +1,47 @@
-import { AutoWaveLogoDark } from '../brand/AutoWaveBrand';
-import { AUTH_TRUST_LINE, HOW_IT_WORKS, PORTAL_HIGHLIGHTS } from './portalFeatures';
-
-function FeatureCard({ item }) {
-  const Icon = item.icon;
-
-  return (
-    <article className="auth-bento-card flex items-center gap-2.5 rounded-xl bg-emerald-500/10 p-2.5 ring-1 ring-emerald-400/15">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 ring-1 ring-emerald-400/20">
-        <Icon size={16} strokeWidth={1.75} className="text-emerald-200" />
-      </div>
-      <div className="min-w-0">
-        <h3 className="truncate text-xs font-semibold text-white">{item.title}</h3>
-        <p className="truncate text-[10px] text-emerald-100/50">{item.line}</p>
-      </div>
-    </article>
-  );
-}
+import { AutoWaveMark } from '../brand/AutoWaveBrand';
+import { AUTH_TRUST_LINE, HOW_IT_WORKS } from './portalFeatures';
+import AuthPhoneDemo from './AuthPhoneDemo';
 
 export default function AuthShowcase() {
   const TrustIcon = AUTH_TRUST_LINE.icon;
 
   return (
-    <div className="auth-showcase relative h-full overflow-hidden text-white">
-      <div className="auth-showcase-bg pointer-events-none absolute inset-0" />
-      <div className="auth-orb auth-orb-1 pointer-events-none absolute" />
-      <div className="auth-orb auth-orb-2 pointer-events-none absolute" />
-      <div className="auth-grain pointer-events-none absolute inset-0 opacity-[0.3]" />
-
-      <div className="relative z-10 flex h-full flex-col gap-4 px-6 py-5 lg:px-8 lg:py-6 xl:px-10">
+    <div className="auth-showcase relative flex h-full flex-col overflow-hidden bg-white text-slate-900">
+      <div className="relative z-10 flex h-full min-h-0 flex-col px-6 py-5 lg:px-8 lg:py-6 xl:px-10">
         <header className="flex shrink-0 items-center justify-between gap-3">
-          <AutoWaveLogoDark className="h-8 object-contain sm:h-9" />
-          <p className="hidden items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] text-emerald-100/70 ring-1 ring-emerald-400/15 sm:inline-flex">
-            <TrustIcon size={11} className="shrink-0 text-emerald-300" />
+          <AutoWaveMark showTagline />
+          <p className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] text-emerald-800 ring-1 ring-emerald-100 sm:inline-flex">
+            <TrustIcon size={11} className="shrink-0 text-emerald-600" />
             <span className="truncate">{AUTH_TRUST_LINE.text}</span>
           </p>
         </header>
 
-        <div className="shrink-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
-            All-in-one dashboard
+        <div className="mt-4 shrink-0 text-center lg:text-left">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600">
+            See it in action
           </p>
-          <h1 className="mt-1.5 text-xl font-bold leading-tight tracking-tight lg:text-2xl xl:text-[1.65rem]">
-            Reply to customers instantly
+          <h1 className="mt-1 text-lg font-bold leading-tight tracking-tight text-slate-900 lg:text-xl xl:text-2xl">
+            Customers message you — AutoWave replies instantly
           </h1>
-          <p className="mt-1.5 max-w-md text-xs leading-relaxed text-emerald-50/45">
-            WhatsApp, Instagram, contacts, leads &amp; CareerAI — one easy place.
-          </p>
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-2 gap-2 lg:grid-cols-3 lg:content-center xl:gap-2.5">
-          {PORTAL_HIGHLIGHTS.map((item) => (
-            <FeatureCard key={item.id} item={item} />
-          ))}
+        <div className="flex min-h-0 flex-1 items-center justify-center py-3">
+          <AuthPhoneDemo />
         </div>
 
-        <footer className="shrink-0 border-t border-emerald-400/10 pt-3">
-          <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-emerald-200/40">
-            How it works
-          </p>
+        <footer className="shrink-0 border-t border-slate-100 pt-3">
           <div className="grid grid-cols-3 gap-2">
             {HOW_IT_WORKS.map(({ step, title, line }) => (
               <div
                 key={step}
-                className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-2 py-2 ring-1 ring-emerald-400/10"
+                className="flex items-center gap-2 rounded-lg bg-slate-50 px-2 py-2 ring-1 ring-slate-100"
               >
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-500/25 text-[10px] font-bold text-emerald-100">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-[10px] font-bold text-white">
                   {step}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[10px] font-semibold text-white/90">{title}</p>
-                  <p className="truncate text-[9px] text-emerald-100/45">{line}</p>
+                  <p className="truncate text-[10px] font-semibold text-slate-800">{title}</p>
+                  <p className="truncate text-[9px] text-slate-500">{line}</p>
                 </div>
               </div>
             ))}
