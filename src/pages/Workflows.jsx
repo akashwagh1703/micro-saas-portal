@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
+import PageHeader from '../components/ui/PageHeader';
 import BusinessWizard from '../components/BusinessWizard';
 import SetupChecklist from '../components/onboarding/SetupChecklist';
 import TestBotCard from '../components/onboarding/TestBotCard';
@@ -121,23 +122,22 @@ export default function Workflows() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Auto-replies</h1>
-          <p className="text-sm text-slate-500">
-            Bots that answer customers on WhatsApp and Instagram — turn on when you&apos;re ready
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => setWizardOpen(true)}>
-            <Wand2 size={16} className="mr-1 inline" />
-            {profile?.configured ? 'Change business' : 'Set up my business'}
-          </Button>
-          <Button variant="secondary" onClick={createWorkflow}>
-            <Plus size={16} className="mr-1 inline" /> Add custom
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Automation"
+        title="Auto-replies"
+        description="Bots that answer customers on WhatsApp and Instagram — turn on when you're ready"
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => setWizardOpen(true)}>
+              <Wand2 size={16} className="mr-1 inline" />
+              {profile?.configured ? 'Change business' : 'Set up my business'}
+            </Button>
+            <Button variant="secondary" onClick={createWorkflow}>
+              <Plus size={16} className="mr-1 inline" /> Add custom
+            </Button>
+          </div>
+        }
+      />
 
       {progress && !progress.complete && (
         <SetupChecklist steps={steps} compact />

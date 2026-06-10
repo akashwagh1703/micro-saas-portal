@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, Send, Inbox as InboxIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import EmptyState from '../components/ui/EmptyState';
+import PageHeader from '../components/ui/PageHeader';
 import TestBotCard from '../components/onboarding/TestBotCard';
 import api from '../services/api';
 import { fetchSetupProgress } from '../utils/setupProgress';
@@ -77,11 +78,12 @@ export default function Inbox() {
       : 'Type a reply…';
 
   return (
-    <div className="flex h-[calc(100vh-3rem)] flex-col">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-slate-900">Customer messages</h1>
-        <p className="text-sm text-slate-500">Chats from WhatsApp and Instagram — auto-replies appear here too</p>
-      </div>
+    <div className="flex h-[calc(100vh-5rem)] flex-col">
+      <PageHeader
+        eyebrow="Inbox"
+        title="Customer messages"
+        description="Chats from WhatsApp and Instagram — auto-replies appear here too"
+      />
 
       {progress?.hasLive && (
         <div className="mb-4">
@@ -93,7 +95,7 @@ export default function Inbox() {
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="flex flex-1 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-200/40">
         <div className="flex w-80 flex-shrink-0 flex-col border-r border-slate-100">
           <div className="border-b p-3 space-y-2">
             <div className="relative">

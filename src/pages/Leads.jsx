@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
+import PageHeader from '../components/ui/PageHeader';
+import StatCard from '../components/ui/StatCard';
 import api from '../services/api';
 
 const STATUS_OPTIONS = [
@@ -129,42 +131,24 @@ export default function Leads() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Leads</h1>
-          <p className="text-sm text-slate-500">Leads captured from WhatsApp and Instagram auto-replies</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <PageHeader
+        eyebrow="Pipeline"
+        title="Leads"
+        description="Leads captured from WhatsApp and Instagram auto-replies"
+        action={
           <Button variant="secondary" onClick={exportCsv}>
             <Download size={16} className="mr-1 inline" />
             Export CSV
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {stats && (
-        <div className="grid gap-3 sm:grid-cols-4">
-          <Card className="!p-4">
-            <p className="text-2xl font-bold">{stats.total}</p>
-            <p className="text-xs text-slate-500">Total leads</p>
-            {(stats.whatsapp > 0 || stats.instagram > 0) && (
-              <p className="mt-1 text-[10px] text-slate-400">
-                WA {stats.whatsapp ?? 0} · IG {stats.instagram ?? 0}
-              </p>
-            )}
-          </Card>
-          <Card className="!p-4">
-            <p className="text-2xl font-bold">{stats.this_week}</p>
-            <p className="text-xs text-slate-500">This week</p>
-          </Card>
-          <Card className="!p-4">
-            <p className="text-2xl font-bold">{stats.new}</p>
-            <p className="text-xs text-slate-500">New</p>
-          </Card>
-          <Card className="!p-4">
-            <p className="text-2xl font-bold">{stats.qualified}</p>
-            <p className="text-xs text-slate-500">Qualified</p>
-          </Card>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard label="Total leads" value={stats.total} accent="emerald" />
+          <StatCard label="This week" value={stats.this_week} accent="blue" />
+          <StatCard label="New" value={stats.new} accent="violet" />
+          <StatCard label="Qualified" value={stats.qualified} accent="amber" />
         </div>
       )}
 

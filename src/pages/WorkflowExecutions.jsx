@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import PageHeader from '../components/ui/PageHeader';
 import api from '../services/api';
 
 export default function WorkflowExecutions() {
@@ -13,11 +14,12 @@ export default function WorkflowExecutions() {
   }, [id]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link to="/workflows"><Button variant="secondary">← Back</Button></Link>
-        <h1 className="text-2xl font-bold">Execution Logs</h1>
-      </div>
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHeader
+        eyebrow="Automation"
+        title="Execution logs"
+        action={<Link to="/workflows"><Button variant="secondary">← Back</Button></Link>}
+      />
       <Card>
         {executions.length === 0 ? (
           <p className="text-sm text-slate-500">No executions yet.</p>

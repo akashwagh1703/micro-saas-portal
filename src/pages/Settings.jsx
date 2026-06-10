@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import PageHeader from '../components/ui/PageHeader';
 import PlanBillingTab from '../components/billing/PlanBillingTab';
 import BusinessTypeCard from '../components/BusinessTypeCard';
 import api from '../services/api';
@@ -319,24 +320,23 @@ export default function Settings() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="text-sm text-slate-500">
-          {showCareerTab
+      <PageHeader
+        eyebrow="Account"
+        title="Settings"
+        description={
+          showCareerTab
             ? 'Connect WhatsApp, job sources, seeker billing, and smart replies'
-            : 'Connect WhatsApp, Instagram, and customize smart replies'}
-        </p>
-      </div>
+            : 'Connect WhatsApp, Instagram, and customize smart replies'
+        }
+      />
 
-      <div className="flex flex-wrap gap-2 border-b border-slate-200">
+      <div className="flex flex-wrap gap-1 rounded-2xl border border-slate-200/80 bg-slate-100/80 p-1.5">
         {tabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => selectTab(t.id)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
-              tab === t.id ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500'
-            }`}
+            className={`tab-pill ${tab === t.id ? 'tab-pill-active' : ''}`}
           >
             {t.label}
           </button>

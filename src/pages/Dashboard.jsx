@@ -14,6 +14,8 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import Card from '../components/ui/Card';
+import PageHeader from '../components/ui/PageHeader';
+import StatCard from '../components/ui/StatCard';
 import SetupChecklist from '../components/onboarding/SetupChecklist';
 import TestBotCard from '../components/onboarding/TestBotCard';
 import BusinessWizard from '../components/BusinessWizard';
@@ -23,11 +25,11 @@ import api from '../services/api';
 import { fetchSetupProgress, buildSetupSteps } from '../utils/setupProgress';
 
 const statConfig = [
-  { key: 'total_messages', label: 'Messages handled', icon: MessageSquare, color: 'text-blue-600 bg-blue-50' },
-  { key: 'active_workflows', label: 'Auto-replies live', icon: Bot, color: 'text-purple-600 bg-purple-50' },
-  { key: 'inbox_conversations', label: 'Customer chats', icon: Inbox, color: 'text-amber-600 bg-amber-50' },
-  { key: 'contacts_count', label: 'Contacts', icon: Users, color: 'text-emerald-600 bg-emerald-50' },
-  { key: 'leads_count', label: 'Leads captured', icon: UserPlus, color: 'text-rose-600 bg-rose-50' },
+  { key: 'total_messages', label: 'Messages handled', icon: MessageSquare, accent: 'blue' },
+  { key: 'active_workflows', label: 'Auto-replies live', icon: Bot, accent: 'violet' },
+  { key: 'inbox_conversations', label: 'Customer chats', icon: Inbox, accent: 'amber' },
+  { key: 'contacts_count', label: 'Contacts', icon: Users, accent: 'emerald' },
+  { key: 'leads_count', label: 'Leads captured', icon: UserPlus, accent: 'rose' },
 ];
 
 export default function Dashboard() {
@@ -90,18 +92,18 @@ export default function Dashboard() {
 
     return (
       <div className="mx-auto max-w-4xl space-y-6">
-        <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-600 to-emerald-700 p-6 text-white shadow-lg shadow-emerald-600/20">
-          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-100">CareerAI</p>
-          <h1 className="mt-1 text-2xl font-bold">
+        <div className="hero-gradient p-6 sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-widest text-emerald-100/90">CareerAI</p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
             {user?.name ? `Hi ${user.name.split(' ')[0]}` : 'Welcome'}
           </h1>
-          <p className="mt-2 max-w-lg text-sm text-emerald-50/95">
+          <p className="mt-3 max-w-lg text-sm leading-relaxed text-emerald-50/95">
             Job seekers message your WhatsApp → resume parsed → 70%+ job matches → cover letters on apply.
           </p>
           {progress?.complete && (
             <Link
               to="/career-ai"
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-emerald-800 shadow-md transition hover:bg-emerald-50"
             >
               Open CareerAI
               <ArrowRight size={16} />
@@ -130,17 +132,7 @@ export default function Dashboard() {
         {careerCards.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2">
             {careerCards.map(({ label, value, icon: Icon }) => (
-              <Card key={label} className="!p-4">
-                <div className="flex items-center gap-4">
-                  <div className="rounded-xl bg-emerald-50 p-3 text-emerald-600">
-                    <Icon size={20} />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-slate-900">{value ?? '—'}</p>
-                    <p className="text-xs text-slate-500">{label}</p>
-                  </div>
-                </div>
-              </Card>
+              <StatCard key={label} icon={Icon} label={label} value={value} accent="emerald" />
             ))}
           </div>
         )}
@@ -168,10 +160,11 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Home</h1>
-        <p className="text-sm text-slate-500">WhatsApp and Instagram auto-replies — one dashboard</p>
-      </div>
+      <PageHeader
+        eyebrow="Dashboard"
+        title="Home"
+        description="WhatsApp and Instagram auto-replies — one dashboard"
+      />
 
       {progress && <SetupChecklist steps={steps} userName={user?.name} />}
 
@@ -188,18 +181,14 @@ export default function Dashboard() {
       {progress?.complete && (
         <>
           <div className="grid gap-4 sm:grid-cols-2">
-            {statConfig.map(({ key, label, icon: Icon, color }) => (
-              <Card key={key} className="!p-4">
-                <div className="flex items-center gap-4">
-                  <div className={`rounded-lg p-3 ${color}`}>
-                    <Icon size={20} />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stats?.[key] ?? '—'}</p>
-                    <p className="text-xs text-slate-500">{label}</p>
-                  </div>
-                </div>
-              </Card>
+            {statConfig.map(({ key, label, icon, accent }) => (
+              <StatCard
+                key={key}
+                icon={icon}
+                label={label}
+                value={stats?.[key]}
+                accent={accent}
+              />
             ))}
           </div>
 

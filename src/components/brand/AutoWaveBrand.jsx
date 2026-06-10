@@ -13,15 +13,20 @@ export function AutoWaveLogo({ className = 'h-10 object-contain', alt = 'AutoWav
   return <img src={AUTO_WAVE_LOGO} alt={alt} className={className} draggable={false} />;
 }
 
-/** Icon + wordmark for light backgrounds (sidebar, auth forms). */
-export function AutoWaveMark({ className = '', showTagline = false }) {
+/** Icon + wordmark for light or dark backgrounds (sidebar, auth forms). */
+export function AutoWaveMark({ className = '', showTagline = false, variant = 'light' }) {
+  const titleClass = variant === 'dark' ? 'text-white' : 'text-slate-900';
+  const taglineClass = variant === 'dark' ? 'text-slate-400' : 'text-slate-500';
+
   return (
     <div className={`flex min-w-0 items-center gap-2.5 ${className}`}>
-      <AutoWaveIcon className="h-9 w-9 shrink-0" />
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${variant === 'dark' ? 'bg-white/10 ring-1 ring-white/10' : 'bg-emerald-50 ring-1 ring-emerald-100'}`}>
+        <AutoWaveIcon className="h-7 w-7 shrink-0" />
+      </div>
       <div className="min-w-0">
-        <p className="truncate text-sm font-bold text-slate-900">{AUTO_WAVE_NAME}</p>
+        <p className={`truncate text-sm font-bold tracking-tight ${titleClass}`}>{AUTO_WAVE_NAME}</p>
         {showTagline && (
-          <p className="truncate text-xs text-slate-500">{AUTO_WAVE_TAGLINE}</p>
+          <p className={`truncate text-xs ${taglineClass}`}>{AUTO_WAVE_TAGLINE}</p>
         )}
       </div>
     </div>

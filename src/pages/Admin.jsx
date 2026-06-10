@@ -6,6 +6,8 @@ import api from '../services/api';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import PageHeader from '../components/ui/PageHeader';
+import StatCard from '../components/ui/StatCard';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -103,54 +105,26 @@ export default function Admin() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Shield size={22} className="text-violet-600" />
-            <h1 className="text-2xl font-bold text-slate-900">Platform admin</h1>
-          </div>
-          <p className="mt-1 text-sm text-slate-500">
-            Manage all registered operators — billing, channels, and usage.
-          </p>
-        </div>
-        <Link
-          to="/dashboard"
-          className="text-sm font-medium text-emerald-700 hover:underline"
-        >
-          My operator dashboard →
-        </Link>
-      </div>
+      <PageHeader
+        eyebrow="Super admin"
+        title="Platform admin"
+        description="Manage all registered operators — billing, channels, and usage."
+        action={
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50"
+          >
+            My operator dashboard →
+          </Link>
+        }
+      />
 
       {overview && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="!p-4">
-            <div className="flex items-center gap-2 text-slate-500">
-              <Users size={16} />
-              <span className="text-xs font-medium uppercase tracking-wide">Total users</span>
-            </div>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{overview.total_users}</p>
-          </Card>
-          <Card className="!p-4">
-            <div className="flex items-center gap-2 text-slate-500">
-              <UserPlus size={16} />
-              <span className="text-xs font-medium uppercase tracking-wide">New this week</span>
-            </div>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{overview.new_this_week}</p>
-          </Card>
-          <Card className="!p-4">
-            <div className="flex items-center gap-2 text-slate-500">
-              <CreditCard size={16} />
-              <span className="text-xs font-medium uppercase tracking-wide">Active plans</span>
-            </div>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{overview.active_subscriptions}</p>
-          </Card>
-          <Card className="!p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">On trial</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{overview.on_trial}</p>
-            <p className="mt-1 text-xs text-slate-500">
-              {overview.expired_or_cancelled} expired / cancelled
-            </p>
-          </Card>
+          <StatCard icon={Users} label="Total users" value={overview.total_users} accent="violet" />
+          <StatCard icon={UserPlus} label="New this week" value={overview.new_this_week} accent="emerald" />
+          <StatCard icon={CreditCard} label="Active plans" value={overview.active_subscriptions} accent="blue" />
+          <StatCard icon={Shield} label="On trial" value={overview.on_trial} accent="amber" />
         </div>
       )}
 

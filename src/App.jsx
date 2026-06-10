@@ -25,8 +25,11 @@ const CareerSeekerPortal = lazy(() => import('./pages/CareerSeekerPortal'));
 
 function PageLoader() {
   return (
-    <div className="flex min-h-[50vh] items-center justify-center text-slate-500">
-      Loading…
+    <div className="flex min-h-screen items-center justify-center bg-slate-50">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-emerald-200 border-t-emerald-600" />
+        <p className="text-sm font-medium text-slate-500">Loading AutoWave…</p>
+      </div>
     </div>
   );
 }
@@ -35,7 +38,14 @@ export default function App() {
   return (
     <Provider store={store}>
       <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '') || '/'}>
-        <Toaster position="top-right" />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            className: '!rounded-xl !border !border-slate-200/80 !bg-white/95 !text-slate-800 !shadow-lg !text-sm !font-medium',
+            success: { iconTheme: { primary: '#059669', secondary: '#ecfdf5' } },
+            error: { iconTheme: { primary: '#dc2626', secondary: '#fef2f2' } },
+          }}
+        />
         <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/login" element={<Login />} />

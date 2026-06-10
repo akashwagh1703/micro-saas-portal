@@ -42,25 +42,25 @@ export default function DashboardLayout() {
   const isCareerAi = businessCategory === 'career_ai';
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-100">
+    <div className="flex h-screen min-h-0 overflow-hidden bg-slate-100">
       <Sidebar billing={billing} businessCategory={businessCategory} />
       <main
-        className={`flex-1 overflow-y-auto p-4 sm:p-6 ${
-          isCareerAi
-            ? 'bg-gradient-to-br from-slate-50 via-white to-emerald-50/40'
-            : 'bg-slate-50'
+        className={`main-scroll min-h-0 min-w-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-7 lg:px-8 ${
+          isCareerAi ? 'app-main-bg-career' : 'app-main-bg'
         }`}
       >
-        <BillingBanner billing={isSuperAdmin ? null : billing} onRefresh={refreshBilling} />
-        <Outlet
-          context={{
-            billing,
-            refreshBilling,
-            businessCategory,
-            refreshBusinessProfile,
-            isCareerAi,
-          }}
-        />
+        <div className="mx-auto w-full">
+          <BillingBanner billing={isSuperAdmin ? null : billing} onRefresh={refreshBilling} />
+          <Outlet
+            context={{
+              billing,
+              refreshBilling,
+              businessCategory,
+              refreshBusinessProfile,
+              isCareerAi,
+            }}
+          />
+        </div>
       </main>
     </div>
   );

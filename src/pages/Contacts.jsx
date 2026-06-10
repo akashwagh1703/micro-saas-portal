@@ -5,6 +5,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import EmptyState from '../components/ui/EmptyState';
+import PageHeader from '../components/ui/PageHeader';
 import api from '../services/api';
 import {
   channelBadgeClass,
@@ -56,32 +57,33 @@ export default function Contacts() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Contacts</h1>
-          <p className="text-sm text-slate-500">People who have messaged you on WhatsApp or Instagram</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            value={channelFilter}
-            onChange={(e) => setChannelFilter(e.target.value)}
-          >
-            {CHANNEL_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
-            <input
-              className="rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm"
-              placeholder="Search contacts..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+      <PageHeader
+        eyebrow="Audience"
+        title="Contacts"
+        description="People who have messaged you on WhatsApp or Instagram"
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/10"
+              value={channelFilter}
+              onChange={(e) => setChannelFilter(e.target.value)}
+            >
+              {CHANNEL_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <div className="relative">
+              <Search className="absolute left-3 top-3 text-slate-400" size={16} />
+              <input
+                className="rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/10"
+                placeholder="Search contacts..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <Card>
         {loading ? (
