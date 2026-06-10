@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
 import { store } from './store';
 import ProtectedRoute from './components/ProtectedRoute';
+import SuperAdminRoute from './components/SuperAdminRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
 
 const Login = lazy(() => import('./pages/auth/Login'));
@@ -18,6 +19,7 @@ const Workflows = lazy(() => import('./pages/Workflows'));
 const WorkflowBuilder = lazy(() => import('./pages/WorkflowBuilder'));
 const WorkflowExecutions = lazy(() => import('./pages/WorkflowExecutions'));
 const Settings = lazy(() => import('./pages/Settings'));
+const Admin = lazy(() => import('./pages/Admin'));
 const CareerAI = lazy(() => import('./pages/CareerAI'));
 const CareerSeekerPortal = lazy(() => import('./pages/CareerSeekerPortal'));
 
@@ -52,6 +54,14 @@ export default function App() {
               <Route path="/workflows/:id/edit" element={<WorkflowBuilder />} />
               <Route path="/workflows/:id/executions" element={<WorkflowExecutions />} />
               <Route path="/settings" element={<Settings />} />
+              <Route
+                path="/admin"
+                element={
+                  <SuperAdminRoute>
+                    <Admin />
+                  </SuperAdminRoute>
+                }
+              />
               <Route path="/career-ai" element={<CareerAI />} />
             </Route>
           </Route>

@@ -22,7 +22,7 @@ export default function Register() {
       const { data } = await api.post('/auth/register', form);
       dispatch(setCredentials(data));
       toast.success('Welcome! Let\'s set up your auto-replies.');
-      navigate(await resolvePostAuthPath(api));
+      navigate(await resolvePostAuthPath(api, data.user));
     } catch (err) {
       const errors = err.response?.data?.errors;
       const msg = errors ? Object.values(errors).flat()[0] : 'Registration failed';

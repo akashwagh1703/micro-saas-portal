@@ -223,8 +223,21 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
 
       {canSubscribe && !razorpay_configured && (
         <p className="text-center text-xs text-amber-700">
-          Online payments are not configured on this server yet. Contact the administrator.
+          Online payments are not configured on this server yet. Set RAZORPAY_* variables in API env.
         </p>
+      )}
+
+      {razorpay_configured && billing.razorpay_webhook_url && (
+        <Card>
+          <p className="text-sm font-medium text-slate-900">Razorpay webhook (server admin)</p>
+          <p className="mt-1 text-xs text-slate-500">
+            Add this URL in Razorpay Dashboard with secret from server{' '}
+            <span className="font-mono">RAZORPAY_WEBHOOK_SECRET</span>.
+          </p>
+          <p className="mt-2 break-all rounded-lg bg-slate-50 p-3 font-mono text-xs text-slate-700">
+            {billing.razorpay_webhook_url}
+          </p>
+        </Card>
       )}
 
       {status === 'active' && (

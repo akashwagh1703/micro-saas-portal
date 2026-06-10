@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   LayoutDashboard,
   Workflow,
@@ -8,6 +8,7 @@ import {
   UserPlus,
   Briefcase,
   Settings,
+  Shield,
   LogOut,
 } from 'lucide-react';
 import api from '../../services/api';
@@ -36,13 +37,19 @@ const careerNavItems = [
 export default function Sidebar({ billing, businessCategory }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
+  const isSuperAdmin = !!user?.is_super_admin;
   const isCareerAi = businessCategory === 'career_ai';
 
-  const visibleNavItems = isCareerAi
-    ? careerNavItems
-    : defaultNavItems.filter(
-        (item) => item.to !== '/career-ai' || businessCategory === 'career_ai',
-      );
+  const adminNavItem = { to: '/admin', icon: Shield, label: 'Platform admin', hint: 'All users & billing' };
+
+  const visibleNavItems = isSuperAdmin
+    ? [adminNavItem, ...defaultNavItems]
+    : isCareerAi
+      ? careerNavItems
+      : defaultNavItems.filter(
+          (item) => item.to !== '/career-ai' || businessCategory === 'career_ai',
+        );
 
   const handleLogout = async () => {
     try {
@@ -58,14 +65,19 @@ export default function Sidebar({ billing, businessCategory }) {
   return (
     <aside className="flex h-full w-64 flex-col border-r border-slate-200/80 bg-white shadow-sm">
       <div className="border-b border-slate-100 px-5 py-5">
-        <AutoWaveMark showTagline={!isCareerAi} />
-        {isCareerAi && (
+        <AutoWaveMark showTagline={!isCareerAi && !isSuperAdmin} />
+        {isSuperAdmin && (
+          <p className="mt-2 rounded-lg bg-violet-50 px-2.5 py-1.5 text-[11px] font-medium text-violet-800">
+            Super admin · Full platform access
+          </p>
+        )}
+        {isCareerAi && !isSuperAdmin && (
           <p className="mt-2 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[11px] font-medium text-emerald-800">
             CareerAI · Job seeker bot
           </p>
         )}
         <div className="mt-2">
-          <BillingSidebarBadge billing={billing} />
+          {!isSuperAdmin && <BillingSidebarBadge billing={billing} />}
         </div>
       </div>
 

@@ -41,7 +41,7 @@ export default function Login() {
       const { data } = await api.post('/auth/login', form);
       dispatch(setCredentials(data));
       toast.success('Welcome back!');
-      navigate(await resolvePostAuthPath(api));
+      navigate(await resolvePostAuthPath(api, data.user));
     } catch (err) {
       if (!err.response) {
         toast.error(

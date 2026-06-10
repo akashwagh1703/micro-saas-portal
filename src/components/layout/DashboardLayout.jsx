@@ -1,10 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import Sidebar from './Sidebar';
 import BillingBanner from '../billing/BillingBanner';
 import api from '../../services/api';
+import { updateUser } from '../../store/authSlice';
 
 export default function DashboardLayout() {
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
+  const isSuperAdmin = !!user?.is_super_admin;
   const [billing, setBilling] = useState(null);
   const [businessCategory, setBusinessCategory] = useState(null);
 
@@ -29,7 +34,10 @@ export default function DashboardLayout() {
   useEffect(() => {
     refreshBilling();
     refreshBusinessProfile();
-  }, [refreshBilling, refreshBusinessProfile]);
+    api.get('/auth/profile').then((r) => {
+      if (r.data?.user) dispatch(updateUser(r.data.user));
+    }).catch(() => {});
+  }, [refreshBilling, refreshBusinessProfile, dispatch]);
 
   const isCareerAi = businessCategory === 'career_ai';
 
@@ -43,7 +51,7 @@ export default function DashboardLayout() {
             : 'bg-slate-50'
         }`}
       >
-        <BillingBanner billing={billing} onRefresh={refreshBilling} />
+        <BillingBanner billing={isSuperAdmin ? null : billing} onRefresh={refreshBilling} />
         <Outlet
           context={{
             billing,
