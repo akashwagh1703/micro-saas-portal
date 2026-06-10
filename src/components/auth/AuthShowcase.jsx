@@ -1,42 +1,18 @@
 import { AutoWaveLogoDark } from '../brand/AutoWaveBrand';
 import { AUTH_TRUST_LINE, HOW_IT_WORKS, PORTAL_HIGHLIGHTS } from './portalFeatures';
 
-function ChatPreview() {
-  return (
-    <div className="auth-chat-preview mt-4 space-y-2">
-      <div className="flex justify-start">
-        <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-white/10 px-3 py-2 text-[11px] text-white/80 ring-1 ring-white/10">
-          Hi, are you open today?
-        </div>
-      </div>
-      <div className="flex justify-end">
-        <div className="max-w-[85%] rounded-2xl rounded-br-md bg-emerald-500/30 px-3 py-2 text-[11px] text-emerald-50 ring-1 ring-emerald-400/25">
-          Yes! We&apos;re open until 8 PM. How can we help?
-        </div>
-      </div>
-      <p className="pt-1 text-[10px] text-emerald-200/70">↳ Replied automatically for you</p>
-    </div>
-  );
-}
-
 function FeatureCard({ item }) {
   const Icon = item.icon;
 
   return (
-    <article
-      className={`auth-bento-card group relative overflow-hidden rounded-2xl bg-gradient-to-br p-4 ring-1 ${item.accent} ${item.span || ''}`}
-    >
-      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/5 blur-2xl transition group-hover:bg-white/10" />
-      <div className="relative flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/10">
-          <Icon size={20} strokeWidth={1.75} className={item.iconClass} />
-        </div>
-        <div className="min-w-0">
-          <h3 className="text-sm font-semibold text-white">{item.title}</h3>
-          <p className="mt-1 text-xs leading-relaxed text-white/55">{item.line}</p>
-        </div>
+    <article className="auth-bento-card flex items-center gap-2.5 rounded-xl bg-emerald-500/10 p-2.5 ring-1 ring-emerald-400/15">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 ring-1 ring-emerald-400/20">
+        <Icon size={16} strokeWidth={1.75} className="text-emerald-200" />
       </div>
-      {item.featured && <ChatPreview />}
+      <div className="min-w-0">
+        <h3 className="truncate text-xs font-semibold text-white">{item.title}</h3>
+        <p className="truncate text-[10px] text-emerald-100/50">{item.line}</p>
+      </div>
     </article>
   );
 }
@@ -45,56 +21,55 @@ export default function AuthShowcase() {
   const TrustIcon = AUTH_TRUST_LINE.icon;
 
   return (
-    <div className="auth-showcase relative flex h-full flex-col overflow-hidden text-white">
+    <div className="auth-showcase relative h-full overflow-hidden text-white">
       <div className="auth-showcase-bg pointer-events-none absolute inset-0" />
       <div className="auth-orb auth-orb-1 pointer-events-none absolute" />
       <div className="auth-orb auth-orb-2 pointer-events-none absolute" />
-      <div className="auth-orb auth-orb-3 pointer-events-none absolute" />
-      <div className="auth-grain pointer-events-none absolute inset-0 opacity-[0.35]" />
+      <div className="auth-grain pointer-events-none absolute inset-0 opacity-[0.3]" />
 
-      <div className="relative z-10 flex h-full flex-col px-8 py-8 lg:px-10 lg:py-10 xl:px-12">
-        <header className="shrink-0">
-          <AutoWaveLogoDark className="h-10 object-contain sm:h-11" />
-          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-[11px] text-white/50 ring-1 ring-white/10">
-            <TrustIcon size={12} className="text-emerald-400" />
-            {AUTH_TRUST_LINE.text}
+      <div className="relative z-10 flex h-full flex-col gap-4 px-6 py-5 lg:px-8 lg:py-6 xl:px-10">
+        <header className="flex shrink-0 items-center justify-between gap-3">
+          <AutoWaveLogoDark className="h-8 object-contain sm:h-9" />
+          <p className="hidden items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] text-emerald-100/70 ring-1 ring-emerald-400/15 sm:inline-flex">
+            <TrustIcon size={11} className="shrink-0 text-emerald-300" />
+            <span className="truncate">{AUTH_TRUST_LINE.text}</span>
           </p>
         </header>
 
-        <div className="my-8 shrink-0 xl:my-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300/80">
+        <div className="shrink-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300/80">
             All-in-one dashboard
           </p>
-          <h1 className="mt-3 max-w-xl text-3xl font-bold leading-[1.15] tracking-tight xl:text-[2.35rem]">
-            Reply to customers instantly — even when you&apos;re busy
+          <h1 className="mt-1.5 text-xl font-bold leading-tight tracking-tight lg:text-2xl xl:text-[1.65rem]">
+            Reply to customers instantly
           </h1>
-          <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/55">
-            WhatsApp, Instagram, contacts, leads &amp; job seeker tools — everything in one calm, easy dashboard.
+          <p className="mt-1.5 max-w-md text-xs leading-relaxed text-emerald-50/45">
+            WhatsApp, Instagram, contacts, leads &amp; CareerAI — one easy place.
           </p>
         </div>
 
-        <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:content-start lg:gap-3">
+        <div className="grid min-h-0 flex-1 grid-cols-2 gap-2 lg:grid-cols-3 lg:content-center xl:gap-2.5">
           {PORTAL_HIGHLIGHTS.map((item) => (
             <FeatureCard key={item.id} item={item} />
           ))}
         </div>
 
-        <footer className="mt-6 shrink-0 border-t border-white/10 pt-6">
-          <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">
+        <footer className="shrink-0 border-t border-emerald-400/10 pt-3">
+          <p className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-emerald-200/40">
             How it works
           </p>
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-3 gap-2">
             {HOW_IT_WORKS.map(({ step, title, line }) => (
               <div
                 key={step}
-                className="flex items-start gap-3 rounded-xl bg-white/5 px-3 py-2.5 ring-1 ring-white/8"
+                className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-2 py-2 ring-1 ring-emerald-400/10"
               >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-xs font-bold text-emerald-200 ring-1 ring-emerald-400/20">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-500/25 text-[10px] font-bold text-emerald-100">
                   {step}
                 </span>
-                <div>
-                  <p className="text-xs font-semibold text-white/90">{title}</p>
-                  <p className="text-[11px] text-white/45">{line}</p>
+                <div className="min-w-0">
+                  <p className="truncate text-[10px] font-semibold text-white/90">{title}</p>
+                  <p className="truncate text-[9px] text-emerald-100/45">{line}</p>
                 </div>
               </div>
             ))}

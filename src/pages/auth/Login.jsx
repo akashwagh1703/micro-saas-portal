@@ -11,16 +11,16 @@ import { resolvePostAuthPath } from '../../utils/postAuth';
 
 function AuthField({ label, icon: Icon, ...props }) {
   return (
-    <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-slate-700">{label}</label>
+    <div className="space-y-1">
+      <label className="block text-xs font-medium text-slate-700">{label}</label>
       <div className="relative">
         <Icon
-          size={18}
+          size={16}
           strokeWidth={1.5}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600/50"
         />
         <input
-          className="auth-input-focus w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm shadow-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
+          className="auth-input-focus w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm outline-none"
           {...props}
         />
       </div>
@@ -57,11 +57,8 @@ export default function Login() {
   };
 
   return (
-    <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to manage your chats, auto-replies, contacts and leads — all in one place."
-    >
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <AuthLayout title="Welcome back" subtitle="Manage chats, auto-replies & contacts in one place.">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <div className="auth-animate-fade-up auth-stagger-1">
           <AuthField
             label="Your email"
@@ -79,7 +76,7 @@ export default function Login() {
             label="Password"
             icon={Lock}
             type="password"
-            placeholder="Enter your password"
+            placeholder="Enter password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             required
@@ -87,30 +84,26 @@ export default function Login() {
         </div>
 
         <div className="auth-animate-fade-up auth-stagger-3 flex justify-end">
-          <Link to="/forgot-password" className="text-sm font-medium text-emerald-700 hover:text-emerald-800">
+          <Link to="/forgot-password" className="text-xs font-medium text-emerald-700 hover:text-emerald-800">
             Forgot password?
           </Link>
         </div>
 
         <div className="auth-animate-fade-up auth-stagger-4">
-          <Button type="submit" loading={loading} className="w-full py-3">
-            Sign in to dashboard
+          <Button type="submit" loading={loading} className="w-full py-2.5">
+            Sign in
           </Button>
         </div>
 
-        <p className="auth-animate-fade-up auth-stagger-5 text-center text-sm text-slate-500">
+        <p className="auth-animate-fade-up auth-stagger-5 text-center text-xs text-slate-500">
           New here?{' '}
           <Link to="/register" className="font-semibold text-emerald-700 hover:text-emerald-800">
-            Create a free account
+            Create account
           </Link>
-        </p>
-
-        <p className="auth-animate-fade-up auth-stagger-6 text-center text-xs leading-relaxed text-slate-400">
-          By signing in, you agree to our{' '}
-          <Link to="/privacy" className="font-medium text-emerald-700 hover:underline">
-            Privacy Policy
+          {' · '}
+          <Link to="/privacy" className="text-slate-400 hover:text-emerald-700">
+            Privacy
           </Link>
-          .
         </p>
       </form>
     </AuthLayout>

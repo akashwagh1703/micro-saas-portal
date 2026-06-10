@@ -24,12 +24,12 @@ export default function ForgotPassword() {
   };
 
   return (
-    <AuthLayout title="Reset password" subtitle="Enter your email and we'll send you a link to choose a new password.">
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <AuthLayout title="Reset password" subtitle="We'll email you a link to set a new password.">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <Button type="submit" loading={loading} className="w-full">Send reset link</Button>
-        <p className="text-center text-sm text-slate-500">
-          <Link to="/login" className="font-medium text-emerald-600 hover:underline">Back to sign in</Link>
+        <Button type="submit" loading={loading} className="w-full py-2.5">Send reset link</Button>
+        <p className="text-center text-xs text-slate-500">
+          <Link to="/login" className="font-semibold text-emerald-700 hover:text-emerald-800">Back to sign in</Link>
         </p>
       </form>
     </AuthLayout>

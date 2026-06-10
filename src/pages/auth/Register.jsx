@@ -33,24 +33,16 @@ export default function Register() {
   };
 
   return (
-    <AuthLayout title="Create your account" subtitle="Set up auto-replies in minutes — no technical skills needed.">
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <AuthLayout title="Create account" subtitle="Set up auto-replies in minutes — no tech skills needed.">
+      <form onSubmit={handleSubmit} className="space-y-2.5">
         <Input label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
         <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
         <Input label="Password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
         <Input label="Confirm Password" type="password" value={form.password_confirmation} onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })} required />
-        <Button type="submit" loading={loading} className="w-full">Create account</Button>
-        <p className="text-center text-sm text-slate-500">
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-emerald-600 hover:underline">Sign in</Link>
-        </p>
-
-        <p className="text-center text-xs leading-relaxed text-slate-400">
-          By creating an account, you agree to our{' '}
-          <Link to="/privacy" className="font-medium text-emerald-700 hover:underline">
-            Privacy Policy
-          </Link>
-          .
+        <Button type="submit" loading={loading} className="w-full py-2.5">Create account</Button>
+        <p className="text-center text-xs text-slate-500">
+          Have an account?{' '}
+          <Link to="/login" className="font-semibold text-emerald-700 hover:text-emerald-800">Sign in</Link>
         </p>
       </form>
     </AuthLayout>
