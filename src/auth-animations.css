@@ -20,47 +20,77 @@
   50% { opacity: 1; }
 }
 
-/* 14s chat loop — messages appear, typing, reply, repeat */
 @keyframes auth-chat-cycle-in-1 {
-  0%, 2% { opacity: 0; transform: translateY(10px) scale(0.96); }
-  4%, 88% { opacity: 1; transform: translateY(0) scale(1); }
-  92%, 100% { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  0%, 2% { opacity: 0; transform: translateY(8px) scale(0.96); }
+  5%, 90% { opacity: 1; transform: translateY(0) scale(1); }
+  95%, 100% { opacity: 0; transform: translateY(-4px); }
 }
 
 @keyframes auth-chat-cycle-typing-1 {
-  0%, 8% { opacity: 0; transform: scale(0.9); }
-  10%, 14% { opacity: 1; transform: scale(1); }
-  16%, 100% { opacity: 0; transform: scale(0.9); }
+  0%, 10% { opacity: 0; transform: scale(0.9); }
+  12%, 18% { opacity: 1; transform: scale(1); }
+  20%, 100% { opacity: 0; transform: scale(0.9); }
 }
 
 @keyframes auth-chat-cycle-out-1 {
-  0%, 16% { opacity: 0; transform: translateY(10px) scale(0.96); }
-  19%, 88% { opacity: 1; transform: translateY(0) scale(1); }
-  92%, 100% { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  0%, 18% { opacity: 0; transform: translateY(8px) scale(0.96); }
+  22%, 90% { opacity: 1; transform: translateY(0) scale(1); }
+  95%, 100% { opacity: 0; transform: translateY(-4px); }
 }
 
 @keyframes auth-chat-cycle-in-2 {
-  0%, 28% { opacity: 0; transform: translateY(10px) scale(0.96); }
-  31%, 88% { opacity: 1; transform: translateY(0) scale(1); }
-  92%, 100% { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  0%, 32% { opacity: 0; transform: translateY(8px) scale(0.96); }
+  36%, 90% { opacity: 1; transform: translateY(0) scale(1); }
+  95%, 100% { opacity: 0; transform: translateY(-4px); }
 }
 
 @keyframes auth-chat-cycle-typing-2 {
-  0%, 36% { opacity: 0; transform: scale(0.9); }
-  38%, 42% { opacity: 1; transform: scale(1); }
-  44%, 100% { opacity: 0; transform: scale(0.9); }
+  0%, 42% { opacity: 0; transform: scale(0.9); }
+  44%, 50% { opacity: 1; transform: scale(1); }
+  52%, 100% { opacity: 0; transform: scale(0.9); }
 }
 
 @keyframes auth-chat-cycle-out-2 {
-  0%, 44% { opacity: 0; transform: translateY(10px) scale(0.96); }
-  47%, 88% { opacity: 1; transform: translateY(0) scale(1); }
-  92%, 100% { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  0%, 52% { opacity: 0; transform: translateY(8px) scale(0.96); }
+  56%, 90% { opacity: 1; transform: translateY(0) scale(1); }
+  95%, 100% { opacity: 0; transform: translateY(-4px); }
 }
 
 @keyframes auth-chat-cycle-badge {
-  0%, 22% { opacity: 0; transform: translateY(6px); }
-  26%, 88% { opacity: 1; transform: translateY(0); }
-  92%, 100% { opacity: 0; transform: translateY(6px); }
+  0%, 24% { opacity: 0; transform: translateY(6px); }
+  28%, 90% { opacity: 1; transform: translateY(0); }
+  95%, 100% { opacity: 0; transform: translateY(6px); }
+}
+
+/* Compact mobile — faster loop, no typing steps */
+@keyframes auth-chat-compact-in-1 {
+  0%, 3% { opacity: 0; transform: translateY(6px); }
+  6%, 88% { opacity: 1; transform: translateY(0); }
+  94%, 100% { opacity: 0; }
+}
+
+@keyframes auth-chat-compact-out-1 {
+  0%, 14% { opacity: 0; transform: translateY(6px); }
+  18%, 88% { opacity: 1; transform: translateY(0); }
+  94%, 100% { opacity: 0; }
+}
+
+@keyframes auth-chat-compact-in-2 {
+  0%, 28% { opacity: 0; transform: translateY(6px); }
+  32%, 88% { opacity: 1; transform: translateY(0); }
+  94%, 100% { opacity: 0; }
+}
+
+@keyframes auth-chat-compact-out-2 {
+  0%, 44% { opacity: 0; transform: translateY(6px); }
+  48%, 88% { opacity: 1; transform: translateY(0); }
+  94%, 100% { opacity: 0; }
+}
+
+@keyframes auth-chat-compact-badge {
+  0%, 58% { opacity: 0; transform: translateY(4px); }
+  62%, 88% { opacity: 1; transform: translateY(0); }
+  94%, 100% { opacity: 0; }
 }
 
 .auth-shell {
@@ -68,159 +98,55 @@
   max-height: 100dvh;
   width: 100%;
   overflow: hidden;
-}
-
-/* Mobile — white top + dark form, no page scroll */
-.auth-mobile-showcase {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 16px 8px;
-  border-bottom: 1px solid #f1f5f9;
-  max-height: 38dvh;
-  min-height: 0;
-}
-
-.auth-phone-scene--compact {
-  max-height: min(22dvh, 168px) !important;
-  max-width: 108px !important;
-  margin-top: 4px;
-  animation: none;
-}
-
-.auth-phone-scene--compact .auth-phone {
-  border-radius: 1.25rem;
-  border-width: 2px;
-}
-
-.auth-phone-scene--compact .auth-phone-notch {
-  height: 14px;
-  width: 56px;
-  border-radius: 0 0 10px 10px;
-}
-
-.auth-phone-scene--compact .auth-phone-status {
-  padding: 20px 10px 4px;
-  font-size: 7px;
-}
-
-.auth-phone-scene--compact .auth-phone-status-icons span {
-  height: 5px;
-  width: 5px;
-}
-
-.auth-phone-scene--compact .auth-wa-header {
-  padding: 5px 7px 6px;
-  gap: 5px;
-}
-
-.auth-phone-scene--compact .auth-wa-avatar {
-  height: 22px;
-  width: 22px;
-  font-size: 7px;
-}
-
-.auth-phone-scene--compact .auth-wa-header p {
-  font-size: 8px !important;
-}
-
-.auth-phone-scene--compact .auth-wa-header p + p {
-  font-size: 7px !important;
-}
-
-.auth-phone-scene--compact .auth-wa-chat {
-  gap: 4px;
-  padding: 6px 5px 4px;
-}
-
-.auth-phone-scene--compact .auth-wa-usecase {
-  font-size: 6px;
-  padding: 2px 6px;
-  margin-bottom: 2px;
-}
-
-.auth-phone-scene--compact .auth-chat-incoming span,
-.auth-phone-scene--compact .auth-chat-outgoing span {
-  font-size: 7px;
-  line-height: 1.3;
-}
-
-.auth-phone-scene--compact .auth-chat-incoming time,
-.auth-phone-scene--compact .auth-chat-outgoing time {
-  font-size: 6px;
-}
-
-.auth-phone-scene--compact .auth-chat-incoming,
-.auth-phone-scene--compact .auth-chat-outgoing {
-  padding: 4px 6px 3px;
-}
-
-.auth-phone-scene--compact .auth-chat-typing {
-  padding: 5px 8px;
-}
-
-.auth-phone-scene--compact .auth-typing-dots i {
-  height: 3px;
-  width: 3px;
-}
-
-.auth-phone-scene--compact .auth-auto-badge {
-  font-size: 6px;
-  padding: 2px 6px;
-  gap: 3px;
-}
-
-.auth-phone-scene--compact .auth-auto-dot {
-  height: 4px;
-  width: 4px;
-}
-
-.auth-phone-scene--compact .auth-wa-input {
-  padding: 4px 6px 8px;
-}
-
-.auth-phone-scene--compact .auth-wa-input span {
-  padding: 4px 8px;
-  font-size: 7px;
-}
-
-.auth-phone-scene--compact .auth-wa-send {
-  height: 18px;
-  width: 18px;
-}
-
-@media (max-width: 1023px) {
-  .auth-sidebar-bg {
-    border-left: none;
-    box-shadow: none;
-  }
-
-  .auth-form-panel {
-    padding: 1rem !important;
-  }
-
-  .auth-sidebar-bg .flex.min-h-0.flex-1 {
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-  }
-}
-
-@media (max-width: 1023px) and (max-height: 680px) {
-  .auth-mobile-showcase {
-    max-height: 32dvh;
-  }
-
-  .auth-phone-scene--compact {
-    max-height: min(18dvh, 140px) !important;
-    max-width: 96px !important;
-  }
 }
 
 html:has(.auth-shell),
 html:has(.auth-shell) body {
   height: 100dvh;
   overflow: hidden;
+}
+
+/* Desktop split */
+@media (min-width: 1024px) {
+  .auth-shell {
+    flex-direction: row;
+  }
+
+  .auth-desktop-showcase {
+    width: 52%;
+    flex-shrink: 0;
+  }
+
+  .auth-sidebar-bg {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* Mobile top strip — side by side to save vertical space */
+.auth-mobile-showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.auth-mobile-copy {
+  min-width: 0;
+}
+
+.auth-mobile-phone {
+  flex-shrink: 0;
+}
+
+.auth-form-wrap {
+  flex: 1;
+  min-height: 0;
 }
 
 .auth-animate-fade-up {
@@ -232,7 +158,6 @@ html:has(.auth-shell) body {
 .auth-stagger-3 { animation-delay: 0.15s; opacity: 0; }
 .auth-stagger-4 { animation-delay: 0.2s; opacity: 0; }
 .auth-stagger-5 { animation-delay: 0.25s; opacity: 0; }
-.auth-stagger-6 { animation-delay: 0.3s; opacity: 0; }
 
 .auth-input-focus {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -243,11 +168,15 @@ html:has(.auth-shell) body {
   box-shadow: 0 0 0 3px rgb(16 185 129 / 0.15);
 }
 
-/* Right panel — matches dashboard Sidebar */
 .auth-sidebar-bg {
-  border-left: 1px solid rgb(30 41 59 / 0.8);
   background: linear-gradient(to bottom, #020617, #020617, #0f172a);
-  box-shadow: -8px 0 30px rgb(2 6 23 / 0.35);
+}
+
+@media (min-width: 1024px) {
+  .auth-sidebar-bg {
+    border-left: 1px solid rgb(30 41 59 / 0.8);
+    box-shadow: -8px 0 30px rgb(2 6 23 / 0.35);
+  }
 }
 
 .auth-form-panel {
@@ -257,31 +186,152 @@ html:has(.auth-shell) body {
 .auth-form-panel:focus-within {
   box-shadow:
     0 0 0 1px rgb(16 185 129 / 0.25),
-    0 24px 48px -16px rgb(0 0 0 / 0.5);
+    0 20px 40px -16px rgb(0 0 0 / 0.45);
 }
 
-/* Phone demo */
+/* Phone demo — desktop */
 .auth-phone-scene {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  max-height: min(52vh, 420px);
+  height: 100%;
+  max-height: min(46dvh, 400px);
+  max-width: 220px;
   aspect-ratio: 9 / 17;
-  max-width: 240px;
   animation: auth-phone-float 5s ease-in-out infinite;
 }
 
-@media (min-height: 800px) {
-  .auth-phone-scene {
-    max-height: min(58vh, 460px);
-    max-width: 260px;
+@media (min-height: 780px) {
+  .auth-phone-scene:not(.auth-phone-scene--compact) {
+    max-height: min(50dvh, 440px);
+    max-width: 240px;
   }
 }
 
+/* Phone — compact mobile */
+.auth-phone-scene--compact {
+  width: 118px;
+  height: 210px;
+  max-width: 118px;
+  max-height: 210px;
+  aspect-ratio: auto;
+  animation: none;
+}
+
+@media (min-width: 390px) and (max-width: 1023px) {
+  .auth-phone-scene--compact {
+    width: 132px;
+    height: 234px;
+    max-width: 132px;
+    max-height: 234px;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .auth-phone-scene--compact {
+    width: 148px;
+    height: 262px;
+    max-width: 148px;
+    max-height: 262px;
+  }
+
+  .auth-mobile-showcase {
+    padding: 14px 20px;
+    gap: 16px;
+  }
+}
+
+.auth-phone-scene--compact .auth-phone {
+  border-radius: 1.35rem;
+  border-width: 2px;
+}
+
+.auth-phone-scene--compact .auth-phone-notch {
+  height: 12px;
+  width: 48px;
+  border-radius: 0 0 8px 8px;
+}
+
+.auth-phone-scene--compact .auth-wa-header {
+  padding: 6px 8px;
+  gap: 6px;
+}
+
+.auth-phone-scene--compact .auth-wa-back {
+  height: 10px;
+  width: 10px;
+}
+
+.auth-phone-scene--compact .auth-wa-avatar {
+  height: 24px;
+  width: 24px;
+  font-size: 8px;
+}
+
+.auth-phone-scene--compact .auth-wa-header p {
+  font-size: 8px !important;
+  line-height: 1.2;
+}
+
+.auth-phone-scene--compact .auth-wa-header p + p {
+  font-size: 7px !important;
+}
+
+.auth-phone-scene--compact .auth-wa-chat {
+  padding: 4px 5px 3px;
+}
+
+.auth-phone-scene--compact .auth-chat-stack {
+  gap: 3px;
+}
+
+.auth-phone-scene--compact .auth-chat-incoming span,
+.auth-phone-scene--compact .auth-chat-outgoing span {
+  font-size: 7px;
+  line-height: 1.25;
+}
+
+.auth-phone-scene--compact .auth-chat-incoming,
+.auth-phone-scene--compact .auth-chat-outgoing {
+  padding: 3px 5px;
+}
+
+.auth-phone-scene--compact .auth-auto-badge {
+  font-size: 6px;
+  padding: 2px 5px;
+  gap: 3px;
+  margin-top: 1px;
+}
+
+.auth-phone-scene--compact .auth-auto-dot {
+  height: 4px;
+  width: 4px;
+}
+
+.auth-phone-scene--compact .auth-wa-input {
+  padding: 3px 5px 6px;
+}
+
+.auth-phone-scene--compact .auth-wa-input span {
+  padding: 3px 6px;
+  font-size: 6px;
+}
+
+.auth-phone-scene--compact .auth-wa-send {
+  height: 16px;
+  width: 16px;
+}
+
+.auth-phone-scene--compact .auth-chat-in-1 { animation: auth-chat-compact-in-1 10s ease infinite; }
+.auth-phone-scene--compact .auth-chat-out-1 { animation: auth-chat-compact-out-1 10s ease infinite; }
+.auth-phone-scene--compact .auth-chat-in-2 { animation: auth-chat-compact-in-2 10s ease infinite; }
+.auth-phone-scene--compact .auth-chat-out-2 { animation: auth-chat-compact-out-2 10s ease infinite; }
+.auth-phone-scene--compact .auth-auto-badge { animation: auth-chat-compact-badge 10s ease infinite; }
+
 .auth-phone-glow {
-  background: radial-gradient(ellipse at center, rgb(16 185 129 / 0.12), transparent 70%);
+  background: radial-gradient(ellipse at center, rgb(16 185 129 / 0.1), transparent 70%);
 }
 
 .auth-phone {
@@ -291,13 +341,12 @@ html:has(.auth-shell) body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  border-radius: 2rem;
+  border-radius: 1.75rem;
   border: 3px solid #1e293b;
   background: #0f172a;
   box-shadow:
-    0 24px 48px -12px rgb(15 23 42 / 0.35),
-    0 0 0 1px rgb(255 255 255 / 0.08),
-    inset 0 1px 0 rgb(255 255 255 / 0.06);
+    0 20px 40px -12px rgb(15 23 42 / 0.3),
+    0 0 0 1px rgb(255 255 255 / 0.08);
 }
 
 .auth-phone-notch {
@@ -305,10 +354,10 @@ html:has(.auth-shell) body {
   top: 0;
   left: 50%;
   z-index: 20;
-  height: 22px;
-  width: 88px;
+  height: 20px;
+  width: 76px;
   transform: translateX(-50%);
-  border-radius: 0 0 14px 14px;
+  border-radius: 0 0 12px 12px;
   background: #1e293b;
 }
 
@@ -317,21 +366,21 @@ html:has(.auth-shell) body {
   shrink: 0;
   align-items: center;
   justify-content: space-between;
-  padding: 28px 16px 6px;
-  font-size: 10px;
+  padding: 24px 12px 4px;
+  font-size: 9px;
   font-weight: 600;
   color: #fff;
 }
 
 .auth-phone-status-icons {
   display: flex;
-  gap: 4px;
+  gap: 3px;
 }
 
 .auth-phone-status-icons span {
   display: block;
-  height: 8px;
-  width: 8px;
+  height: 7px;
+  width: 7px;
   border-radius: 2px;
   background: rgb(255 255 255 / 0.85);
 }
@@ -340,30 +389,31 @@ html:has(.auth-shell) body {
   display: flex;
   shrink: 0;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: #075e54;
-  padding: 8px 10px 10px;
+  padding: 7px 9px 8px;
 }
 
 .auth-wa-back {
-  height: 14px;
-  width: 14px;
+  height: 12px;
+  width: 12px;
   border-left: 2px solid #fff;
   border-bottom: 2px solid #fff;
   transform: rotate(45deg);
   opacity: 0.9;
+  flex-shrink: 0;
 }
 
 .auth-wa-avatar {
   display: flex;
-  height: 32px;
-  width: 32px;
+  height: 28px;
+  width: 28px;
   shrink: 0;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   background: linear-gradient(135deg, #10b981, #059669);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   color: #fff;
 }
@@ -374,9 +424,8 @@ html:has(.auth-shell) body {
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  gap: 6px;
   overflow: hidden;
-  padding: 10px 8px 8px;
+  padding: 6px 6px 4px;
 }
 
 .auth-wa-chat-bg {
@@ -391,87 +440,87 @@ html:has(.auth-shell) body {
   position: relative;
   z-index: 1;
   align-self: center;
-  margin-bottom: 2px;
+  flex-shrink: 0;
+  margin-bottom: 4px;
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.75);
-  padding: 3px 8px;
-  font-size: 7px;
+  background: rgb(255 255 255 / 0.8);
+  padding: 2px 7px;
+  font-size: 6px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #059669;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+}
+
+.auth-chat-stack {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
 .auth-chat-msg {
-  position: relative;
-  z-index: 1;
-  max-width: 92%;
+  max-width: 94%;
   opacity: 0;
-  animation-duration: 16s;
+  flex-shrink: 0;
+  animation-duration: 14s;
   animation-timing-function: ease;
   animation-iteration-count: infinite;
 }
 
 .auth-chat-incoming {
   align-self: flex-start;
-  border-radius: 8px 8px 8px 2px;
+  border-radius: 7px 7px 7px 2px;
   background: #fff;
-  padding: 6px 8px 4px;
+  padding: 5px 7px 3px;
   box-shadow: 0 1px 1px rgb(0 0 0 / 0.08);
 }
 
 .auth-chat-incoming span {
   display: block;
-  font-size: 9px;
-  line-height: 1.4;
+  font-size: 8px;
+  line-height: 1.35;
   color: #111;
-  word-break: break-word;
 }
 
 .auth-chat-incoming time {
   float: right;
-  margin-top: 2px;
-  margin-left: 8px;
-  font-size: 8px;
+  margin-left: 6px;
+  font-size: 7px;
   color: #8696a0;
 }
 
 .auth-chat-outgoing {
   align-self: flex-end;
-  border-radius: 8px 8px 2px 8px;
+  border-radius: 7px 7px 2px 7px;
   background: #d9fdd3;
-  padding: 6px 8px 4px;
+  padding: 5px 7px 3px;
   box-shadow: 0 1px 1px rgb(0 0 0 / 0.06);
 }
 
 .auth-chat-outgoing span {
   display: block;
-  font-size: 9px;
-  line-height: 1.4;
+  font-size: 8px;
+  line-height: 1.35;
   color: #111;
-  word-break: break-word;
 }
 
 .auth-chat-outgoing time {
   float: right;
-  margin-top: 2px;
-  margin-left: 8px;
-  font-size: 8px;
+  margin-left: 6px;
+  font-size: 7px;
   color: #667781;
 }
 
 .auth-chat-typing {
   align-self: flex-end;
-  border-radius: 8px 8px 2px 8px;
+  border-radius: 7px 7px 2px 7px;
   background: #d9fdd3;
-  padding: 8px 12px;
-  box-shadow: 0 1px 1px rgb(0 0 0 / 0.06);
-}
-
-.auth-chat-typing-1,
-.auth-chat-typing-2 {
-  align-self: flex-end;
+  padding: 6px 10px;
 }
 
 .auth-typing-dots {
@@ -481,8 +530,8 @@ html:has(.auth-shell) body {
 
 .auth-typing-dots i {
   display: block;
-  height: 5px;
-  width: 5px;
+  height: 4px;
+  width: 4px;
   border-radius: 999px;
   background: #667781;
   animation: auth-typing-bounce 1.2s ease infinite;
@@ -499,26 +548,24 @@ html:has(.auth-shell) body {
 .auth-chat-out-2 { animation-name: auth-chat-cycle-out-2; }
 
 .auth-auto-badge {
-  position: relative;
-  z-index: 1;
   align-self: center;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   border-radius: 999px;
   background: rgb(255 255 255 / 0.92);
-  padding: 4px 10px;
-  font-size: 8px;
+  padding: 3px 8px;
+  font-size: 7px;
   font-weight: 600;
   color: #059669;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.08);
   opacity: 0;
-  animation: auth-chat-cycle-badge 16s ease infinite;
+  animation: auth-chat-cycle-badge 14s ease infinite;
 }
 
 .auth-auto-dot {
-  height: 6px;
-  width: 6px;
+  height: 5px;
+  width: 5px;
   border-radius: 999px;
   background: #10b981;
   animation: auth-auto-pulse 1.5s ease infinite;
@@ -528,27 +575,65 @@ html:has(.auth-shell) body {
   display: flex;
   shrink: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   border-top: 1px solid rgb(0 0 0 / 0.06);
   background: #f0f2f5;
-  padding: 8px 10px 14px;
+  padding: 6px 8px 10px;
 }
 
 .auth-wa-input span {
   flex: 1;
   border-radius: 999px;
   background: #fff;
-  padding: 7px 12px;
-  font-size: 9px;
+  padding: 5px 10px;
+  font-size: 8px;
   color: #8696a0;
 }
 
 .auth-wa-send {
-  height: 28px;
-  width: 28px;
+  height: 24px;
+  width: 24px;
   border-radius: 999px;
   background: #008069;
+  flex-shrink: 0;
+}
+
+/* Small phones — tighter form */
+@media (max-width: 389px) {
+  .auth-mobile-showcase {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .auth-form-wrap {
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .auth-form-panel {
+    padding: 0.875rem !important;
+  }
+}
+
+/* Short screens — shrink top strip */
+@media (max-width: 1023px) and (max-height: 700px) {
+  .auth-phone-scene--compact {
+    width: 108px;
+    height: 192px;
+    max-width: 108px;
+    max-height: 192px;
+  }
+
+  .auth-mobile-showcase {
+    padding: 8px 12px;
+  }
+
+  .auth-form-wrap {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -559,7 +644,6 @@ html:has(.auth-shell) body {
   .auth-typing-dots i,
   .auth-animate-fade-up {
     animation: none !important;
-    transition: none !important;
   }
 
   .auth-chat-msg,
@@ -570,16 +654,5 @@ html:has(.auth-shell) body {
 
   .auth-chat-typing {
     display: none;
-  }
-}
-
-@media (max-height: 700px) {
-  .auth-form-panel {
-    padding: 1rem !important;
-  }
-
-  .auth-phone-scene {
-    max-height: min(46vh, 360px);
-    max-width: 210px;
   }
 }

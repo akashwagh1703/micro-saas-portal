@@ -25,7 +25,7 @@ export default function AuthShowcase() {
           </h1>
         </div>
 
-        <div className="flex min-h-0 flex-1 items-center justify-center py-3">
+        <div className="flex min-h-0 flex-1 items-center justify-center py-2">
           <AuthPhoneDemo />
         </div>
 

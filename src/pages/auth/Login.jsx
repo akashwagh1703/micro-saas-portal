@@ -58,7 +58,7 @@ export default function Login() {
 
   return (
     <AuthLayout title="Welcome back" subtitle="Manage chats, auto-replies & contacts in one place.">
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form onSubmit={handleSubmit} className="space-y-2.5">
         <div className="auth-animate-fade-up auth-stagger-1">
           <AuthField
             label="Your email"
