@@ -57,46 +57,55 @@ export default function Login() {
   };
 
   return (
-    <AuthLayout title="Sign in" subtitle="Access your WhatsApp and Instagram automation dashboard">
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to manage your chats, auto-replies, contacts and leads — all in one place."
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <AuthField
-          label="Email"
-          icon={Mail}
-          type="email"
-          placeholder="you@business.com"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          required
-        />
+        <div className="auth-animate-fade-up auth-stagger-1">
+          <AuthField
+            label="Your email"
+            icon={Mail}
+            type="email"
+            placeholder="you@yourbusiness.com"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            required
+          />
+        </div>
 
-        <AuthField
-          label="Password"
-          icon={Lock}
-          type="password"
-          placeholder="Enter your password"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          required
-        />
+        <div className="auth-animate-fade-up auth-stagger-2">
+          <AuthField
+            label="Password"
+            icon={Lock}
+            type="password"
+            placeholder="Enter your password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
+          />
+        </div>
 
-        <div className="flex justify-end">
-          <Link to="/forgot-password" className="text-sm text-emerald-700 hover:underline">
+        <div className="auth-animate-fade-up auth-stagger-3 flex justify-end">
+          <Link to="/forgot-password" className="text-sm font-medium text-emerald-700 hover:text-emerald-800">
             Forgot password?
           </Link>
         </div>
 
-        <Button type="submit" loading={loading} className="w-full py-2.5">
-          Sign in
-        </Button>
+        <div className="auth-animate-fade-up auth-stagger-4">
+          <Button type="submit" loading={loading} className="w-full py-3">
+            Sign in to dashboard
+          </Button>
+        </div>
 
-        <p className="text-center text-sm text-slate-500">
-          Don&apos;t have an account?{' '}
-          <Link to="/register" className="font-medium text-emerald-700 hover:underline">
-            Create account
+        <p className="auth-animate-fade-up auth-stagger-5 text-center text-sm text-slate-500">
+          New here?{' '}
+          <Link to="/register" className="font-semibold text-emerald-700 hover:text-emerald-800">
+            Create a free account
           </Link>
         </p>
 
-        <p className="text-center text-xs leading-relaxed text-slate-400">
+        <p className="auth-animate-fade-up auth-stagger-6 text-center text-xs leading-relaxed text-slate-400">
           By signing in, you agree to our{' '}
           <Link to="/privacy" className="font-medium text-emerald-700 hover:underline">
             Privacy Policy

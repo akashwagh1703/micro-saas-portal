@@ -1,7 +1,7 @@
-/* Auth — professional, restrained motion */
+/* Auth — 2026-style motion & surfaces */
 
 @keyframes auth-fade-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -10,8 +10,19 @@
   100% { background-position: 200% center; }
 }
 
+@keyframes auth-orb-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(12px, -18px) scale(1.05); }
+  66% { transform: translate(-8px, 10px) scale(0.95); }
+}
+
+@keyframes auth-chat-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .auth-animate-fade-up {
-  animation: auth-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: auth-fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .auth-stagger-1 { animation-delay: 0.06s; opacity: 0; }
@@ -32,48 +43,103 @@
 }
 
 .auth-input-focus:focus {
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12);
 }
 
-/* Slider track — hardware-accelerated horizontal slide */
-.auth-slider-track {
-  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
+/* Left showcase */
+.auth-showcase-bg {
+  background:
+    radial-gradient(ellipse 90% 70% at 0% 0%, rgb(16 185 129 / 0.18), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 100% 20%, rgb(56 189 248 / 0.08), transparent 50%),
+    linear-gradient(165deg, #071018 0%, #0a1512 45%, #0c1a16 100%);
 }
 
-/* Per-slide content fade when track moves */
-.auth-slide-panel {
-  opacity: 0.55;
-  transform: scale(0.985);
-  transition: opacity 0.5s ease, transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+.auth-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 }
 
-.auth-slide-panel.is-active {
-  opacity: 1;
-  transform: scale(1);
+.auth-orb {
+  border-radius: 999px;
+  filter: blur(60px);
+  animation: auth-orb-drift 14s ease-in-out infinite;
 }
 
-.auth-mockup {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+.auth-orb-1 {
+  top: 10%;
+  left: -5%;
+  width: 280px;
+  height: 280px;
+  background: rgb(16 185 129 / 0.22);
 }
 
-.auth-nav-btn {
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+.auth-orb-2 {
+  top: 45%;
+  right: -8%;
+  width: 220px;
+  height: 220px;
+  background: rgb(99 102 241 / 0.12);
+  animation-delay: -4s;
 }
 
-.auth-nav-btn:hover {
-  background-color: rgba(255, 255, 255, 0.14);
+.auth-orb-3 {
+  bottom: 5%;
+  left: 30%;
+  width: 180px;
+  height: 180px;
+  background: rgb(45 212 191 / 0.1);
+  animation-delay: -8s;
+}
+
+.auth-bento-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, ring-color 0.25s ease;
+}
+
+.auth-bento-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.25);
+}
+
+.auth-chat-preview > div:nth-child(1) {
+  animation: auth-chat-in 0.6s ease 0.2s both;
+}
+
+.auth-chat-preview > div:nth-child(2) {
+  animation: auth-chat-in 0.6s ease 0.45s both;
+}
+
+.auth-chat-preview > p {
+  animation: auth-chat-in 0.6s ease 0.7s both;
+}
+
+.auth-form-panel {
+  transition: box-shadow 0.3s ease;
+}
+
+.auth-form-panel:focus-within {
+  box-shadow:
+    0 0 0 1px rgb(16 185 129 / 0.15),
+    0 25px 50px -12px rgb(0 0 0 / 0.35);
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .auth-slider-track,
-  .auth-slide-panel,
+  .auth-orb,
+  .auth-bento-card,
   .auth-animate-fade-up,
-  .auth-btn-shimmer {
+  .auth-btn-shimmer,
+  .auth-chat-preview > * {
     animation: none !important;
     transition: none !important;
+  }
+
+  .auth-bento-card:hover {
+    transform: none;
   }
 }

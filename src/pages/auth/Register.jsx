@@ -33,7 +33,7 @@ export default function Register() {
   };
 
   return (
-    <AuthLayout title="Create account" subtitle="Start automating WhatsApp and Instagram">
+    <AuthLayout title="Create your account" subtitle="Set up auto-replies in minutes — no technical skills needed.">
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
         <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />

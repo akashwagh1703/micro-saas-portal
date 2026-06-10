@@ -24,7 +24,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <AuthLayout title="Forgot password" subtitle="We'll send you a reset link if the email exists">
+    <AuthLayout title="Reset password" subtitle="Enter your email and we'll send you a link to choose a new password.">
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <Button type="submit" loading={loading} className="w-full">Send reset link</Button>
