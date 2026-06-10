@@ -58,8 +58,8 @@
 }
 
 @keyframes auth-chat-cycle-badge {
-  0%, 20% { opacity: 0; transform: translateY(6px); }
-  24%, 88% { opacity: 1; transform: translateY(0); }
+  0%, 22% { opacity: 0; transform: translateY(6px); }
+  26%, 88% { opacity: 1; transform: translateY(0); }
   92%, 100% { opacity: 0; transform: translateY(6px); }
 }
 
@@ -68,6 +68,153 @@
   max-height: 100dvh;
   width: 100%;
   overflow: hidden;
+}
+
+/* Mobile — white top + dark form, no page scroll */
+.auth-mobile-showcase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  max-height: 38dvh;
+  min-height: 0;
+}
+
+.auth-phone-scene--compact {
+  max-height: min(22dvh, 168px) !important;
+  max-width: 108px !important;
+  margin-top: 4px;
+  animation: none;
+}
+
+.auth-phone-scene--compact .auth-phone {
+  border-radius: 1.25rem;
+  border-width: 2px;
+}
+
+.auth-phone-scene--compact .auth-phone-notch {
+  height: 14px;
+  width: 56px;
+  border-radius: 0 0 10px 10px;
+}
+
+.auth-phone-scene--compact .auth-phone-status {
+  padding: 20px 10px 4px;
+  font-size: 7px;
+}
+
+.auth-phone-scene--compact .auth-phone-status-icons span {
+  height: 5px;
+  width: 5px;
+}
+
+.auth-phone-scene--compact .auth-wa-header {
+  padding: 5px 7px 6px;
+  gap: 5px;
+}
+
+.auth-phone-scene--compact .auth-wa-avatar {
+  height: 22px;
+  width: 22px;
+  font-size: 7px;
+}
+
+.auth-phone-scene--compact .auth-wa-header p {
+  font-size: 8px !important;
+}
+
+.auth-phone-scene--compact .auth-wa-header p + p {
+  font-size: 7px !important;
+}
+
+.auth-phone-scene--compact .auth-wa-chat {
+  gap: 4px;
+  padding: 6px 5px 4px;
+}
+
+.auth-phone-scene--compact .auth-wa-usecase {
+  font-size: 6px;
+  padding: 2px 6px;
+  margin-bottom: 2px;
+}
+
+.auth-phone-scene--compact .auth-chat-incoming span,
+.auth-phone-scene--compact .auth-chat-outgoing span {
+  font-size: 7px;
+  line-height: 1.3;
+}
+
+.auth-phone-scene--compact .auth-chat-incoming time,
+.auth-phone-scene--compact .auth-chat-outgoing time {
+  font-size: 6px;
+}
+
+.auth-phone-scene--compact .auth-chat-incoming,
+.auth-phone-scene--compact .auth-chat-outgoing {
+  padding: 4px 6px 3px;
+}
+
+.auth-phone-scene--compact .auth-chat-typing {
+  padding: 5px 8px;
+}
+
+.auth-phone-scene--compact .auth-typing-dots i {
+  height: 3px;
+  width: 3px;
+}
+
+.auth-phone-scene--compact .auth-auto-badge {
+  font-size: 6px;
+  padding: 2px 6px;
+  gap: 3px;
+}
+
+.auth-phone-scene--compact .auth-auto-dot {
+  height: 4px;
+  width: 4px;
+}
+
+.auth-phone-scene--compact .auth-wa-input {
+  padding: 4px 6px 8px;
+}
+
+.auth-phone-scene--compact .auth-wa-input span {
+  padding: 4px 8px;
+  font-size: 7px;
+}
+
+.auth-phone-scene--compact .auth-wa-send {
+  height: 18px;
+  width: 18px;
+}
+
+@media (max-width: 1023px) {
+  .auth-sidebar-bg {
+    border-left: none;
+    box-shadow: none;
+  }
+
+  .auth-form-panel {
+    padding: 1rem !important;
+  }
+
+  .auth-sidebar-bg .flex.min-h-0.flex-1 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+}
+
+@media (max-width: 1023px) and (max-height: 680px) {
+  .auth-mobile-showcase {
+    max-height: 32dvh;
+  }
+
+  .auth-phone-scene--compact {
+    max-height: min(18dvh, 140px) !important;
+    max-width: 96px !important;
+  }
 }
 
 html:has(.auth-shell),
@@ -240,12 +387,28 @@ html:has(.auth-shell) body {
   opacity: 0.55;
 }
 
+.auth-wa-usecase {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  margin-bottom: 2px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.75);
+  padding: 3px 8px;
+  font-size: 7px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #059669;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+}
+
 .auth-chat-msg {
   position: relative;
   z-index: 1;
-  max-width: 88%;
+  max-width: 92%;
   opacity: 0;
-  animation-duration: 14s;
+  animation-duration: 16s;
   animation-timing-function: ease;
   animation-iteration-count: infinite;
 }
@@ -260,9 +423,10 @@ html:has(.auth-shell) body {
 
 .auth-chat-incoming span {
   display: block;
-  font-size: 10px;
-  line-height: 1.35;
+  font-size: 9px;
+  line-height: 1.4;
   color: #111;
+  word-break: break-word;
 }
 
 .auth-chat-incoming time {
@@ -283,9 +447,10 @@ html:has(.auth-shell) body {
 
 .auth-chat-outgoing span {
   display: block;
-  font-size: 10px;
-  line-height: 1.35;
+  font-size: 9px;
+  line-height: 1.4;
   color: #111;
+  word-break: break-word;
 }
 
 .auth-chat-outgoing time {
@@ -302,6 +467,11 @@ html:has(.auth-shell) body {
   background: #d9fdd3;
   padding: 8px 12px;
   box-shadow: 0 1px 1px rgb(0 0 0 / 0.06);
+}
+
+.auth-chat-typing-1,
+.auth-chat-typing-2 {
+  align-self: flex-end;
 }
 
 .auth-typing-dots {
@@ -343,7 +513,7 @@ html:has(.auth-shell) body {
   color: #059669;
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
   opacity: 0;
-  animation: auth-chat-cycle-badge 14s ease infinite;
+  animation: auth-chat-cycle-badge 16s ease infinite;
 }
 
 .auth-auto-dot {

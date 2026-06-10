@@ -21,7 +21,7 @@ export default function AuthShowcase() {
             See it in action
           </p>
           <h1 className="mt-1 text-lg font-bold leading-tight tracking-tight text-slate-900 lg:text-xl xl:text-2xl">
-            Customers message you — AutoWave replies instantly
+            Capture leads on WhatsApp — AutoWave replies &amp; saves them
           </h1>
         </div>
 
