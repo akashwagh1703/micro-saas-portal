@@ -4,8 +4,10 @@ import { Provider } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
 import { store } from './store';
 import ProtectedRoute from './components/ProtectedRoute';
+import NonCareerAiRoute from './components/NonCareerAiRoute';
 import SuperAdminRoute from './components/SuperAdminRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
+import PageLoader from './components/ui/PageLoader';
 
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
@@ -22,17 +24,6 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Admin = lazy(() => import('./pages/Admin'));
 const CareerAI = lazy(() => import('./pages/CareerAI'));
 const CareerSeekerPortal = lazy(() => import('./pages/CareerSeekerPortal'));
-
-function PageLoader() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50">
-      <div className="flex flex-col items-center gap-4">
-        <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-emerald-200 border-t-emerald-600" />
-        <p className="text-sm font-medium text-slate-500">Loading AutoWave…</p>
-      </div>
-    </div>
-  );
-}
 
 export default function App() {
   return (
@@ -57,13 +48,15 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/contacts" element={<Contacts />} />
-              <Route path="/leads" element={<Leads />} />
               <Route path="/inbox" element={<Inbox />} />
-              <Route path="/workflows" element={<Workflows />} />
-              <Route path="/workflows/:id/edit" element={<WorkflowBuilder />} />
-              <Route path="/workflows/:id/executions" element={<WorkflowExecutions />} />
               <Route path="/settings" element={<Settings />} />
+              <Route element={<NonCareerAiRoute />}>
+                <Route path="/contacts" element={<Contacts />} />
+                <Route path="/leads" element={<Leads />} />
+                <Route path="/workflows" element={<Workflows />} />
+                <Route path="/workflows/:id/edit" element={<WorkflowBuilder />} />
+                <Route path="/workflows/:id/executions" element={<WorkflowExecutions />} />
+              </Route>
               <Route
                 path="/admin"
                 element={

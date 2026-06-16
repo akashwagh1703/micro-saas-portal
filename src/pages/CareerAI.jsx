@@ -18,6 +18,8 @@ import Card from '../components/ui/Card';
 import BusinessTypeCard from '../components/BusinessTypeCard';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import Pagination from '../components/ui/Pagination';
+import { CAREER_MATCH_THRESHOLD, formatMatchThreshold } from '../constants/career';
 import { useOutletContext } from 'react-router-dom';
 
 const TABS = [
@@ -66,6 +68,7 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [rematching, setRematching] = useState(false);
+  const [runningPlaybook, setRunningPlaybook] = useState(false);
   const [generatingGuidance, setGeneratingGuidance] = useState(null);
   const [savingAlerts, setSavingAlerts] = useState(false);
   const [sendingPortal, setSendingPortal] = useState(false);
@@ -118,7 +121,11 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
           .filter(Boolean),
         auto_apply_consent: form.auto_apply_consent,
       });
-      toast.success('Profile updated');
+      toast.success(
+        data.rematch?.autoTriggered
+          ? `Profile updated — ${data.rematch.matchCount} ${formatMatchThreshold()}`
+          : 'Profile updated',
+      );
       setEditing(false);
       onSaved?.(data);
     } catch {
@@ -160,6 +167,26 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
       toast.error(err.response?.data?.message || 'Re-match failed');
     } finally {
       setRematching(false);
+    }
+  };
+
+  const runZeroMatchPlaybook = async () => {
+    if (!profile?.id) return;
+    setRunningPlaybook(true);
+    try {
+      const { data } = await api.post(`/career/profiles/${profile.id}/zero-match-playbook`, {
+        fetch: true,
+        rematch: true,
+      });
+      const msg = data.rematch
+        ? `Playbook done — fetched ${data.jobs_fetched} jobs, ${data.rematch.good_match_count} ${formatMatchThreshold()}`
+        : `Playbook done — fetched ${data.jobs_fetched} jobs`;
+      toast.success(msg);
+      onRematched?.();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Zero-match playbook failed');
+    } finally {
+      setRunningPlaybook(false);
     }
   };
 
@@ -270,6 +297,9 @@ function ProfileDetailModal({ profile, loading, onClose, onSaved, onDeleted, onR
                 </Button>
                 <Button variant="secondary" onClick={rematchProfile} loading={rematching}>
                   Re-match jobs
+                </Button>
+                <Button variant="secondary" onClick={runZeroMatchPlaybook} loading={runningPlaybook}>
+                  Zero-match playbook
                 </Button>
               </div>
             )}
@@ -809,6 +839,11 @@ export default function CareerAI() {
   const [fetching, setFetching] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  const JOBS_PAGE_SIZE = 10;
+  const MATCHES_PAGE_SIZE = 10;
+  const [jobsPage, setJobsPage] = useState(1);
+  const [matchesPage, setMatchesPage] = useState(1);
+
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [profileDetail, setProfileDetail] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -836,6 +871,8 @@ export default function CareerAI() {
       setProfiles(p.data.items ?? []);
       setJobs(j.data ?? []);
       setMatches(m.data ?? []);
+      setJobsPage(1);
+      setMatchesPage(1);
       setApplications(apps.data ?? []);
       setStorageStatus(storage.data);
       setJobSources(sources.data?.sources ?? []);
@@ -990,7 +1027,7 @@ export default function CareerAI() {
             <p className="text-xs font-semibold uppercase tracking-widest text-emerald-100/90">CareerAI</p>
             <h1 className="mt-2 text-xl font-bold tracking-tight sm:text-2xl">Job seeker operations</h1>
             <p className="mt-2 text-sm text-emerald-50/90">
-              WhatsApp bot · 70%+ matches · cover letters
+              WhatsApp bot · {formatMatchThreshold()} · cover letters
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -1066,7 +1103,7 @@ export default function CareerAI() {
                   ['Job seekers', analytics.profiles],
                   ['Ready profiles', analytics.complete_profiles],
                   ['Active jobs', analytics.jobs],
-                  ['70%+ matches', analytics.matches],
+                  [formatMatchThreshold(), analytics.match_quality?.good_matches ?? analytics.matches],
                   ['Applications', analytics.applications],
                   ['AI tokens (month)', analytics.ai_usage?.total_tokens ?? 0],
                 ].map(([label, value]) => (
@@ -1076,6 +1113,48 @@ export default function CareerAI() {
                   </Card>
                 ))}
               </div>
+
+              {analytics.match_quality && (
+                <Card title="Match quality">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {[
+                      ['Avg match score', `${analytics.match_quality.avg_score}%`],
+                      ['Strong (80%+)', analytics.match_quality.strong_matches],
+                      ['Profiles w/ matches', analytics.match_quality.profiles_with_good_matches],
+                      ['Apply rate', `${Math.round((analytics.match_quality.apply_rate ?? 0) * 100)}%`],
+                    ].map(([label, value]) => (
+                      <div key={label}>
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+                        <p className="mt-1 text-xl font-bold text-slate-900">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-4 text-sm text-slate-600">
+                    {analytics.match_quality.zero_match_profiles} complete profile
+                    {analytics.match_quality.zero_match_profiles === 1 ? '' : 's'} with no {formatMatchThreshold()}.
+                  </p>
+                  {Array.isArray(analytics.zero_match_profiles) && analytics.zero_match_profiles.length > 0 && (
+                    <ul className="mt-3 divide-y divide-slate-100 rounded-lg border border-slate-100">
+                      {analytics.zero_match_profiles.slice(0, 8).map((p) => (
+                        <li key={p.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                          <span>
+                            {p.full_name || 'Unnamed'}{' '}
+                            <span className="text-slate-400">{p.phone ? `· ${p.phone}` : ''}</span>
+                          </span>
+                          <button
+                            type="button"
+                            className="shrink-0 text-emerald-700 hover:underline"
+                            onClick={() => openProfile(p.id)}
+                          >
+                            View
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Card>
+              )}
+
               <Card title="Quick actions">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                   <div className="flex-1">
@@ -1227,7 +1306,9 @@ export default function CareerAI() {
                       No jobs yet. Seed samples or fetch from Adzuna above.
                     </p>
                   ) : (
-                    jobs.map((j) => (
+                    jobs
+                      .slice((jobsPage - 1) * JOBS_PAGE_SIZE, jobsPage * JOBS_PAGE_SIZE)
+                      .map((j) => (
                       <div key={j.id} className="py-3">
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <div>
@@ -1261,17 +1342,26 @@ export default function CareerAI() {
                     ))
                   )}
                 </div>
+                <Pagination
+                  page={jobsPage}
+                  pageSize={JOBS_PAGE_SIZE}
+                  totalItems={jobs.length}
+                  onPageChange={setJobsPage}
+                  itemLabel="job"
+                />
               </Card>
 
-              <Card title="70%+ matches">
+              <Card title={formatMatchThreshold()}>
                 <p className="mb-3 text-xs text-slate-500">
-                  Shown to job seekers on WhatsApp when score is 70% or higher.
+                  Shown to job seekers on WhatsApp when score is {CAREER_MATCH_THRESHOLD}% or higher.
                 </p>
                 <div className="divide-y divide-slate-100">
                   {matches.length === 0 ? (
                     <p className="py-6 text-center text-sm text-slate-500">No matches yet — fetch jobs first.</p>
                   ) : (
-                    matches.slice(0, 30).map((m) => (
+                    matches
+                      .slice((matchesPage - 1) * MATCHES_PAGE_SIZE, matchesPage * MATCHES_PAGE_SIZE)
+                      .map((m) => (
                       <div key={m.id} className="flex items-center justify-between gap-3 py-3">
                         <div className="min-w-0">
                           <p className="font-medium text-slate-900">{m.job?.title}</p>
@@ -1298,6 +1388,14 @@ export default function CareerAI() {
                     ))
                   )}
                 </div>
+                <Pagination
+                  page={matchesPage}
+                  pageSize={MATCHES_PAGE_SIZE}
+                  totalItems={matches.length}
+                  onPageChange={setMatchesPage}
+                  itemLabel="match"
+                  itemLabelPlural="matches"
+                />
               </Card>
             </div>
           )}

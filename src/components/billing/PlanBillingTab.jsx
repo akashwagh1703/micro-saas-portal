@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { CheckCircle2, CreditCard, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { CheckCircle2, CreditCard, Loader2, Receipt } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -15,16 +15,24 @@ function formatDate(iso) {
   });
 }
 
+function formatAmount(amountInr, currency = 'INR') {
+  if (amountInr == null) return '—';
+  if (currency === 'INR') return `₹${amountInr}`;
+  return `${amountInr} ${currency}`;
+}
+
 function StatusBadge({ status }) {
   const styles = {
     trial: 'bg-amber-100 text-amber-800',
     active: 'bg-emerald-100 text-emerald-800',
+    past_due: 'bg-orange-100 text-orange-800',
     expired: 'bg-red-100 text-red-800',
     cancelled: 'bg-slate-100 text-slate-700',
   };
   const labels = {
     trial: 'Free trial',
     active: 'Active',
+    past_due: 'Payment issue',
     expired: 'Expired',
     cancelled: 'Cancelled',
   };
@@ -35,8 +43,31 @@ function StatusBadge({ status }) {
   );
 }
 
+function eventLabel(eventType) {
+  const map = {
+    'subscription.activated': 'Subscription started',
+    'subscription.charged': 'Renewal payment',
+    'subscription.cancel_requested': 'Cancellation scheduled',
+    'payment.captured': 'Payment received',
+  };
+  return map[eventType] || eventType?.replace(/[._]/g, ' ') || 'Transaction';
+}
+
 export default function PlanBillingTab({ billing, onStatusChange }) {
   const [paying, setPaying] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [transactions, setTransactions] = useState([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!billing?.billing_enabled) return;
+    setTransactionsLoading(true);
+    api
+      .get('/billing/transactions')
+      .then((r) => setTransactions(Array.isArray(r.data) ? r.data : r.data?.data || []))
+      .catch(() => setTransactions([]))
+      .finally(() => setTransactionsLoading(false));
+  }, [billing?.billing_enabled, billing?.status]);
 
   if (!billing) {
     return (
@@ -59,8 +90,17 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
     );
   }
 
-  const { status, plan, days_left, trial_ends_at, current_period_end, prices, razorpay_configured, has_access } =
-    billing;
+  const {
+    status,
+    plan,
+    days_left,
+    trial_ends_at,
+    current_period_end,
+    prices,
+    razorpay_configured,
+    has_access,
+    cancel_at_period_end,
+  } = billing;
 
   const startCheckout = async (planType) => {
     setPaying(planType);
@@ -106,7 +146,24 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
     }
   };
 
-  const canSubscribe = status !== 'active';
+  const cancelSubscription = async () => {
+    if (!window.confirm('Cancel at the end of your current billing period? You keep access until then.')) {
+      return;
+    }
+    setCancelling(true);
+    try {
+      await api.post('/billing/cancel');
+      toast.success('Subscription will cancel at period end. Access continues until then.');
+      onStatusChange?.();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not cancel subscription');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const canSubscribe = status !== 'active' && status !== 'past_due';
+  const showCancel = status === 'active' && !cancel_at_period_end;
 
   return (
     <div className="space-y-4">
@@ -125,6 +182,26 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
           </div>
         </div>
 
+        {status === 'past_due' && (
+          <div className="mt-4 rounded-lg border border-orange-200 bg-orange-50 p-3">
+            <p className="text-sm font-medium text-orange-900">Payment failed on your last renewal</p>
+            <p className="mt-1 text-xs text-orange-800/90">
+              {has_access
+                ? `Access continues until ${formatDate(current_period_end)}. Update your payment method in Razorpay or subscribe again below.`
+                : 'Your auto-replies are paused. Subscribe below to restore access.'}
+            </p>
+          </div>
+        )}
+
+        {cancel_at_period_end && current_period_end && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="text-sm font-medium text-amber-900">Cancellation scheduled</p>
+            <p className="mt-1 text-xs text-amber-800/90">
+              Your subscription ends on {formatDate(current_period_end)}. You keep full access until then.
+            </p>
+          </div>
+        )}
+
         <dl className="mt-6 grid gap-3 sm:grid-cols-2">
           {status === 'trial' && (
             <>
@@ -138,14 +215,14 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
               </div>
             </>
           )}
-          {status === 'active' && (
+          {(status === 'active' || status === 'past_due') && (
             <>
               <div className="rounded-lg bg-slate-50 p-3">
                 <dt className="text-xs text-slate-500">Billing cycle</dt>
                 <dd className="text-sm font-medium capitalize text-slate-900">{plan || '—'}</dd>
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
-                <dt className="text-xs text-slate-500">Renews on</dt>
+                <dt className="text-xs text-slate-500">{cancel_at_period_end ? 'Access until' : 'Renews on'}</dt>
                 <dd className="text-sm font-medium text-slate-900">{formatDate(current_period_end)}</dd>
               </div>
             </>
@@ -153,7 +230,7 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
           {(status === 'expired' || status === 'cancelled') && (
             <div className="rounded-lg border border-red-100 bg-red-50 p-3 sm:col-span-2">
               <p className="text-sm font-medium text-red-900">
-                {has_access ? 'Active' : 'Auto-replies are paused until you subscribe.'}
+                {has_access ? 'Access active until period end' : 'Auto-replies are paused until you subscribe.'}
               </p>
               <p className="mt-1 text-xs text-red-800/80">
                 Your data is safe. Subscribe below to go live again.
@@ -161,6 +238,17 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
             </div>
           )}
         </dl>
+
+        {showCancel && (
+          <div className="mt-6 border-t border-slate-100 pt-4">
+            <Button variant="danger" onClick={cancelSubscription} loading={cancelling}>
+              Cancel subscription
+            </Button>
+            <p className="mt-2 text-xs text-slate-500">
+              Cancels at period end — no immediate cutoff. You can resubscribe anytime before then.
+            </p>
+          </div>
+        )}
       </Card>
 
       {canSubscribe && (
@@ -240,14 +328,54 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
         </Card>
       )}
 
-      {status === 'active' && (
-        <Card>
-          <p className="text-sm text-slate-600">
-            Your platform subscription is active. To change or cancel billing, use the Razorpay
-            receipt email or contact support.
-          </p>
-        </Card>
-      )}
+      <Card>
+        <div className="flex items-center gap-2">
+          <Receipt size={18} className="text-slate-500" />
+          <h3 className="font-semibold text-slate-900">Payment history</h3>
+        </div>
+        {transactionsLoading ? (
+          <div className="mt-4 flex items-center gap-2 text-sm text-slate-500">
+            <Loader2 size={14} className="animate-spin" />
+            Loading receipts…
+          </div>
+        ) : transactions.length === 0 ? (
+          <p className="mt-4 text-sm text-slate-500">No payments recorded yet.</p>
+        ) : (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs text-slate-500">
+                  <th className="pb-2 font-medium">Date</th>
+                  <th className="pb-2 font-medium">Description</th>
+                  <th className="pb-2 font-medium">Amount</th>
+                  <th className="pb-2 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((tx) => (
+                  <tr key={tx.id} className="border-b border-slate-50">
+                    <td className="py-2.5 text-slate-600">{formatDate(tx.created_at)}</td>
+                    <td className="py-2.5">
+                      <span className="text-slate-900">{eventLabel(tx.event_type)}</span>
+                      {tx.plan && (
+                        <span className="ml-1 text-xs capitalize text-slate-500">({tx.plan})</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 font-medium text-slate-900">
+                      {formatAmount(tx.amount_inr, tx.currency)}
+                    </td>
+                    <td className="py-2.5">
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs capitalize text-slate-700">
+                        {tx.status || '—'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

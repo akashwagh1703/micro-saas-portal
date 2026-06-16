@@ -36,10 +36,11 @@ const careerNavItems = [
 
 const adminNavItem = { to: '/admin', icon: Shield, label: 'Platform admin', hint: 'All users & billing', admin: true };
 
-function NavItem({ to, icon: Icon, label, hint, isAdmin }) {
+function NavItem({ to, icon: Icon, label, hint, isAdmin, onNavClick }) {
   return (
     <NavLink
       to={to}
+      onClick={onNavClick}
       className={({ isActive }) =>
         `group block rounded-xl px-3 py-2.5 transition duration-200 ${
           isActive
@@ -73,7 +74,7 @@ function NavItem({ to, icon: Icon, label, hint, isAdmin }) {
   );
 }
 
-function NavSection({ label, items }) {
+function NavSection({ label, items, onNavClick }) {
   if (!items.length) return null;
   return (
     <div className="space-y-1">
@@ -83,13 +84,13 @@ function NavSection({ label, items }) {
         </p>
       )}
       {items.map((item) => (
-        <NavItem key={item.to} {...item} />
+        <NavItem key={item.to} {...item} onNavClick={onNavClick} />
       ))}
     </div>
   );
 }
 
-export default function Sidebar({ billing, businessCategory }) {
+export default function Sidebar({ billing, businessCategory, mobileOpen = false, onNavClick }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
@@ -112,6 +113,7 @@ export default function Sidebar({ billing, businessCategory }) {
     : [{ label: null, items: workspaceItems }];
 
   const handleLogout = async () => {
+    onNavClick?.();
     try {
       await api.post('/auth/logout');
     } catch {
@@ -125,7 +127,11 @@ export default function Sidebar({ billing, businessCategory }) {
   const initial = (user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase();
 
   return (
-    <aside className="relative flex h-full min-h-0 w-[17.5rem] shrink-0 flex-col border-r border-slate-800/80 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 shadow-xl shadow-slate-950/40">
+    <aside
+      className={`fixed inset-y-0 left-0 z-50 flex h-full min-h-0 w-[17.5rem] shrink-0 flex-col border-r border-slate-800/80 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 shadow-xl shadow-slate-950/40 transition-transform duration-200 md:relative md:translate-x-0 ${
+        mobileOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}
+    >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-emerald-500/10 to-transparent" />
 
       <div className="relative shrink-0 border-b border-white/5 px-5 py-5">
@@ -149,7 +155,7 @@ export default function Sidebar({ billing, businessCategory }) {
 
       <nav className="sidebar-scroll relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-2">
         {navGroups.map((group) => (
-          <NavSection key={group.label || 'main'} {...group} />
+          <NavSection key={group.label || 'main'} {...group} onNavClick={onNavClick} />
         ))}
       </nav>
 

@@ -3,12 +3,13 @@ import { X, ArrowLeft, Sparkles, Check, Wand2, Bot, AlertTriangle, Lightbulb } f
 import toast from 'react-hot-toast';
 import Button from './ui/Button';
 import api from '../services/api';
+import { formatMatchThreshold } from '../constants/career';
 
 const BUSINESS_OPTIONS = [
   {
     key: 'career_ai',
     label: 'CareerAI Bot',
-    hint: 'Job seekers on WhatsApp — resumes, 70%+ matches, cover letters.',
+    hint: `Job seekers on WhatsApp — resumes, ${formatMatchThreshold()}, cover letters.`,
     example: 'Upload resume → matched jobs → apply with cover letter.',
   },
   {
@@ -385,7 +386,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
             </p>
             <p className="mt-1 text-xs leading-relaxed text-emerald-800/90">
               {isCareerAi
-                ? 'WhatsApp bot for resumes, 70%+ job matches, and cover letters — no workflow builder needed.'
+                ? `WhatsApp bot for resumes, ${formatMatchThreshold('job matches')}, and cover letters — no workflow builder needed.`
                 : 'Pick your industry and use cases — we create ready-made workflows for you.'}
             </p>
           </div>
@@ -462,7 +463,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
                   <p className="text-sm font-semibold text-emerald-900">CareerAI on WhatsApp</p>
                   <ul className="mt-2 space-y-1.5 text-xs text-emerald-800">
                     <li>• Job seekers upload resume → profile built automatically</li>
-                    <li>• Jobs matched by role, skills, location (70%+ only)</li>
+                    <li>• Jobs matched by role, skills, location ({formatMatchThreshold()} only)</li>
                     <li>• Tailored cover letter sent as PDF/DOCX</li>
                   </ul>
                 </div>

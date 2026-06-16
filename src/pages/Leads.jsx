@@ -6,6 +6,7 @@ import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 import PageHeader from '../components/ui/PageHeader';
 import StatCard from '../components/ui/StatCard';
+import Pagination from '../components/ui/Pagination';
 import api from '../services/api';
 
 const STATUS_OPTIONS = [
@@ -42,11 +43,14 @@ const CHANNEL_OPTIONS = [
   { value: 'instagram', label: 'Instagram' },
 ];
 
+const PAGE_SIZE = 15;
+
 export default function Leads() {
   const [leads, setLeads] = useState([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [channelFilter, setChannelFilter] = useState('');
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,9 +69,15 @@ export default function Leads() {
   }, []);
 
   useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, channelFilter]);
+
+  useEffect(() => {
     const t = setTimeout(fetchLeads, 300);
     return () => clearTimeout(t);
   }, [search, statusFilter, channelFilter]);
+
+  const pagedLeads = leads.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const openDetail = async (lead) => {
     setSelected(lead);
@@ -208,7 +218,7 @@ export default function Leads() {
                 </tr>
               </thead>
               <tbody>
-                {leads.map((lead) => (
+                {pagedLeads.map((lead) => (
                   <tr key={lead.id} className="border-b border-slate-50 hover:bg-slate-50">
                     <td className="py-3 font-medium">{lead.name || '—'}</td>
                     <td className="py-3">{lead.phone || (lead.username ? `@${lead.username.replace(/^@/, '')}` : '—')}</td>
@@ -228,6 +238,13 @@ export default function Leads() {
                 ))}
               </tbody>
             </table>
+            <Pagination
+              page={page}
+              pageSize={PAGE_SIZE}
+              totalItems={leads.length}
+              onPageChange={setPage}
+              itemLabel="lead"
+            />
           </div>
         )}
       </Card>

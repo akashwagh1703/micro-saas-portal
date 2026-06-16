@@ -1,13 +1,16 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Send, Inbox as InboxIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import EmptyState from '../components/ui/EmptyState';
 import PageHeader from '../components/ui/PageHeader';
+import Pagination from '../components/ui/Pagination';
 import TestBotCard from '../components/onboarding/TestBotCard';
 import api from '../services/api';
 import { fetchSetupProgress } from '../utils/setupProgress';
 import { contactPrimaryLabel, contactSecondaryLabel } from '../utils/contactDisplay';
+
+const CONVERSATIONS_PAGE_SIZE = 20;
 
 export default function Inbox() {
   const [conversations, setConversations] = useState([]);
@@ -17,16 +20,27 @@ export default function Inbox() {
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
   const [channelFilter, setChannelFilter] = useState('');
+  const [conversationsPage, setConversationsPage] = useState(1);
   const [progress, setProgress] = useState(null);
   const messagesEndRef = useRef(null);
+  const searchRef = useRef(search);
+  const channelFilterRef = useRef(channelFilter);
+  const selectedRef = useRef(selected);
 
-  const fetchConversations = () => {
-    api.get('/inbox/conversations', {
-      params: { search, channel: channelFilter || undefined },
+  searchRef.current = search;
+  channelFilterRef.current = channelFilter;
+  selectedRef.current = selected;
+
+  const fetchConversations = useCallback(() => {
+    return api.get('/inbox/conversations', {
+      params: {
+        search: searchRef.current,
+        channel: channelFilterRef.current || undefined,
+      },
     }).then((r) => {
       setConversations(r.data.data || []);
     });
-  };
+  }, []);
 
   const fetchMessages = (id) => {
     api.get(`/inbox/conversations/${id}/messages`).then((r) => {
@@ -37,13 +51,26 @@ export default function Inbox() {
 
   useEffect(() => {
     fetchSetupProgress(api).then(setProgress);
-    fetchConversations();
+  }, []);
+
+  useEffect(() => {
+    setConversationsPage(1);
+  }, [search, channelFilter]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      fetchConversations();
+    }, search ? 300 : 0);
+    return () => clearTimeout(t);
+  }, [search, channelFilter, fetchConversations]);
+
+  useEffect(() => {
     const interval = setInterval(() => {
       fetchConversations();
-      if (selected) fetchMessages(selected);
+      if (selectedRef.current) fetchMessages(selectedRef.current);
     }, 5000);
     return () => clearInterval(interval);
-  }, [search, channelFilter, selected]);
+  }, [fetchConversations]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -72,6 +99,10 @@ export default function Inbox() {
   };
 
   const selectedConversation = conversations.find((c) => c.id === selected);
+  const pagedConversations = conversations.slice(
+    (conversationsPage - 1) * CONVERSATIONS_PAGE_SIZE,
+    conversationsPage * CONVERSATIONS_PAGE_SIZE,
+  );
   const replyPlaceholder =
     selectedConversation?.channel === 'instagram'
       ? 'Reply on Instagram…'
@@ -125,7 +156,8 @@ export default function Inbox() {
                 <p className="mt-1 text-xs text-slate-400">Messages from WhatsApp or Instagram will appear here</p>
               </div>
             ) : (
-              conversations.map((conv) => (
+              <>
+                {pagedConversations.map((conv) => (
                 <button
                   key={conv.id}
                   type="button"
@@ -152,7 +184,16 @@ export default function Inbox() {
                     <p className="truncate text-xs text-slate-500">{contactSecondaryLabel(conv.contact)}</p>
                   </div>
                 </button>
-              ))
+                ))}
+                <Pagination
+                  page={conversationsPage}
+                  pageSize={CONVERSATIONS_PAGE_SIZE}
+                  totalItems={conversations.length}
+                  onPageChange={setConversationsPage}
+                  itemLabel="conversation"
+                  className="px-3"
+                />
+              </>
             )}
           </div>
         </div>

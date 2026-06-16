@@ -7,11 +7,12 @@ import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import PageHeader from '../components/ui/PageHeader';
 import PlanBillingTab from '../components/billing/PlanBillingTab';
+import IntegrationCredentialsPanel from '../components/integrations/IntegrationCredentialsPanel';
 import BusinessTypeCard from '../components/BusinessTypeCard';
 import api from '../services/api';
 import { useSelector } from 'react-redux';
 
-const VALID_TABS = ['profile', 'password', 'billing', 'whatsapp', 'instagram', 'ai', 'career'];
+const VALID_TABS = ['profile', 'password', 'billing', 'credentials', 'whatsapp', 'instagram', 'ai', 'career'];
 
 const CAREER_FIELD_RULES = {
   jsearch_max_pages: { pattern: /^[1-3]$/, message: 'Enter 1, 2, or 3' },
@@ -303,6 +304,7 @@ export default function Settings() {
     { id: 'profile', label: 'Profile' },
     { id: 'password', label: 'Password' },
     { id: 'billing', label: 'Plan & billing' },
+    { id: 'credentials', label: 'Integrations' },
     { id: 'whatsapp', label: 'WhatsApp' },
     { id: 'instagram', label: 'Instagram' },
     { id: 'ai', label: 'Smart replies (AI)' },
@@ -374,6 +376,10 @@ export default function Settings() {
 
       {tab === 'billing' && (
         <PlanBillingTab billing={billing} onStatusChange={() => refreshBilling?.()} />
+      )}
+
+      {tab === 'credentials' && !isCareerAi && (
+        <IntegrationCredentialsPanel />
       )}
 
       {tab === 'whatsapp' && (

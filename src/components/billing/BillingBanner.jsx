@@ -48,14 +48,22 @@ export default function BillingBanner({ billing, onRefresh }) {
 
   if (status === 'active') {
     const label = plan === 'yearly' ? 'Yearly' : 'Monthly';
+    const { cancel_at_period_end, current_period_end } = billing;
     return (
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200/80 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3.5 shadow-sm">
         <div className="flex items-center gap-3">
           <CreditCard size={18} className="text-emerald-700" />
           <div>
-            <p className="text-sm font-medium text-emerald-900">Platform plan active · {label}</p>
+            <p className="text-sm font-medium text-emerald-900">
+              Platform plan active · {label}
+              {cancel_at_period_end ? ' · cancelling' : ''}
+            </p>
             {current_period_end && (
-              <p className="text-xs text-slate-600">Renews {formatDate(current_period_end)}</p>
+              <p className="text-xs text-slate-600">
+                {cancel_at_period_end
+                  ? `Access until ${formatDate(current_period_end)}`
+                  : `Renews ${formatDate(current_period_end)}`}
+              </p>
             )}
           </div>
         </div>
@@ -64,6 +72,30 @@ export default function BillingBanner({ billing, onRefresh }) {
           className="text-sm font-medium text-emerald-800 hover:underline"
         >
           Manage
+        </Link>
+      </div>
+    );
+  }
+
+  if (status === 'past_due') {
+    return (
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-orange-200/80 bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-3.5 shadow-sm">
+        <div className="flex items-start gap-3">
+          <AlertCircle size={18} className="text-orange-600" />
+          <div>
+            <p className="text-sm font-medium text-orange-900">Payment issue — action needed</p>
+            <p className="text-xs text-orange-800/80">
+              {billing.has_access && billing.current_period_end
+                ? `Access continues until ${formatDate(billing.current_period_end)}. Update payment in Settings.`
+                : 'Renew your subscription to keep auto-replies running.'}
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/settings?tab=billing"
+          className="rounded-lg bg-orange-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-orange-700"
+        >
+          Fix billing
         </Link>
       </div>
     );
@@ -117,6 +149,16 @@ export function BillingSidebarBadge({ billing, dark = false }) {
       <p className={`${base} ${dark ? 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/20' : 'bg-emerald-50 text-emerald-800'}`}>
         {plan === 'yearly' ? 'Yearly' : 'Monthly'} plan
       </p>
+    );
+  }
+  if (status === 'past_due') {
+    return (
+      <Link
+        to="/settings?tab=billing"
+        className={`${base} ${dark ? 'bg-orange-500/15 text-orange-200 ring-orange-400/20 hover:bg-orange-500/25' : 'block bg-orange-50 text-orange-800 hover:bg-orange-100'}`}
+      >
+        Payment issue
+      </Link>
     );
   }
   if (status === 'expired' || status === 'cancelled') {

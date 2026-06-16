@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Wand2, Building2, Trash2, Bot } from 'lucide-react';
+import { Plus, Wand2, Building2, Trash2, Bot, History } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -241,6 +241,11 @@ export default function Workflows() {
                         </Button>
                         <Link to={`/workflows/${wf.id}/edit`}>
                           <Button variant="secondary">Edit</Button>
+                        </Link>
+                        <Link to={`/workflows/${wf.id}/executions`}>
+                          <Button variant="secondary" title="Execution logs">
+                            <History size={14} />
+                          </Button>
                         </Link>
                         <Button
                           variant="danger"

@@ -6,6 +6,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import EmptyState from '../components/ui/EmptyState';
 import PageHeader from '../components/ui/PageHeader';
+import Pagination from '../components/ui/Pagination';
 import api from '../services/api';
 import {
   channelBadgeClass,
@@ -20,10 +21,13 @@ const CHANNEL_OPTIONS = [
   { value: 'instagram', label: 'Instagram' },
 ];
 
+const PAGE_SIZE = 15;
+
 export default function Contacts() {
   const [contacts, setContacts] = useState([]);
   const [search, setSearch] = useState('');
   const [channelFilter, setChannelFilter] = useState('');
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,9 +40,15 @@ export default function Contacts() {
   };
 
   useEffect(() => {
+    setPage(1);
+  }, [search, channelFilter]);
+
+  useEffect(() => {
     const t = setTimeout(fetchContacts, 300);
     return () => clearTimeout(t);
   }, [search, channelFilter]);
+
+  const pagedContacts = contacts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const openDetail = async (contact) => {
     setSelected(contact);
@@ -111,7 +121,7 @@ export default function Contacts() {
                 </tr>
               </thead>
               <tbody>
-                {contacts.map((c) => (
+                {pagedContacts.map((c) => (
                   <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50">
                     <td className="py-3 font-medium">{contactPrimaryLabel(c)}</td>
                     <td className="py-3">
@@ -137,6 +147,13 @@ export default function Contacts() {
                 ))}
               </tbody>
             </table>
+            <Pagination
+              page={page}
+              pageSize={PAGE_SIZE}
+              totalItems={contacts.length}
+              onPageChange={setPage}
+              itemLabel="contact"
+            />
           </div>
         )}
       </Card>

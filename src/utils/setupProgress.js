@@ -1,4 +1,6 @@
 /** Tracks the setup journey for non-technical users. */
+import { formatMatchThreshold } from '../constants/career';
+
 export function isCareerAiBusiness(profile) {
   return profile?.business_category === 'career_ai';
 }
@@ -100,7 +102,7 @@ export function buildSetupSteps(progress) {
       {
         id: 'jobs',
         title: 'Add job listings',
-        description: 'Fetch roles so seekers get 70%+ matches.',
+        description: `Fetch roles so seekers get ${formatMatchThreshold()}.`,
         done: progress.careerHasJobs,
         href: '/career-ai',
         action: 'Fetch jobs',

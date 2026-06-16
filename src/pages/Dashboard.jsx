@@ -17,6 +17,7 @@ import Card from '../components/ui/Card';
 import PageHeader from '../components/ui/PageHeader';
 import StatCard from '../components/ui/StatCard';
 import SetupChecklist from '../components/onboarding/SetupChecklist';
+import { formatMatchThreshold } from '../constants/career';
 import TestBotCard from '../components/onboarding/TestBotCard';
 import BusinessWizard from '../components/BusinessWizard';
 import BusinessTypeCard from '../components/BusinessTypeCard';
@@ -98,7 +99,7 @@ export default function Dashboard() {
             {user?.name ? `Hi ${user.name.split(' ')[0]}` : 'Welcome'}
           </h1>
           <p className="mt-3 max-w-lg text-sm leading-relaxed text-emerald-50/95">
-            Job seekers message your WhatsApp → resume parsed → 70%+ job matches → cover letters on apply.
+            Job seekers message your WhatsApp → resume parsed → {formatMatchThreshold('job matches')} → cover letters on apply.
           </p>
           {progress?.complete && (
             <Link
