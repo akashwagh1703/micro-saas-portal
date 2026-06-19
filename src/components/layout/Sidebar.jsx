@@ -10,6 +10,7 @@ import {
   Settings,
   Shield,
   LogOut,
+  Globe,
 } from 'lucide-react';
 import api from '../../services/api';
 import { logout } from '../../store/authSlice';
@@ -23,6 +24,7 @@ const defaultNavItems = [
   { to: '/inbox', icon: Inbox, label: 'Messages', hint: 'Customer chats' },
   { to: '/contacts', icon: Users, label: 'Contacts', hint: 'People who messaged you' },
   { to: '/leads', icon: UserPlus, label: 'Leads', hint: 'Captured from auto-replies' },
+  { to: '/website-leads', icon: Globe, label: 'Website Leads', hint: 'Demo requests from website' },
   { to: '/career-ai', icon: Briefcase, label: 'CareerAI', hint: 'Jobs & job seekers' },
   { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, CareerAI & billing' },
 ];

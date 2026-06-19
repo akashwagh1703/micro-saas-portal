@@ -16,6 +16,7 @@ const PrivacyPolicy = lazy(() => import('./pages/auth/PrivacyPolicy'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Contacts = lazy(() => import('./pages/Contacts'));
 const Leads = lazy(() => import('./pages/Leads'));
+const WebsiteLeads = lazy(() => import('./pages/WebsiteLeads'));
 const Inbox = lazy(() => import('./pages/Inbox'));
 const Workflows = lazy(() => import('./pages/Workflows'));
 const WorkflowBuilder = lazy(() => import('./pages/WorkflowBuilder'));
@@ -53,6 +54,7 @@ export default function App() {
               <Route element={<NonCareerAiRoute />}>
                 <Route path="/contacts" element={<Contacts />} />
                 <Route path="/leads" element={<Leads />} />
+                <Route path="/website-leads" element={<WebsiteLeads />} />
                 <Route path="/workflows" element={<Workflows />} />
                 <Route path="/workflows/:id/edit" element={<WorkflowBuilder />} />
                 <Route path="/workflows/:id/executions" element={<WorkflowExecutions />} />

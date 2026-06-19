@@ -5,7 +5,7 @@ import Button from './ui/Button';
 import api from '../services/api';
 import { formatMatchThreshold } from '../constants/career';
 
-const BUSINESS_OPTIONS = [
+const FALLBACK_BUSINESS_OPTIONS = [
   {
     key: 'career_ai',
     label: 'CareerAI Bot',
@@ -74,7 +74,7 @@ const BUSINESS_OPTIONS = [
   },
 ];
 
-const USE_CASE_OPTIONS = [
+const FALLBACK_USE_CASE_OPTIONS = [
   {
     key: 'customer_support',
     label: 'Customer Support',
@@ -113,7 +113,7 @@ const USE_CASE_OPTIONS = [
   },
 ];
 
-const RECOMMENDED_USE_CASES = {
+const FALLBACK_RECOMMENDED_USE_CASES = {
   farmer: ['faq_bot', 'customer_support'],
   real_estate: ['lead_generation', 'appointment_booking'],
   coaching: ['lead_generation', 'appointment_booking'],
@@ -126,6 +126,29 @@ const RECOMMENDED_USE_CASES = {
   career_ai: ['ai_chat'],
   other: ['ai_chat', 'customer_support'],
 };
+
+function catalogToOptions(catalog) {
+  const verticals = catalog?.verticals ?? FALLBACK_BUSINESS_OPTIONS;
+  const useCases = catalog?.use_cases ?? FALLBACK_USE_CASE_OPTIONS;
+  const businessOptions = verticals.map((v) => ({
+    key: v.key,
+    label: v.label,
+    hint: v.hint,
+    example: v.example,
+    kind: v.kind,
+    supports_use_case_picker: v.supports_use_case_picker,
+  }));
+  const useCaseOptions = useCases.map((u) => ({
+    key: u.key,
+    label: u.label,
+    hint: u.hint,
+    example: u.example,
+  }));
+  const recommendedUseCases = Object.fromEntries(
+    verticals.map((v) => [v.key, v.recommended_use_cases ?? []]),
+  );
+  return { businessOptions, useCaseOptions, recommendedUseCases };
+}
 
 const NODE_LABELS = {
   trigger: 'Trigger',
@@ -213,6 +236,7 @@ function MultiOptionList({ options, values, onToggle, recommended = [] }) {
 export default function BusinessWizard({ onClose, onCreated, profile: initialProfile }) {
   const [step, setStep] = useState(1);
   const [profile, setProfile] = useState(initialProfile ?? null);
+  const [catalog, setCatalog] = useState(null);
   const [business, setBusiness] = useState(null);
   const [businessDescription, setBusinessDescription] = useState('');
   const [useCases, setUseCases] = useState([]);
@@ -220,24 +244,35 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
   const [previews, setPreviews] = useState([]);
   const [previewLoading, setPreviewLoading] = useState(false);
 
+  const { businessOptions, useCaseOptions, recommendedUseCases } = useMemo(
+    () => catalogToOptions(catalog),
+    [catalog],
+  );
+
+  const selectedVertical = businessOptions.find((o) => o.key === business);
   const isOther = business === 'other';
+  const isCareerAi = selectedVertical?.kind === 'plugin' || business === 'career_ai';
+  const supportsUseCasePicker = selectedVertical?.supports_use_case_picker !== false && !isCareerAi;
   const descriptionRequired = isOther && !businessDescription.trim();
   const isBusinessChange =
     profile?.configured && profile.business_category && business !== profile.business_category;
   const blockBusinessChange = isBusinessChange && !profile.can_change_business;
 
-  const recommendedUseCases = useMemo(
-    () => (business ? RECOMMENDED_USE_CASES[business] || [] : []),
-    [business],
+  const recommendedForBusiness = useMemo(
+    () => (business ? recommendedUseCases[business] || [] : []),
+    [business, recommendedUseCases],
   );
 
-  const selectedBusinessLabel = BUSINESS_OPTIONS.find((o) => o.key === business)?.label;
-  const isCareerAi = business === 'career_ai';
+  const selectedBusinessLabel = selectedVertical?.label;
 
   useEffect(() => {
     if (initialProfile) return;
     api.get('/settings/business-profile').then((r) => setProfile(r.data)).catch(() => {});
   }, [initialProfile]);
+
+  useEffect(() => {
+    api.get('/platform/verticals').then((r) => setCatalog(r.data)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!profile?.configured) return;
@@ -282,8 +317,8 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
   };
 
   const applyRecommended = () => {
-    if (recommendedUseCases.length === 0) return;
-    setUseCases(recommendedUseCases);
+    if (recommendedForBusiness.length === 0) return;
+    setUseCases(recommendedForBusiness);
     toast.success('Recommended use cases selected');
   };
 
@@ -340,7 +375,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
     }
     setBusiness(key);
     if (key !== 'other') setBusinessDescription('');
-    if (!profile?.configured) setUseCases(RECOMMENDED_USE_CASES[key] || []);
+    if (!profile?.configured) setUseCases(recommendedUseCases[key] || []);
   };
 
   const goToUseCases = () => {
@@ -353,8 +388,8 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
       return;
     }
     if (blockBusinessChange) return;
-    if (!profile?.configured && useCases.length === 0 && recommendedUseCases.length > 0) {
-      setUseCases(recommendedUseCases);
+    if (!profile?.configured && useCases.length === 0 && recommendedForBusiness.length > 0) {
+      setUseCases(recommendedForBusiness);
     }
     setStep(2);
   };
@@ -400,7 +435,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
                 <span className="text-emerald-700">
                   {' '}
                   → switching to{' '}
-                  {BUSINESS_OPTIONS.find((o) => o.key === business)?.label ?? business}
+                  {businessOptions.find((o) => o.key === business)?.label ?? business}
                 </span>
               )}
             </p>
@@ -410,7 +445,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
         <div className="px-6 py-5">
           <div className="mb-4 flex items-center gap-2 text-xs text-slate-400">
             <span className={step === 1 ? 'font-semibold text-emerald-600' : ''}>1. Your business</span>
-            {!isCareerAi && (
+            {!isCareerAi && supportsUseCasePicker && (
               <>
                 <span>›</span>
                 <span className={step === 2 ? 'font-semibold text-emerald-600' : ''}>2. What to automate</span>
@@ -438,7 +473,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
                 </p>
               </div>
               <p className="mb-3 text-sm font-medium text-slate-700">What is your business?</p>
-              <OptionList options={BUSINESS_OPTIONS} value={business} onSelect={handleBusinessSelect} />
+              <OptionList options={businessOptions} value={business} onSelect={handleBusinessSelect} />
               {isOther && (
                 <div className="mt-4">
                   <label htmlFor="business-description" className="mb-1 block text-sm font-medium text-slate-700">
@@ -475,7 +510,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
                 <p className="text-xs text-violet-900">
                   <span className="font-medium">Business:</span> {selectedBusinessLabel}
                 </p>
-                {recommendedUseCases.length > 0 && (
+                {recommendedForBusiness.length > 0 && (
                   <button
                     type="button"
                     onClick={applyRecommended}
@@ -493,10 +528,10 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
               </div>
               <p className="mb-3 text-sm font-medium text-slate-700">What do you want to automate?</p>
               <MultiOptionList
-                options={USE_CASE_OPTIONS}
+                options={useCaseOptions}
                 values={useCases}
                 onToggle={toggleUseCase}
-                recommended={recommendedUseCases}
+                recommended={recommendedForBusiness}
               />
               {useCases.length > 0 && (
                 <div className="mt-4 space-y-2">
@@ -507,7 +542,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
                       <div key={preview.use_case} className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-3">
                         <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
                           {preview.generation_mode === 'ai' ? <Bot size={14} /> : <Wand2 size={14} />}
-                          {USE_CASE_OPTIONS.find((o) => o.key === preview.use_case)?.label}
+                          {useCaseOptions.find((o) => o.key === preview.use_case)?.label}
                           <span className="text-xs font-normal text-slate-500">→ {preview.template_name}</span>
                         </div>
                         {preview.node_types?.length > 0 && (
