@@ -17,6 +17,7 @@ import Input from '../components/ui/Input';
 import api from '../services/api';
 import { actionErrorMessage } from '../utils/actionErrorMessage';
 import InteractiveMessageNode from '../components/workflows/InteractiveMessageNode';
+import NodePropertyPanel from '../components/workflows/NodePropertyPanel';
 
 const nodeTypesList = [
   { type: 'trigger', label: 'When message arrives', color: 'bg-blue-500' },
@@ -144,6 +145,8 @@ export default function WorkflowBuilder() {
   const navigate = useNavigate();
   const [workflow, setWorkflow] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
+  const [selectedInteractiveNode, setSelectedInteractiveNode] = useState(null);
+  const [showNodePropertyPanel, setShowNodePropertyPanel] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -250,6 +253,27 @@ export default function WorkflowBuilder() {
       )
     );
     setSelectedNode((prev) => ({ ...prev, data: { ...prev.data, ...updates } }));
+  };
+
+  const handleInteractiveNodeUpdate = (nodeId, updatedData) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                templateId: updatedData.templateId,
+                label: updatedData.label,
+                optionRouting: updatedData.optionRouting,
+              },
+            }
+          : n
+      )
+    );
+    setShowNodePropertyPanel(false);
+    setSelectedInteractiveNode(null);
+    toast.success('Interactive node updated');
   };
 
   const collectInputFields = nodes
@@ -754,7 +778,14 @@ export default function WorkflowBuilder() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onNodeClick={(_, node) => setSelectedNode(node)}
+            onNodeClick={(_, node) => {
+              if (node.data?.nodeType === 'interactive_message') {
+                setSelectedInteractiveNode(node);
+                setShowNodePropertyPanel(true);
+              } else {
+                setSelectedNode(node);
+              }
+            }}
             nodeTypes={nodeTypes}
             fitView
           >
@@ -769,6 +800,18 @@ export default function WorkflowBuilder() {
           {renderNodeSettings()}
         </div>
       </div>
+
+      {/* Interactive Message Node Property Panel */}
+      {showNodePropertyPanel && selectedInteractiveNode && (
+        <NodePropertyPanel
+          node={selectedInteractiveNode}
+          onClose={() => {
+            setShowNodePropertyPanel(false);
+            setSelectedInteractiveNode(null);
+          }}
+          onUpdate={handleInteractiveNodeUpdate}
+        />
+      )}
     </div>
   );
 }
