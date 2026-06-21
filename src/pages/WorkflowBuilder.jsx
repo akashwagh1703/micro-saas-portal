@@ -16,6 +16,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import api from '../services/api';
 import { actionErrorMessage } from '../utils/actionErrorMessage';
+import InteractiveMessageNode from '../components/workflows/InteractiveMessageNode';
 
 const nodeTypesList = [
   { type: 'trigger', label: 'When message arrives', color: 'bg-blue-500' },
@@ -26,6 +27,7 @@ const nodeTypesList = [
   { type: 'delay', label: 'Wait', color: 'bg-slate-500' },
   { type: 'ai', label: 'Smart reply', color: 'bg-violet-500' },
   { type: 'send_message', label: 'Send message', color: 'bg-emerald-500' },
+  { type: 'interactive_message', label: 'Interactive buttons/list', color: 'bg-emerald-600' },
 ];
 
 function CustomNode({ data, selected }) {
@@ -60,7 +62,7 @@ function CustomNode({ data, selected }) {
   );
 }
 
-const nodeTypes = { custom: CustomNode };
+const nodeTypes = { custom: CustomNode, interactive_message: InteractiveMessageNode };
 
 function copyText(text, label = 'Copied') {
   navigator.clipboard.writeText(text).then(() => toast.success(label)).catch(() => toast.error('Copy failed'));
@@ -212,7 +214,7 @@ export default function WorkflowBuilder() {
   const addNode = (type) => {
     const newNode = {
       id: `${type}-${Date.now()}`,
-      type: 'custom',
+      type: type === 'interactive_message' ? 'interactive_message' : 'custom',
       position: { x: 150 + Math.random() * 200, y: 150 + Math.random() * 100 },
       data: {
         nodeType: type,
@@ -229,6 +231,9 @@ export default function WorkflowBuilder() {
           : {}),
         ...(type === 'trigger'
           ? { channel: 'both', summary: 'WhatsApp or Instagram DMs' }
+          : {}),
+        ...(type === 'interactive_message'
+          ? { templateId: null }
           : {}),
       },
     };
@@ -615,6 +620,68 @@ export default function WorkflowBuilder() {
               />
               <p className="text-xs text-slate-500">Runs on a schedule when the workflow is live (requires background queue).</p>
             </>
+          )}
+        </div>
+      );
+    }
+
+    if (type === 'interactive_message') {
+      const [templates, setTemplates] = useState([]);
+      const [templatesLoading, setTemplatesLoading] = useState(false);
+
+      useEffect(() => {
+        setTemplatesLoading(true);
+        api
+          .get('/interactive-messages')
+          .then((res) => {
+            setTemplates(Array.isArray(res.data) ? res.data : res.data.templates || []);
+          })
+          .catch(() => {
+            setTemplates([]);
+          })
+          .finally(() => setTemplatesLoading(false));
+      }, []);
+
+      return (
+        <div className="space-y-3">
+          <p className="text-xs text-slate-500">
+            Select an interactive message template to send buttons or a dropdown menu to the customer.
+          </p>
+          <div>
+            <label className="text-sm font-medium">Template</label>
+            <select
+              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              value={selectedData.templateId || ''}
+              onChange={(e) => updateSelectedNodeData({ templateId: e.target.value || null })}
+              disabled={templatesLoading}
+            >
+              <option value="">
+                {templatesLoading ? 'Loading templates…' : 'Select a template'}
+              </option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name} ({t.messageType})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedData.templateId && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+              <p className="text-xs font-medium text-emerald-800">✓ Template selected</p>
+              <p className="mt-1 text-xs text-emerald-700">
+                This message will wait for customer interaction before proceeding.
+              </p>
+            </div>
+          )}
+
+          {templates.length === 0 && !templatesLoading && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <p className="text-xs font-medium text-amber-800">No templates available</p>
+              <p className="mt-1 text-xs text-amber-700">
+                Create a template first from the Templates page.
+              </p>
+            </div>
           )}
         </div>
       );
