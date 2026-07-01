@@ -27,8 +27,6 @@ const defaultNavItems = [
   { to: '/inbox', icon: Inbox, label: 'Messages', hint: 'Customer chats' },
   { to: '/contacts', icon: Users, label: 'Contacts', hint: 'People who messaged you' },
   { to: '/leads', icon: UserPlus, label: 'Leads', hint: 'Captured from auto-replies' },
-  { to: '/website-leads', icon: Globe, label: 'Website Leads', hint: 'Demo requests from website' },
-  { to: '/career-ai', icon: Briefcase, label: 'CareerAI', hint: 'Jobs & job seekers' },
   { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, CareerAI & billing' },
 ];
 
@@ -40,6 +38,13 @@ const careerNavItems = [
 ];
 
 const adminNavItem = { to: '/admin', icon: Shield, label: 'Platform admin', hint: 'All users & billing', admin: true };
+const websiteLeadsNavItem = {
+  to: '/website-leads',
+  icon: Globe,
+  label: 'Website Leads',
+  hint: 'Demo requests from website',
+  admin: true,
+};
 
 function NavItem({ to, icon: Icon, label, hint, isAdmin, onNavClick }) {
   return (
@@ -102,17 +107,15 @@ export default function Sidebar({ billing, businessCategory, mobileOpen = false,
   const isSuperAdmin = !!user?.is_super_admin;
   const isCareerAi = businessCategory === 'career_ai';
 
-  const workspaceItems = isSuperAdmin
-    ? defaultNavItems
-    : isCareerAi
-      ? careerNavItems
-      : defaultNavItems.filter(
-          (item) => item.to !== '/career-ai' || businessCategory === 'career_ai',
-        );
+  const workspaceItems = isCareerAi
+    ? careerNavItems
+    : defaultNavItems.filter(
+        (item) => item.to !== '/career-ai' || businessCategory === 'career_ai',
+      );
 
   const navGroups = isSuperAdmin
     ? [
-        { label: 'Platform', items: [adminNavItem] },
+        { label: 'Platform', items: [adminNavItem, websiteLeadsNavItem] },
         { label: 'Workspace', items: workspaceItems },
       ]
     : [{ label: null, items: workspaceItems }];

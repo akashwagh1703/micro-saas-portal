@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Search, X, UserPlus, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
@@ -43,7 +43,7 @@ const CHANNEL_OPTIONS = [
   { value: 'instagram', label: 'Instagram' },
 ];
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 20;
 
 export default function Leads() {
   const [leads, setLeads] = useState([]);
@@ -51,18 +51,30 @@ export default function Leads() {
   const [statusFilter, setStatusFilter] = useState('');
   const [channelFilter, setChannelFilter] = useState('');
   const [page, setPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  const fetchLeads = () => {
+  const fetchLeads = useCallback(() => {
     setLoading(true);
-    api.get('/leads', { params: { search, status: statusFilter || undefined, channel: channelFilter || undefined } })
-      .then((r) => setLeads(r.data.data || []))
+    api.get('/leads', {
+      params: {
+        search: search.trim() || undefined,
+        status: statusFilter || undefined,
+        channel: channelFilter || undefined,
+        page,
+      },
+    })
+      .then((r) => {
+        setLeads(r.data.data || []);
+        setTotalItems(r.data.total ?? 0);
+      })
+      .catch(() => toast.error('Failed to fetch leads'))
       .finally(() => setLoading(false));
-  };
+  }, [search, statusFilter, channelFilter, page]);
 
   useEffect(() => {
     api.get('/leads/stats').then((r) => setStats(r.data)).catch(() => {});
@@ -75,9 +87,7 @@ export default function Leads() {
   useEffect(() => {
     const t = setTimeout(fetchLeads, 300);
     return () => clearTimeout(t);
-  }, [search, statusFilter, channelFilter]);
-
-  const pagedLeads = leads.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  }, [fetchLeads]);
 
   const openDetail = async (lead) => {
     setSelected(lead);
@@ -218,7 +228,7 @@ export default function Leads() {
                 </tr>
               </thead>
               <tbody>
-                {pagedLeads.map((lead) => (
+                {leads.map((lead) => (
                   <tr key={lead.id} className="border-b border-slate-50 hover:bg-slate-50">
                     <td className="py-3 font-medium">{lead.name || '—'}</td>
                     <td className="py-3">{lead.phone || (lead.username ? `@${lead.username.replace(/^@/, '')}` : '—')}</td>
@@ -241,7 +251,7 @@ export default function Leads() {
             <Pagination
               page={page}
               pageSize={PAGE_SIZE}
-              totalItems={leads.length}
+              totalItems={totalItems}
               onPageChange={setPage}
               itemLabel="lead"
             />

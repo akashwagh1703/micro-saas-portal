@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Search, Calendar, Building2, Mail, Phone, Star, X, Download } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Search, Building2, Mail, Phone, Star, X, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -43,29 +43,39 @@ function getScoreColor(score) {
   return 'text-slate-600 bg-slate-50';
 }
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 20;
 
 export default function WebsiteLeads() {
   const [leads, setLeads] = useState([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  const fetchLeads = () => {
+  const fetchLeads = useCallback(() => {
     setLoading(true);
-    api.get('/website/leads', { params: { status: statusFilter || undefined, page } })
-      .then((r) => setLeads(r.data.data || []))
+    api.get('/website/leads', {
+      params: {
+        status: statusFilter || undefined,
+        search: search.trim() || undefined,
+        page,
+      },
+    })
+      .then((r) => {
+        setLeads(r.data.data || []);
+        setTotalItems(r.data.meta?.total ?? 0);
+      })
       .catch((err) => {
         console.error('Failed to fetch website leads:', err);
         toast.error('Failed to fetch leads');
       })
       .finally(() => setLoading(false));
-  };
+  }, [statusFilter, search, page]);
 
   useEffect(() => {
     api.get('/website/leads/stats')
@@ -80,14 +90,14 @@ export default function WebsiteLeads() {
   useEffect(() => {
     const t = setTimeout(fetchLeads, 300);
     return () => clearTimeout(t);
-  }, [statusFilter, page]);
+  }, [fetchLeads]);
 
   const openDetail = async (lead) => {
     setSelected(lead);
     try {
       const { data } = await api.get(`/website/leads/${lead.id}`);
       setDetail(data);
-    } catch (err) {
+    } catch {
       toast.error('Failed to fetch lead details');
     }
   };
@@ -126,7 +136,10 @@ export default function WebsiteLeads() {
   const exportCsv = async () => {
     try {
       const response = await api.get('/website/leads/export', {
-        params: { status: statusFilter || undefined },
+        params: {
+          status: statusFilter || undefined,
+          search: search.trim() || undefined,
+        },
         responseType: 'blob',
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -141,8 +154,6 @@ export default function WebsiteLeads() {
       toast.error('Export failed');
     }
   };
-
-  const pagedLeads = leads.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="space-y-6">
@@ -215,7 +226,7 @@ export default function WebsiteLeads() {
                 </tr>
               </thead>
               <tbody>
-                {pagedLeads.map((lead) => (
+                {leads.map((lead) => (
                   <tr key={lead.id} className="border-b border-slate-50 hover:bg-slate-50">
                     <td className="py-3 font-medium">{lead.name || '—'}</td>
                     <td className="py-3">
@@ -260,7 +271,7 @@ export default function WebsiteLeads() {
             <Pagination
               page={page}
               pageSize={PAGE_SIZE}
-              totalItems={leads.length}
+              totalItems={totalItems}
               onPageChange={setPage}
               itemLabel="lead"
             />
@@ -281,6 +292,8 @@ export default function WebsiteLeads() {
               {detail.phone && <p><span className="text-slate-500">Phone:</span> {detail.phone}</p>}
               {detail.businessType && <p><span className="text-slate-500">Business Type:</span> {detail.businessType}</p>}
               {detail.companyName && <p><span className="text-slate-500">Company:</span> {detail.companyName}</p>}
+              {detail.qualification && <p><span className="text-slate-500">Qualification:</span> {detail.qualification}</p>}
+              {detail.demoConfirmed && <p><span className="text-slate-500">Demo confirmed:</span> Yes</p>}
               {detail.monthlyMessages && <p><span className="text-slate-500">Monthly Messages:</span> {detail.monthlyMessages}</p>}
               {detail.challenge && <p><span className="text-slate-500">Challenge:</span> {detail.challenge}</p>}
               {detail.source && <p><span className="text-slate-500">Source:</span> {detail.source}</p>}

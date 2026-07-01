@@ -55,12 +55,19 @@ export default function App() {
               <Route element={<NonCareerAiRoute />}>
                 <Route path="/contacts" element={<Contacts />} />
                 <Route path="/leads" element={<Leads />} />
-                <Route path="/website-leads" element={<WebsiteLeads />} />
                 <Route path="/workflows" element={<Workflows />} />
                 <Route path="/workflows/:id/edit" element={<WorkflowBuilder />} />
                 <Route path="/workflows/:id/executions" element={<WorkflowExecutions />} />
                 <Route path="/templates" element={<InteractiveTemplates />} />
               </Route>
+              <Route
+                path="/website-leads"
+                element={
+                  <SuperAdminRoute>
+                    <WebsiteLeads />
+                  </SuperAdminRoute>
+                }
+              />
               <Route
                 path="/admin"
                 element={
