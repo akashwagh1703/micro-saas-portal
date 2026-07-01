@@ -197,7 +197,7 @@ export default function WebsiteLeads() {
             title="No website leads yet"
             description="Demo requests from the marketing website will appear here."
             actionLabel="Visit Website"
-            actionHref="https://autowave.in"
+            actionHref="https://autowave.playltp.in"
             hint="Leads are captured when users submit the demo request form on the website."
           />
         ) : (
