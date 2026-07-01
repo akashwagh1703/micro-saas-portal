@@ -25,6 +25,7 @@ import ChannelAnalytics from '../components/dashboard/ChannelAnalytics';
 import api from '../services/api';
 import { fetchSetupProgress, buildSetupSteps } from '../utils/setupProgress';
 import { applyBusinessChange } from '../utils/businessChange';
+import { syncSetupBusinessResult } from '../utils/workspaceSync';
 
 const statConfig = [
   { key: 'total_messages', label: 'Messages handled', icon: MessageSquare, accent: 'blue' },
@@ -37,7 +38,8 @@ const statConfig = [
 export default function Dashboard() {
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
-  const { refreshBusinessProfile } = useOutletContext() ?? {};
+  const { refreshBusinessProfile, applyBusinessProfile, businessProfile: layoutProfile } =
+    useOutletContext() ?? {};
   const [progress, setProgress] = useState(null);
   const [activities, setActivities] = useState([]);
   const [integrationHealth, setIntegrationHealth] = useState(null);
@@ -64,6 +66,26 @@ export default function Dashboard() {
       .catch(() => {});
   }, [progress?.complete, progress?.isCareerAi]);
 
+  useEffect(() => {
+    if (!layoutProfile?.configured) return;
+    setProgress((prev) => {
+      if (!prev) return prev;
+      const careerAi = layoutProfile.business_category === 'career_ai';
+      if (
+        prev.profile?.business_category === layoutProfile.business_category &&
+        prev.isCareerAi === careerAi
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        profile: layoutProfile,
+        isCareerAi: careerAi,
+        businessConfigured: layoutProfile.configured,
+      };
+    });
+  }, [layoutProfile]);
+
   const refresh = () => {
     fetchSetupProgress(api).then((p) => {
       setProgress(p);
@@ -75,9 +97,22 @@ export default function Dashboard() {
 
   const handleWizardCreated = async (data) => {
     setWizardOpen(false);
-    await refresh();
-    refreshBusinessProfile?.();
+    const profile = syncSetupBusinessResult(data, { applyBusinessProfile });
+    if (profile) {
+      setProgress((prev) =>
+        prev
+          ? {
+              ...prev,
+              profile,
+              isCareerAi: profile.business_category === 'career_ai',
+              businessConfigured: profile.configured,
+            }
+          : prev,
+      );
+    }
     applyBusinessChange(navigate, data);
+    refresh();
+    refreshBusinessProfile?.();
   };
 
   const steps = progress ? buildSetupSteps(progress) : [];

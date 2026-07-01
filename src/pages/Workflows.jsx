@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { Plus, Wand2, Building2, Trash2, Bot, History } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
@@ -12,6 +12,11 @@ import TestBotCard from '../components/onboarding/TestBotCard';
 import api from '../services/api';
 import { fetchSetupProgress, buildSetupSteps } from '../utils/setupProgress';
 import { applyBusinessChange } from '../utils/businessChange';
+import {
+  patchProfilePublishedCount,
+  patchWorkflowLive,
+  syncSetupBusinessResult,
+} from '../utils/workspaceSync';
 import { describeTrigger, getChannelBadge } from '../utils/workflowKeywords';
 import { actionErrorMessage } from '../utils/actionErrorMessage';
 
@@ -27,6 +32,8 @@ const USE_CASE_LABELS = {
 const FIRST_LIVE_KEY = 'autowave_first_go_live';
 
 export default function Workflows() {
+  const { applyBusinessProfile, refreshBusinessProfile, businessProfile: layoutProfile } =
+    useOutletContext() ?? {};
   const [workflows, setWorkflows] = useState([]);
   const [profile, setProfile] = useState(null);
   const [progress, setProgress] = useState(null);
@@ -36,32 +43,47 @@ export default function Workflows() {
   const [togglingId, setTogglingId] = useState(null);
   const navigate = useNavigate();
 
-  const refresh = () => {
-    fetchSetupProgress(api).then((p) => {
+  const refresh = (options = {}) => {
+    const { silent = false } = options;
+    if (!silent) setLoading(true);
+    return fetchSetupProgress(api).then((p) => {
       setProgress(p);
       setProfile(p.profile);
+      if (p.profile) applyBusinessProfile?.(p.profile);
       setWorkflows(p.workflows);
       setLoading(false);
+      return p;
     });
   };
 
   useEffect(() => {
-    refresh();
-    api
-      .get('/settings/business-profile')
-      .then((r) => {
-        if (r.data?.business_category === 'career_ai' && r.data?.configured) {
-          return;
-        }
-        if (!r.data?.configured) setWizardOpen(true);
-      })
-      .catch(() => {});
+    if (layoutProfile?.configured) {
+      setProfile(layoutProfile);
+    }
+  }, [layoutProfile]);
+
+  useEffect(() => {
+    refresh({ silent: !!layoutProfile?.configured });
+    if (!layoutProfile?.configured) {
+      api
+        .get('/settings/business-profile')
+        .then((r) => {
+          if (r.data?.business_category === 'career_ai' && r.data?.configured) {
+            return;
+          }
+          if (!r.data?.configured) setWizardOpen(true);
+        })
+        .catch(() => {});
+    }
   }, []);
 
   const handleWizardCreated = async (data) => {
     setWizardOpen(false);
-    await refresh();
+    syncSetupBusinessResult(data, { setProfile, setWorkflows, applyBusinessProfile });
+    setLoading(false);
     applyBusinessChange(navigate, data);
+    refresh({ silent: true });
+    refreshBusinessProfile?.();
   };
 
   const createWorkflow = async () => {
@@ -71,9 +93,18 @@ export default function Workflows() {
   };
 
   const togglePublish = async (wf) => {
+    const isLive = wf.status === 'published' && wf.is_active;
+    const nextLive = !isLive;
+
     setTogglingId(wf.id);
+    setWorkflows((prev) => patchWorkflowLive(prev, wf.id, nextLive));
+    setProfile((prev) => {
+      const next = patchProfilePublishedCount(prev, nextLive ? 1 : -1);
+      applyBusinessProfile?.(next);
+      return next;
+    });
+
     try {
-      const isLive = wf.status === 'published' && wf.is_active;
       if (isLive) {
         await api.post(`/workflows/${wf.id}/unpublish`);
         toast.success('Turned off — customers will not get this auto-reply');
@@ -87,8 +118,14 @@ export default function Workflows() {
           toast.success('Auto-reply is now live!');
         }
       }
-      refresh();
+      refresh({ silent: true });
     } catch (err) {
+      setWorkflows((prev) => patchWorkflowLive(prev, wf.id, isLive));
+      setProfile((prev) => {
+        const next = patchProfilePublishedCount(prev, nextLive ? -1 : 1);
+        applyBusinessProfile?.(next);
+        return next;
+      });
       toast.error(actionErrorMessage(err, 'Could not update auto-reply'));
     } finally {
       setTogglingId(null);
@@ -104,11 +141,29 @@ export default function Workflows() {
     if (!window.confirm(message)) return;
 
     setDeletingId(wf.id);
+    const snapshot = workflows;
+    setWorkflows((prev) => prev.filter((w) => w.id !== wf.id));
+    if (isLive) {
+      setProfile((prev) => {
+        const next = patchProfilePublishedCount(prev, -1);
+        applyBusinessProfile?.(next);
+        return next;
+      });
+    }
+
     try {
       await api.delete(`/workflows/${wf.id}`);
       toast.success('Auto-reply deleted');
-      refresh();
+      refresh({ silent: true });
     } catch (err) {
+      setWorkflows(snapshot);
+      if (isLive) {
+        setProfile((prev) => {
+          const next = patchProfilePublishedCount(prev, 1);
+          applyBusinessProfile?.(next);
+          return next;
+        });
+      }
       toast.error(err.response?.data?.message || 'Failed to delete');
     } finally {
       setDeletingId(null);

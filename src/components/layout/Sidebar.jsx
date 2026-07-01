@@ -1,4 +1,3 @@
-import { useEffect, useState, useCallback } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -12,7 +11,6 @@ import {
   Shield,
   LogOut,
   Globe,
-  Zap,
 } from 'lucide-react';
 import api from '../../services/api';
 import { logout } from '../../store/authSlice';
@@ -23,7 +21,6 @@ import { AutoWaveMark } from '../brand/AutoWaveBrand';
 const defaultNavItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Home', hint: 'Setup & overview' },
   { to: '/workflows', icon: Workflow, label: 'Auto-replies', hint: 'Turn bots on or off' },
-  { to: '/templates', icon: Zap, label: 'Interactive', hint: 'Buttons & dropdowns' },
   { to: '/inbox', icon: Inbox, label: 'Messages', hint: 'Customer chats' },
   { to: '/contacts', icon: Users, label: 'Contacts', hint: 'People who messaged you' },
   { to: '/leads', icon: UserPlus, label: 'Leads', hint: 'Captured from auto-replies' },

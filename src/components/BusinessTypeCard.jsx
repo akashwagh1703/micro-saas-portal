@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Building2, RefreshCw } from 'lucide-react';
 import Card from './ui/Card';
 import Button from './ui/Button';
@@ -12,34 +12,49 @@ import { applyBusinessChange } from '../utils/businessChange';
  */
 export default function BusinessTypeCard({ compact = false, onChanged }) {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
+  const {
+    businessProfile: contextProfile,
+    applyBusinessProfile,
+    refreshBusinessProfile,
+  } = useOutletContext() ?? {};
+  const [localProfile, setLocalProfile] = useState(null);
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!contextProfile);
+
+  const profile = contextProfile ?? localProfile;
 
   const loadProfile = useCallback(async () => {
+    if (contextProfile) return contextProfile;
     setLoading(true);
     try {
       const { data } = await api.get('/settings/business-profile');
-      setProfile(data);
+      setLocalProfile(data);
+      return data;
     } catch {
-      setProfile(null);
+      setLocalProfile(null);
+      return null;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [contextProfile]);
 
   useEffect(() => {
-    loadProfile();
-  }, [loadProfile]);
+    if (!contextProfile) {
+      loadProfile();
+    } else {
+      setLoading(false);
+    }
+  }, [contextProfile, loadProfile]);
 
   const handleWizardCreated = async (data) => {
     const previousCategory = profile?.business_category ?? null;
     setWizardOpen(false);
 
     if (data?.business_profile) {
-      setProfile(data.business_profile);
+      applyBusinessProfile?.(data.business_profile);
+      if (!applyBusinessProfile) setLocalProfile(data.business_profile);
     } else {
-      await loadProfile();
+      await (refreshBusinessProfile?.() ?? loadProfile());
     }
 
     onChanged?.(data);

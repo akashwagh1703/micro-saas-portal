@@ -11,7 +11,7 @@ export default function DashboardLayout() {
   const user = useSelector((state) => state.auth.user);
   const isSuperAdmin = !!user?.is_super_admin;
   const [billing, setBilling] = useState(null);
-  const [businessCategory, setBusinessCategory] = useState(null);
+  const [businessProfile, setBusinessProfile] = useState(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const refreshBilling = useCallback(async () => {
@@ -26,16 +26,25 @@ export default function DashboardLayout() {
   const refreshBusinessProfile = useCallback(async () => {
     try {
       const { data } = await api.get('/settings/business-profile');
-      setBusinessCategory(data?.business_category ?? null);
+      setBusinessProfile(data);
+      return data;
     } catch {
-      setBusinessCategory(null);
+      setBusinessProfile(null);
+      return null;
     }
+  }, []);
+
+  /** Instant UI sync after setup-business or other mutations — no wait for refetch. */
+  const applyBusinessProfile = useCallback((profile) => {
+    if (profile) setBusinessProfile(profile);
   }, []);
 
   useEffect(() => {
     refreshBilling();
     refreshBusinessProfile();
   }, [refreshBilling, refreshBusinessProfile]);
+
+  const businessCategory = businessProfile?.business_category ?? null;
 
   useEffect(() => {
     if (!mobileNavOpen) return undefined;
@@ -90,7 +99,9 @@ export default function DashboardLayout() {
               billing,
               refreshBilling,
               businessCategory,
+              businessProfile,
               refreshBusinessProfile,
+              applyBusinessProfile,
               isCareerAi,
             }}
           />
