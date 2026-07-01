@@ -72,7 +72,8 @@ export default function Workflows() {
   const togglePublish = async (wf) => {
     setTogglingId(wf.id);
     try {
-      if (wf.status === 'published') {
+      const isLive = wf.status === 'published' && wf.is_active;
+      if (isLive) {
         await api.post(`/workflows/${wf.id}/unpublish`);
         toast.success('Turned off — customers will not get this auto-reply');
       } else {
@@ -94,8 +95,9 @@ export default function Workflows() {
   };
 
   const deleteWorkflow = async (wf) => {
+    const isLive = wf.status === 'published' && wf.is_active;
     const message =
-      wf.status === 'published'
+      isLive
         ? `"${wf.name}" is live. Delete it permanently?`
         : `Delete "${wf.name}" permanently?`;
     if (!window.confirm(message)) return;
@@ -196,7 +198,7 @@ export default function Workflows() {
           ) : (
             <div className="divide-y divide-slate-100">
               {workflows.map((wf) => {
-                const isLive = wf.status === 'published';
+                const isLive = wf.status === 'published' && wf.is_active;
                 const channelBadge = getChannelBadge(wf.definition);
                 return (
                   <div key={wf.id} className="p-5">

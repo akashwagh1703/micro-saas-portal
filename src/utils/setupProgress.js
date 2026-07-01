@@ -5,22 +5,38 @@ export function isCareerAiBusiness(profile) {
   return profile?.business_category === 'career_ai';
 }
 
+/** Fetch all workflow pages from the paginated API. */
+export async function fetchAllWorkflows(api) {
+  const all = [];
+  let page = 1;
+  let lastPage = 1;
+
+  do {
+    const { data } = await api.get('/workflows', { params: { page } });
+    all.push(...(data?.data || []));
+    lastPage = data?.last_page ?? 1;
+    page += 1;
+  } while (page <= lastPage);
+
+  return all;
+}
+
 export async function fetchSetupProgress(api) {
   try {
-    const [profileRes, statsRes, workflowsRes] = await Promise.all([
+    const [profileRes, statsRes, workflows] = await Promise.all([
       api.get('/settings/business-profile'),
       api.get('/dashboard/stats'),
-      api.get('/workflows'),
+      fetchAllWorkflows(api),
     ]);
 
-    const workflows = workflowsRes.data?.data || [];
     const stats = statsRes.data || {};
     const profile = profileRes.data || {};
     const whatsappConnected = !!stats.whatsapp_connected;
     const instagramConnected = !!stats.instagram_connected;
     const channelConnected = whatsappConnected || instagramConnected;
     const hasLive =
-      workflows.some((w) => w.status === 'published') || (stats.active_workflows ?? 0) > 0;
+      workflows.some((w) => w.status === 'published' && w.is_active) ||
+      (stats.active_workflows ?? 0) > 0;
     const careerAi = isCareerAiBusiness(profile);
     const businessConfigured = !!profile.configured;
 
