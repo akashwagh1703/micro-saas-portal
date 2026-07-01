@@ -1,15 +1,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 import BillingBanner from '../billing/BillingBanner';
 import { AutoWaveMark } from '../brand/AutoWaveBrand';
 import api from '../../services/api';
-import { updateUser } from '../../store/authSlice';
 
 export default function DashboardLayout() {
-  const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const isSuperAdmin = !!user?.is_super_admin;
   const [billing, setBilling] = useState(null);
@@ -37,13 +35,7 @@ export default function DashboardLayout() {
   useEffect(() => {
     refreshBilling();
     refreshBusinessProfile();
-    api
-      .get('/auth/profile')
-      .then((r) => {
-        if (r.data?.user) dispatch(updateUser(r.data.user));
-      })
-      .catch(() => {});
-  }, [refreshBilling, refreshBusinessProfile, dispatch]);
+  }, [refreshBilling, refreshBusinessProfile]);
 
   useEffect(() => {
     if (!mobileNavOpen) return undefined;

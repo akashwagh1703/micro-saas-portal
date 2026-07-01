@@ -83,19 +83,13 @@ export default function Login() {
           />
         </div>
 
-        <div className="auth-animate-fade-up auth-stagger-3 flex justify-end">
-          <Link to="/forgot-password" className="text-xs font-medium text-emerald-700 hover:text-emerald-800">
-            Forgot password?
-          </Link>
-        </div>
-
-        <div className="auth-animate-fade-up auth-stagger-4">
+        <div className="auth-animate-fade-up auth-stagger-3">
           <Button type="submit" loading={loading} className="w-full py-2.5">
             Sign in
           </Button>
         </div>
 
-        <p className="auth-animate-fade-up auth-stagger-5 text-center text-xs text-slate-500">
+        <p className="auth-animate-fade-up auth-stagger-4 text-center text-xs text-slate-500">
           New here?{' '}
           <Link to="/register" className="font-semibold text-emerald-700 hover:text-emerald-800">
             Create account
