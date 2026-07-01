@@ -266,6 +266,12 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
   const selectedBusinessLabel = selectedVertical?.label;
 
   useEffect(() => {
+    if (initialProfile) {
+      setProfile(initialProfile);
+    }
+  }, [initialProfile]);
+
+  useEffect(() => {
     if (initialProfile) return;
     api.get('/settings/business-profile').then((r) => setProfile(r.data)).catch(() => {});
   }, [initialProfile]);
@@ -274,14 +280,17 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
     api.get('/platform/verticals').then((r) => setCatalog(r.data)).catch(() => {});
   }, []);
 
+  // Seed wizard fields once from profile — do not reset while user picks a new business.
+  const [seededFromProfile, setSeededFromProfile] = useState(false);
   useEffect(() => {
-    if (!profile?.configured) return;
+    if (!profile?.configured || seededFromProfile) return;
     setBusiness(profile.business_category);
     setUseCases(profile.use_cases || []);
     if (profile.business_description) {
       setBusinessDescription(profile.business_description);
     }
-  }, [profile]);
+    setSeededFromProfile(true);
+  }, [profile, seededFromProfile]);
 
   useEffect(() => {
     if (step !== 2 || !business || useCases.length === 0) {
@@ -334,6 +343,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
       return;
     }
 
+    const previousCategory = profile?.business_category ?? null;
     setSubmitting(true);
     try {
       const payload = { business_category: business, use_cases: cases };
@@ -343,21 +353,34 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
       if (business === 'career_ai') {
         await api.post('/career/setup');
       }
-      const count = data.workflows?.length ?? 0;
-      toast.success(
-        business === 'career_ai'
-          ? 'CareerAI is ready — connect WhatsApp, then fetch jobs'
-          : count === 1
-            ? '1 workflow ready for your business'
-            : `${count} workflows ready for your business`,
-      );
-      onCreated?.(data);
+
+      const newProfile = data.business_profile ?? null;
+      if (newProfile) {
+        setProfile(newProfile);
+      }
+
+      const changed = previousCategory !== business;
+      if (changed && newProfile?.business_label) {
+        toast.success(`Business updated to ${newProfile.business_label}`);
+      } else if (business === 'career_ai') {
+        toast.success('CareerAI is ready — connect WhatsApp, then fetch jobs');
+      } else {
+        const count = data.workflows?.length ?? 0;
+        toast.success(
+          count === 1
+            ? '1 auto-reply ready for your business'
+            : `${count} auto-replies ready for your business`,
+        );
+      }
+
+      await onCreated?.(data);
     } catch (err) {
       const errors = err.response?.data?.errors;
       if (errors?.business_description?.[0]) toast.error(errors.business_description[0]);
       else if (errors?.business_category?.[0]) toast.error(errors.business_category[0]);
       else if (errors?.use_cases?.[0]) toast.error(errors.use_cases[0]);
       else toast.error(err.response?.data?.message || 'Failed to set up workflows');
+    } finally {
       setSubmitting(false);
     }
   };

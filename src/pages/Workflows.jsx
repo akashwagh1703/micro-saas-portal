@@ -11,6 +11,7 @@ import SetupChecklist from '../components/onboarding/SetupChecklist';
 import TestBotCard from '../components/onboarding/TestBotCard';
 import api from '../services/api';
 import { fetchSetupProgress, buildSetupSteps } from '../utils/setupProgress';
+import { applyBusinessChange } from '../utils/businessChange';
 import { describeTrigger, getChannelBadge } from '../utils/workflowKeywords';
 import { actionErrorMessage } from '../utils/actionErrorMessage';
 
@@ -57,10 +58,10 @@ export default function Workflows() {
       .catch(() => {});
   }, []);
 
-  const handleWizardCreated = () => {
+  const handleWizardCreated = async (data) => {
     setWizardOpen(false);
-    toast.success('Auto-replies created! Connect WhatsApp or Instagram, then go live.');
-    refresh();
+    await refresh();
+    applyBusinessChange(navigate, data);
   };
 
   const createWorkflow = async () => {

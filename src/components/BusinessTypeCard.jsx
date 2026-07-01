@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, RefreshCw } from 'lucide-react';
-import toast from 'react-hot-toast';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import BusinessWizard from './BusinessWizard';
 import api from '../services/api';
+import { applyBusinessChange } from '../utils/businessChange';
 
 /**
  * Shows current business type and opens the setup wizard to change it.
@@ -32,14 +32,22 @@ export default function BusinessTypeCard({ compact = false, onChanged }) {
     loadProfile();
   }, [loadProfile]);
 
-  const handleWizardCreated = () => {
-    const wasConfigured = profile?.configured;
+  const handleWizardCreated = async (data) => {
+    const previousCategory = profile?.business_category ?? null;
     setWizardOpen(false);
-    toast.success(wasConfigured ? 'Business type updated' : 'Business set up');
-    loadProfile();
-    onChanged?.();
-    if (wasConfigured) {
-      navigate('/', { replace: true });
+
+    if (data?.business_profile) {
+      setProfile(data.business_profile);
+    } else {
+      await loadProfile();
+    }
+
+    onChanged?.(data);
+
+    const nextCategory =
+      data?.business_profile?.business_category ?? data?.business_category ?? null;
+    if (nextCategory && nextCategory !== previousCategory) {
+      applyBusinessChange(navigate, data);
     }
   };
 

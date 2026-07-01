@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
+import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
   MessageSquare,
@@ -24,6 +24,7 @@ import BusinessTypeCard from '../components/BusinessTypeCard';
 import ChannelAnalytics from '../components/dashboard/ChannelAnalytics';
 import api from '../services/api';
 import { fetchSetupProgress, buildSetupSteps } from '../utils/setupProgress';
+import { applyBusinessChange } from '../utils/businessChange';
 
 const statConfig = [
   { key: 'total_messages', label: 'Messages handled', icon: MessageSquare, accent: 'blue' },
@@ -34,6 +35,7 @@ const statConfig = [
 ];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const { refreshBusinessProfile } = useOutletContext() ?? {};
   const [progress, setProgress] = useState(null);
@@ -71,10 +73,11 @@ export default function Dashboard() {
     });
   };
 
-  const handleWizardCreated = () => {
+  const handleWizardCreated = async (data) => {
     setWizardOpen(false);
-    refresh();
+    await refresh();
     refreshBusinessProfile?.();
+    applyBusinessChange(navigate, data);
   };
 
   const steps = progress ? buildSetupSteps(progress) : [];
@@ -114,7 +117,14 @@ export default function Dashboard() {
 
         {progress && <SetupChecklist steps={steps} userName={user?.name} />}
 
-        <BusinessTypeCard compact onChanged={() => refreshBusinessProfile?.()} />
+        <BusinessTypeCard
+          compact
+          onChanged={async (data) => {
+            await refresh();
+            refreshBusinessProfile?.();
+            if (data) applyBusinessChange(navigate, data);
+          }}
+        />
 
         {progress?.whatsappConnected && progress?.stats?.whatsapp_display && (
           <Card className="!border-emerald-100 !bg-emerald-50/30">
@@ -169,7 +179,14 @@ export default function Dashboard() {
 
       {progress && <SetupChecklist steps={steps} userName={user?.name} />}
 
-      <BusinessTypeCard compact onChanged={() => refreshBusinessProfile?.()} />
+      <BusinessTypeCard
+        compact
+        onChanged={async (data) => {
+          await refresh();
+          refreshBusinessProfile?.();
+          if (data) applyBusinessChange(navigate, data);
+        }}
+      />
 
       {progress && (progress.hasLive || progress.channelConnected) && (
         <TestBotCard
