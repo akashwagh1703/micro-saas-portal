@@ -9,17 +9,77 @@ function bookingLink(metadata) {
   return metadata?.route || '/scheduling/bookings';
 }
 
+function canUseBrowserNotifications() {
+  return typeof window !== 'undefined' && 'Notification' in window;
+}
+
+async function requestNotificationPermission() {
+  if (!canUseBrowserNotifications()) return 'denied';
+  if (Notification.permission === 'granted') return 'granted';
+  if (Notification.permission === 'denied') return 'denied';
+  try {
+    return await Notification.requestPermission();
+  } catch {
+    return 'denied';
+  }
+}
+
+function showBrowserNotification(item) {
+  if (!canUseBrowserNotifications() || Notification.permission !== 'granted') return;
+  try {
+    const notification = new Notification(item?.title || 'New booking request', {
+      body: item?.body || 'Someone requested a slot. Open to confirm or decline.',
+      tag: `owner-notification-${item?.id ?? Date.now()}`,
+      requireInteraction: true,
+    });
+    notification.onclick = () => {
+      window.focus();
+      const link = bookingLink(item?.metadata);
+      window.location.href = link;
+      notification.close();
+    };
+  } catch {
+    /* ignore unsupported contexts */
+  }
+}
+
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(0);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const panelRef = useRef(null);
+  const prevCountRef = useRef(0);
+  const permissionAskedRef = useRef(false);
 
   const loadCount = useCallback(async () => {
     try {
       const { data } = await api.get('/notifications/unread-count');
-      setCount(Number(data?.count ?? 0));
+      const newCount = Number(data?.count ?? 0);
+      const prev = prevCountRef.current;
+
+      if (newCount > prev && prev >= 0) {
+        if (canUseBrowserNotifications()) {
+          if (Notification.permission === 'default' && !permissionAskedRef.current) {
+            permissionAskedRef.current = true;
+            void requestNotificationPermission();
+          }
+          if (Notification.permission === 'granted') {
+            try {
+              const latest = await api.get('/notifications', { params: { limit: 1 } });
+              const item = latest.data?.data?.[0];
+              if (item && !item.is_read) {
+                showBrowserNotification(item);
+              }
+            } catch {
+              showBrowserNotification({ title: 'New booking request' });
+            }
+          }
+        }
+      }
+
+      prevCountRef.current = newCount;
+      setCount(newCount);
     } catch {
       setCount(0);
     }
@@ -39,8 +99,15 @@ export default function NotificationBell() {
 
   useEffect(() => {
     loadCount();
-    const timer = setInterval(loadCount, 30_000);
-    return () => clearInterval(timer);
+    const timer = setInterval(loadCount, 15_000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') loadCount();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [loadCount]);
 
   useEffect(() => {
@@ -59,6 +126,7 @@ export default function NotificationBell() {
     try {
       await api.post('/notifications/read-all');
       setCount(0);
+      prevCountRef.current = 0;
       setItems((prev) => prev.map((n) => ({ ...n, is_read: true, read_at: new Date().toISOString() })));
     } catch {
       /* ignore */
@@ -70,11 +138,22 @@ export default function NotificationBell() {
       try {
         await api.patch(`/notifications/${item.id}/read`);
         setCount((c) => Math.max(0, c - 1));
+        prevCountRef.current = Math.max(0, prevCountRef.current - 1);
       } catch {
         /* ignore */
       }
     }
     setOpen(false);
+  };
+
+  const enableAlerts = async () => {
+    const result = await requestNotificationPermission();
+    if (result === 'granted') {
+      showBrowserNotification({
+        title: 'Alerts enabled',
+        body: 'You will get instant alerts when someone requests a slot.',
+      });
+    }
   };
 
   return (
@@ -97,15 +176,26 @@ export default function NotificationBell() {
         <div className="absolute right-0 z-50 mt-2 w-[min(100vw-2rem,22rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <p className="text-sm font-semibold text-slate-900">Notifications</p>
-            {count > 0 && (
-              <button
-                type="button"
-                onClick={markAllRead}
-                className="text-xs font-medium text-emerald-700 hover:underline"
-              >
-                Mark all read
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {canUseBrowserNotifications() && Notification.permission !== 'granted' && (
+                <button
+                  type="button"
+                  onClick={enableAlerts}
+                  className="text-xs font-medium text-sky-700 hover:underline"
+                >
+                  Enable alerts
+                </button>
+              )}
+              {count > 0 && (
+                <button
+                  type="button"
+                  onClick={markAllRead}
+                  className="text-xs font-medium text-emerald-700 hover:underline"
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="max-h-80 overflow-y-auto">
