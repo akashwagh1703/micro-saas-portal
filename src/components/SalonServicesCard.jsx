@@ -16,7 +16,7 @@ export default function SalonServicesCard() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/settings/salon-services');
+      const { data } = await api.get('/settings/appointment-services');
       setServices(
         Array.isArray(data?.services) && data.services.length > 0
           ? data.services.map((s) => ({
@@ -27,7 +27,7 @@ export default function SalonServicesCard() {
           : [{ ...EMPTY_ROW }],
       );
     } catch {
-      toast.error('Could not load salon services');
+      toast.error('Could not load booking services');
       setServices([{ ...EMPTY_ROW }]);
     } finally {
       setLoading(false);
@@ -83,7 +83,7 @@ export default function SalonServicesCard() {
 
     setSaving(true);
     try {
-      const { data } = await api.put('/settings/salon-services', { services: payload });
+      const { data } = await api.put('/settings/appointment-services', { services: payload });
       setServices(
         (data?.services ?? payload).map((s) => ({
           text: s.text ?? '',
@@ -91,7 +91,7 @@ export default function SalonServicesCard() {
           value: s.value ?? s.text ?? '',
         })),
       );
-      toast.success('Salon services saved — WhatsApp booking picks update live');
+      toast.success('Booking services saved — WhatsApp buttons update live');
     } catch (err) {
       const apiErrors = err.response?.data?.errors?.salon_services;
       if (Array.isArray(apiErrors) && apiErrors.length > 0) {
@@ -107,7 +107,7 @@ export default function SalonServicesCard() {
   if (loading) {
     return (
       <Card>
-        <p className="text-sm text-slate-500">Loading salon services…</p>
+        <p className="text-sm text-slate-500">Loading booking services…</p>
       </Card>
     );
   }
@@ -118,8 +118,8 @@ export default function SalonServicesCard() {
         <div>
           <h3 className="text-base font-semibold text-slate-900">Booking services</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Customers see these as tap-to-pick options in your WhatsApp appointment flow. Up to 10
-            services — first 3 show as buttons, more appear as a list.
+            Customers tap these options as buttons in your WhatsApp appointment flow. Up to 10
+            services — first 3 show as quick buttons, more appear as a list.
           </p>
         </div>
 

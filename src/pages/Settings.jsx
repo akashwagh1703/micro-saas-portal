@@ -13,7 +13,7 @@ import SalonServicesCard from '../components/SalonServicesCard';
 import api from '../services/api';
 import { useSelector } from 'react-redux';
 
-const VALID_TABS = ['profile', 'password', 'billing', 'credentials', 'whatsapp', 'instagram', 'ai', 'career', 'salon'];
+const VALID_TABS = ['profile', 'password', 'billing', 'credentials', 'whatsapp', 'instagram', 'ai', 'career', 'appointment'];
 
 const CAREER_FIELD_RULES = {
   jsearch_max_pages: { pattern: /^[1-3]$/, message: 'Enter 1, 2, or 3' },
@@ -91,7 +91,13 @@ export default function Settings() {
   }, []);
 
   const showCareerTab = businessCategory === 'career_ai' || isCareerAi === true;
-  const showSalonTab = businessCategory === 'salon';
+  const showAppointmentTab =
+    businessCategory === 'salon' ||
+    businessCategory === 'clinic' ||
+    businessCategory === 'coaching' ||
+    businessCategory === 'real_estate' ||
+    businessCategory === 'ca_accountant' ||
+    businessCategory === 'travel';
 
   useEffect(() => {
     const urlTab = searchParams.get('tab');
@@ -310,7 +316,7 @@ export default function Settings() {
     { id: 'whatsapp', label: 'WhatsApp' },
     { id: 'instagram', label: 'Instagram' },
     { id: 'ai', label: 'Smart replies (AI)' },
-    ...(showSalonTab ? [{ id: 'salon', label: 'Salon services' }] : []),
+    ...(showAppointmentTab ? [{ id: 'appointment', label: 'Booking services' }] : []),
     ...(showCareerTab ? [{ id: 'career', label: 'CareerAI' }] : []),
   ];
 
@@ -639,7 +645,7 @@ export default function Settings() {
         </Card>
       )}
 
-      {tab === 'salon' && showSalonTab && <SalonServicesCard />}
+      {tab === 'appointment' && showAppointmentTab && <SalonServicesCard />}
 
       {tab === 'career' && showCareerTab && (
         <div className="space-y-4">
