@@ -84,6 +84,11 @@ export default function SalonServicesCard() {
     setSaving(true);
     try {
       const { data } = await api.put('/settings/appointment-services', { services: payload });
+      try {
+        await api.post('/workflows/sync-appointment-booking');
+      } catch {
+        /* non-fatal — workflow upgrades on next customer message */
+      }
       setServices(
         (data?.services ?? payload).map((s) => ({
           text: s.text ?? '',
