@@ -9,6 +9,7 @@ import TestBotCard from '../components/onboarding/TestBotCard';
 import api from '../services/api';
 import { fetchSetupProgress } from '../utils/setupProgress';
 import { contactPrimaryLabel, contactSecondaryLabel } from '../utils/contactDisplay';
+import { WhatsAppMessageContent } from '../utils/whatsappFormat';
 
 const CONVERSATIONS_PAGE_SIZE = 20;
 
@@ -213,7 +214,7 @@ export default function Inbox() {
                       m.direction === 'outgoing' ? 'ml-auto bg-[#dcf8c6]' : 'bg-white'
                     }`}
                   >
-                    {m.content}
+                    {m.content ? <WhatsAppMessageContent content={m.content} /> : null}
                     <p className="mt-1 text-right text-[10px] text-slate-400">
                       {new Date(m.created_at).toLocaleTimeString()}
                     </p>

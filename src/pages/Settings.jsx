@@ -9,10 +9,11 @@ import PageHeader from '../components/ui/PageHeader';
 import PlanBillingTab from '../components/billing/PlanBillingTab';
 import IntegrationCredentialsPanel from '../components/integrations/IntegrationCredentialsPanel';
 import BusinessTypeCard from '../components/BusinessTypeCard';
+import SalonServicesCard from '../components/SalonServicesCard';
 import api from '../services/api';
 import { useSelector } from 'react-redux';
 
-const VALID_TABS = ['profile', 'password', 'billing', 'credentials', 'whatsapp', 'instagram', 'ai', 'career'];
+const VALID_TABS = ['profile', 'password', 'billing', 'credentials', 'whatsapp', 'instagram', 'ai', 'career', 'salon'];
 
 const CAREER_FIELD_RULES = {
   jsearch_max_pages: { pattern: /^[1-3]$/, message: 'Enter 1, 2, or 3' },
@@ -90,6 +91,7 @@ export default function Settings() {
   }, []);
 
   const showCareerTab = businessCategory === 'career_ai' || isCareerAi === true;
+  const showSalonTab = businessCategory === 'salon';
 
   useEffect(() => {
     const urlTab = searchParams.get('tab');
@@ -308,6 +310,7 @@ export default function Settings() {
     { id: 'whatsapp', label: 'WhatsApp' },
     { id: 'instagram', label: 'Instagram' },
     { id: 'ai', label: 'Smart replies (AI)' },
+    ...(showSalonTab ? [{ id: 'salon', label: 'Salon services' }] : []),
     ...(showCareerTab ? [{ id: 'career', label: 'CareerAI' }] : []),
   ];
 
@@ -635,6 +638,8 @@ export default function Settings() {
           </div>
         </Card>
       )}
+
+      {tab === 'salon' && showSalonTab && <SalonServicesCard />}
 
       {tab === 'career' && showCareerTab && (
         <div className="space-y-4">
