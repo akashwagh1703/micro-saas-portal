@@ -18,6 +18,12 @@ import api from '../services/api';
 import { actionErrorMessage } from '../utils/actionErrorMessage';
 import InteractiveMessageNode from '../components/workflows/InteractiveMessageNode';
 import NodePropertyPanel from '../components/workflows/NodePropertyPanel';
+import {
+  PickOptionsMessagePanel,
+  ListResourcesMessagePanel,
+  ListSlotsMessagePanel,
+  BookSlotMessagePanel,
+} from '../components/workflows/BookingMessageFields';
 
 const nodeTypesList = [
   { type: 'trigger', label: 'When message arrives', color: 'bg-blue-500' },
@@ -711,7 +717,35 @@ export default function WorkflowBuilder() {
       );
     }
 
-    return <p className="text-sm text-slate-500">Select a node to configure</p>;
+    if (type === 'pick_options') {
+      return (
+        <PickOptionsMessagePanel data={selectedData} onUpdate={updateSelectedNodeData} />
+      );
+    }
+
+    if (type === 'list_resources') {
+      return (
+        <ListResourcesMessagePanel data={selectedData} onUpdate={updateSelectedNodeData} />
+      );
+    }
+
+    if (type === 'list_slots') {
+      return (
+        <ListSlotsMessagePanel data={selectedData} onUpdate={updateSelectedNodeData} />
+      );
+    }
+
+    if (type === 'book_slot') {
+      return (
+        <BookSlotMessagePanel data={selectedData} onUpdate={updateSelectedNodeData} />
+      );
+    }
+
+    return (
+      <p className="text-sm text-slate-500">
+        This step has no editable settings here, or select a booking / message step to edit text.
+      </p>
+    );
   };
 
   if (loading) {
@@ -795,8 +829,11 @@ export default function WorkflowBuilder() {
           </ReactFlow>
         </div>
 
-        <div className="w-72 flex-shrink-0 overflow-y-auto rounded-xl border border-slate-200 bg-white p-4">
-          <h3 className="mb-3 font-semibold">Step settings</h3>
+        <div className="w-80 flex-shrink-0 overflow-y-auto rounded-xl border border-slate-200 bg-white p-4">
+          <h3 className="mb-1 font-semibold">Step settings</h3>
+          {selectedNode?.data?.label && (
+            <p className="mb-3 text-xs text-slate-500">{selectedNode.data.label}</p>
+          )}
           {renderNodeSettings()}
         </div>
       </div>

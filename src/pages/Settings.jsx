@@ -10,6 +10,7 @@ import PlanBillingTab from '../components/billing/PlanBillingTab';
 import IntegrationCredentialsPanel from '../components/integrations/IntegrationCredentialsPanel';
 import BusinessTypeCard from '../components/BusinessTypeCard';
 import SalonServicesCard from '../components/SalonServicesCard';
+import BusinessDetailsCard from '../components/BusinessDetailsCard';
 import api from '../services/api';
 import { useSelector } from 'react-redux';
 
@@ -316,7 +317,7 @@ export default function Settings() {
     { id: 'whatsapp', label: 'WhatsApp' },
     { id: 'instagram', label: 'Instagram' },
     { id: 'ai', label: 'Smart replies (AI)' },
-    ...(showAppointmentTab ? [{ id: 'appointment', label: 'Booking services' }] : []),
+    ...(showAppointmentTab ? [{ id: 'appointment', label: 'Booking & business' }] : []),
     ...(showCareerTab ? [{ id: 'career', label: 'CareerAI' }] : []),
   ];
 
@@ -645,7 +646,12 @@ export default function Settings() {
         </Card>
       )}
 
-      {tab === 'appointment' && showAppointmentTab && <SalonServicesCard />}
+      {tab === 'appointment' && showAppointmentTab && (
+        <div className="space-y-6">
+          <BusinessDetailsCard />
+          <SalonServicesCard />
+        </div>
+      )}
 
       {tab === 'career' && showCareerTab && (
         <div className="space-y-4">

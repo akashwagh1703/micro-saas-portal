@@ -36,6 +36,7 @@ export default function SchedulingBookings() {
   const [resourceFilter, setResourceFilter] = useState('');
   const [selectedId, setSelectedId] = useState(searchParams.get('id') || null);
   const [cancelling, setCancelling] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const fromDate = todayDateStr();
   const toDate = range === 'today' ? fromDate : addDaysDateStr(fromDate, 7);
@@ -100,6 +101,21 @@ export default function SchedulingBookings() {
       toast.error(err.response?.data?.message || 'Could not cancel booking');
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const confirmBooking = async () => {
+    if (!selected || selected.status !== 'pending') return;
+    setConfirming(true);
+    try {
+      await api.patch(`/availability/bookings/${selected.id}`, { status: 'confirmed' });
+      toast.success('Booking confirmed — customer will receive a WhatsApp message');
+      closeDetail();
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not confirm booking');
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -241,10 +257,15 @@ export default function SchedulingBookings() {
                   </div>
                 )}
               </dl>
+              {selected.status === 'pending' && (
+                <Button className="mt-6 w-full" onClick={confirmBooking} loading={confirming}>
+                  Confirm booking
+                </Button>
+              )}
               {selected.status !== 'cancelled' && selected.status !== 'completed' && (
                 <Button
                   variant="danger"
-                  className="mt-6 w-full"
+                  className="mt-3 w-full"
                   onClick={cancelBooking}
                   loading={cancelling}
                 >
