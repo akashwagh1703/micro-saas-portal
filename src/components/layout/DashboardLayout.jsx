@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 import BillingBanner from '../billing/BillingBanner';
+import NotificationBell from '../notifications/NotificationBell';
 import { AutoWaveMark } from '../brand/AutoWaveBrand';
 import api from '../../services/api';
 
@@ -82,16 +83,23 @@ export default function DashboardLayout() {
         }`}
       >
         <div className="mx-auto w-full">
-          <div className="mb-4 flex items-center gap-3 md:hidden">
-            <button
-              type="button"
-              onClick={() => setMobileNavOpen(true)}
-              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-slate-700 shadow-sm hover:bg-slate-50"
-              aria-label="Open navigation menu"
-            >
-              <Menu size={20} />
-            </button>
-            <AutoWaveMark variant="light" showTagline={false} />
+          <div className="mb-4 flex items-center justify-between gap-3 md:hidden">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(true)}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-slate-700 shadow-sm hover:bg-slate-50"
+                aria-label="Open navigation menu"
+              >
+                <Menu size={20} />
+              </button>
+              <AutoWaveMark variant="light" showTagline={false} />
+            </div>
+            <NotificationBell />
+          </div>
+
+          <div className="mb-4 hidden justify-end md:flex">
+            <NotificationBell />
           </div>
 
           <BillingBanner billing={isSuperAdmin ? null : billing} onRefresh={refreshBilling} />
