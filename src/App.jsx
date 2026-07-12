@@ -25,6 +25,9 @@ const Settings = lazy(() => import('./pages/Settings'));
 const Admin = lazy(() => import('./pages/Admin'));
 const CareerAI = lazy(() => import('./pages/CareerAI'));
 const CareerSeekerPortal = lazy(() => import('./pages/CareerSeekerPortal'));
+const SchedulingResources = lazy(() => import('./pages/scheduling/SchedulingResources'));
+const SchedulingResourceDetail = lazy(() => import('./pages/scheduling/SchedulingResourceDetail'));
+const SchedulingBookings = lazy(() => import('./pages/scheduling/SchedulingBookings'));
 
 export default function App() {
   return (
@@ -57,6 +60,9 @@ export default function App() {
                 <Route path="/workflows/:id/edit" element={<WorkflowBuilder />} />
                 <Route path="/workflows/:id/executions" element={<WorkflowExecutions />} />
                 <Route path="/templates" element={<InteractiveTemplates />} />
+                <Route path="/scheduling/resources" element={<SchedulingResources />} />
+                <Route path="/scheduling/resources/:id" element={<SchedulingResourceDetail />} />
+                <Route path="/scheduling/bookings" element={<SchedulingBookings />} />
               </Route>
               <Route
                 path="/website-leads"

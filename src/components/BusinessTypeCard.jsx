@@ -121,6 +121,13 @@ export default function BusinessTypeCard({ compact = false, onChanged }) {
           </Button>
         </div>
 
+        {configured && profile.vertical_deprecated && (
+          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            <strong>{profile.business_label}</strong> is a legacy business type. You can keep using it;
+            switching to a new type uses our updated signup list.
+          </p>
+        )}
+
         {configured && !profile.can_change_business && (
           <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             Turn off all live auto-replies in <strong>Auto-replies</strong> before switching to a

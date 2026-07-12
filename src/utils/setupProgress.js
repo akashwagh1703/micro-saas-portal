@@ -1,5 +1,11 @@
 /** Tracks the setup journey for non-technical users. */
 import { formatMatchThreshold } from '../constants/career';
+import {
+  hasActiveSchedules,
+  isSchedulingApiUnavailable,
+  resourceLabelPlural,
+  supportsScheduling,
+} from './scheduling';
 
 export function isCareerAiBusiness(profile) {
   return profile?.business_category === 'career_ai';
@@ -40,6 +46,18 @@ export async function fetchSetupProgress(api) {
     const careerAi = isCareerAiBusiness(profile);
     const businessConfigured = !!profile.configured;
 
+    let schedulingResources = [];
+    let schedulingApiEnabled = false;
+    if (supportsScheduling(profile)) {
+      try {
+        const { data } = await api.get('/availability/resources');
+        schedulingResources = data?.data || [];
+        schedulingApiEnabled = true;
+      } catch (err) {
+        schedulingApiEnabled = !isSchedulingApiUnavailable(err);
+      }
+    }
+
     let careerHasJobs = false;
     let careerJobSourcesConfigured = false;
     if (careerAi && businessConfigured) {
@@ -71,6 +89,9 @@ export async function fetchSetupProgress(api) {
       isCareerAi: careerAi,
       careerHasJobs,
       careerJobSourcesConfigured,
+      schedulingApiEnabled,
+      schedulingResources,
+      schedulingConfigured: hasActiveSchedules(schedulingResources),
       complete: careerAi
         ? businessConfigured && whatsappConnected
         : businessConfigured && workflows.length > 0 && channelConnected && hasLive,
@@ -91,6 +112,9 @@ export async function fetchSetupProgress(api) {
       isCareerAi: false,
       careerHasJobs: false,
       careerJobSourcesConfigured: false,
+      schedulingApiEnabled: false,
+      schedulingResources: [],
+      schedulingConfigured: false,
       complete: false,
     };
   }
@@ -151,6 +175,18 @@ export function buildSetupSteps(progress) {
       href: '/workflows',
       action: 'Create auto-replies',
     },
+    ...(supportsScheduling(progress.profile)
+      ? [
+          {
+            id: 'scheduling',
+            title: `Add ${resourceLabelPlural(progress.profile).toLowerCase()} & hours`,
+            description: 'Add your team and working hours to enable live slot booking.',
+            done: progress.schedulingConfigured,
+            href: '/scheduling/resources',
+            action: 'Set up scheduling',
+          },
+        ]
+      : []),
     {
       id: 'channels',
       title: 'Connect WhatsApp or Instagram',

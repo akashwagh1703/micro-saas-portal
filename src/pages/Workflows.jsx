@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
-import { Plus, Wand2, Building2, Trash2, Bot, History } from 'lucide-react';
+import { Plus, Wand2, Building2, Trash2, Bot, History, CalendarClock, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -19,6 +19,11 @@ import {
 } from '../utils/workspaceSync';
 import { describeTrigger, getChannelBadge } from '../utils/workflowKeywords';
 import { actionErrorMessage } from '../utils/actionErrorMessage';
+import {
+  isSchedulingApiUnavailable,
+  resourceLabelPlural,
+  supportsScheduling,
+} from '../utils/scheduling';
 
 const USE_CASE_LABELS = {
   customer_support: 'Customer support',
@@ -41,6 +46,7 @@ export default function Workflows() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
+  const [schedulingResourceCount, setSchedulingResourceCount] = useState(null);
   const navigate = useNavigate();
 
   const refresh = (options = {}) => {
@@ -171,6 +177,20 @@ export default function Workflows() {
   };
 
   useEffect(() => {
+    if (!supportsScheduling(profile)) {
+      setSchedulingResourceCount(null);
+      return;
+    }
+    api
+      .get('/availability/resources')
+      .then((r) => setSchedulingResourceCount((r.data?.data || []).length))
+      .catch((err) => {
+        if (isSchedulingApiUnavailable(err)) setSchedulingResourceCount(-1);
+        else setSchedulingResourceCount(0);
+      });
+  }, [profile]);
+
+  useEffect(() => {
     if (profile?.business_category === 'career_ai' && profile?.configured) {
       navigate('/career-ai', { replace: true });
     }
@@ -226,6 +246,11 @@ export default function Workflows() {
               </p>
             )}
           </div>
+          {profile.vertical_deprecated && (
+            <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              Legacy business type — you can keep using it; new signups use the updated catalog.
+            </p>
+          )}
         </Card>
       )}
 
@@ -235,6 +260,27 @@ export default function Workflows() {
           instagramUsername={progress.instagramUsername}
           workflows={workflows}
         />
+      )}
+
+      {supportsScheduling(profile) && schedulingResourceCount !== null && schedulingResourceCount >= 0 && schedulingResourceCount === 0 && (
+        <Card className="!p-4 border-amber-200 bg-amber-50/60">
+          <div className="flex flex-wrap items-start gap-3">
+            <AlertTriangle size={20} className="mt-0.5 shrink-0 text-amber-600" />
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-amber-900">Scheduling not ready yet</p>
+              <p className="mt-1 text-sm text-amber-800">
+                Add your {resourceLabelPlural(profile).toLowerCase()} and working hours before appointment
+                auto-replies can offer real slots.
+              </p>
+              <Link to="/scheduling/resources" className="mt-2 inline-block">
+                <Button variant="secondary" className="!text-sm">
+                  <CalendarClock size={14} className="mr-1 inline" />
+                  Set up scheduling
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Card>
       )}
 
       <section>
@@ -282,6 +328,18 @@ export default function Workflows() {
                           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${channelBadge.className}`}>
                             {channelBadge.label}
                           </span>
+                          {wf.use_case === 'appointment_booking' && supportsScheduling(profile) && schedulingResourceCount > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">
+                              <CalendarClock size={12} />
+                              Scheduling connected
+                            </span>
+                          )}
+                          {wf.use_case === 'appointment_booking' && supportsScheduling(profile) && schedulingResourceCount === 0 && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
+                              <AlertTriangle size={12} />
+                              No {resourceLabelPlural(profile).toLowerCase()} yet
+                            </span>
+                          )}
                         </div>
                         <p className="mt-1 text-sm text-slate-500">{describeTrigger(wf.definition)}</p>
                         {!isLive && (

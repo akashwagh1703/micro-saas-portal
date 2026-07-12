@@ -12,6 +12,7 @@ import {
   FileText,
   Target,
   ArrowRight,
+  CalendarClock,
 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import PageHeader from '../components/ui/PageHeader';
@@ -24,6 +25,7 @@ import BusinessTypeCard from '../components/BusinessTypeCard';
 import ChannelAnalytics from '../components/dashboard/ChannelAnalytics';
 import api from '../services/api';
 import { fetchSetupProgress, buildSetupSteps } from '../utils/setupProgress';
+import { resourceLabelPlural, supportsScheduling } from '../utils/scheduling';
 import { applyBusinessChange } from '../utils/businessChange';
 import { syncSetupBusinessResult } from '../utils/workspaceSync';
 
@@ -33,6 +35,12 @@ const statConfig = [
   { key: 'inbox_conversations', label: 'Customer chats', icon: Inbox, accent: 'amber' },
   { key: 'contacts_count', label: 'Contacts', icon: Users, accent: 'emerald' },
   { key: 'leads_count', label: 'Leads captured', icon: UserPlus, accent: 'rose' },
+];
+
+const schedulingStatConfig = [
+  { key: 'bookings_today', label: 'Bookings today', icon: CalendarClock, accent: 'blue' },
+  { key: 'bookings_upcoming', label: 'Upcoming appointments', icon: CalendarClock, accent: 'amber' },
+  { key: 'resources_active', label: 'Active team members', icon: Users, accent: 'emerald' },
 ];
 
 export default function Dashboard() {
@@ -118,6 +126,7 @@ export default function Dashboard() {
   const steps = progress ? buildSetupSteps(progress) : [];
   const stats = progress?.stats;
   const isCareerAi = progress?.isCareerAi;
+  const showSchedulingStats = supportsScheduling(progress?.profile);
 
   if (isCareerAi) {
     const careerCards = careerStats
@@ -214,6 +223,35 @@ export default function Dashboard() {
 
       {progress && <SetupChecklist steps={steps} userName={user?.name} />}
 
+      {progress &&
+        supportsScheduling(progress.profile) &&
+        !progress.schedulingConfigured &&
+        progress.schedulingApiEnabled && (
+          <Card className="!p-4 border-sky-100 bg-sky-50/50">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-600 text-white">
+                  <CalendarClock size={18} />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900">Enable live slot booking</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Add your {resourceLabelPlural(progress.profile).toLowerCase()} and working hours to enable live
+                    slot booking.
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/scheduling/resources"
+                className="inline-flex items-center gap-1 text-sm font-medium text-sky-700 hover:text-sky-900"
+              >
+                Set up scheduling
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          </Card>
+        )}
+
       <BusinessTypeCard
         compact
         onChanged={async (data) => {
@@ -244,6 +282,34 @@ export default function Dashboard() {
               />
             ))}
           </div>
+
+          {showSchedulingStats && (
+            <Card title="Scheduling">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm text-slate-600">
+                  Today&apos;s appointment load from live WhatsApp booking.
+                </p>
+                <Link
+                  to="/scheduling/bookings"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-sky-700 hover:text-sky-900"
+                >
+                  View bookings
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {schedulingStatConfig.map(({ key, label, icon, accent }) => (
+                  <StatCard
+                    key={key}
+                    icon={icon}
+                    label={label}
+                    value={stats?.[key]}
+                    accent={accent}
+                  />
+                ))}
+              </div>
+            </Card>
+          )}
 
           <Card title="Channel status">
             <div className="space-y-4">

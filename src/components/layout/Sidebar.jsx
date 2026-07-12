@@ -11,12 +11,15 @@ import {
   Shield,
   LogOut,
   Globe,
+  CalendarClock,
+  Scissors,
 } from 'lucide-react';
 import api from '../../services/api';
 import { logout } from '../../store/authSlice';
 import toast from 'react-hot-toast';
 import { BillingSidebarBadge } from '../billing/BillingBanner';
 import { AutoWaveMark } from '../brand/AutoWaveBrand';
+import { supportsScheduling } from '../../utils/scheduling';
 
 const defaultNavItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Home', hint: 'Setup & overview' },
@@ -97,18 +100,29 @@ function NavSection({ label, items, onNavClick }) {
   );
 }
 
-export default function Sidebar({ billing, businessCategory, mobileOpen = false, onNavClick }) {
+export default function Sidebar({ billing, businessCategory, businessProfile, mobileOpen = false, onNavClick }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const isSuperAdmin = !!user?.is_super_admin;
   const isCareerAi = businessCategory === 'career_ai';
+  const showScheduling = supportsScheduling(businessProfile);
+
+  const schedulingNavItems = showScheduling
+    ? [
+        { to: '/scheduling/resources', icon: Scissors, label: 'Resources', hint: 'Barbers, doctors, agents' },
+        { to: '/scheduling/bookings', icon: CalendarClock, label: 'Bookings', hint: 'Appointments & slots' },
+      ]
+    : [];
 
   const workspaceItems = isCareerAi
     ? careerNavItems
-    : defaultNavItems.filter(
-        (item) => item.to !== '/career-ai' || businessCategory === 'career_ai',
-      );
+    : [
+        ...defaultNavItems.filter(
+          (item) => item.to !== '/career-ai' || businessCategory === 'career_ai',
+        ),
+        ...schedulingNavItems,
+      ];
 
   const navGroups = isSuperAdmin
     ? [

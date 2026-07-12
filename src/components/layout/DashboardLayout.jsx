@@ -71,6 +71,7 @@ export default function DashboardLayout() {
       <Sidebar
         billing={billing}
         businessCategory={businessCategory}
+        businessProfile={businessProfile}
         mobileOpen={mobileNavOpen}
         onNavClick={() => setMobileNavOpen(false)}
       />

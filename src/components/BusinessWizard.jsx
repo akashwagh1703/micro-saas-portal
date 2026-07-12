@@ -4,128 +4,128 @@ import toast from 'react-hot-toast';
 import Button from './ui/Button';
 import api from '../services/api';
 import { formatMatchThreshold } from '../constants/career';
+import {
+  clampRecommendedUseCases,
+  filterSignupVerticals,
+  filterUseCasesForVertical,
+} from '../utils/platformCatalog';
 
+/** Minimal offline fallback — aligned with catalog v2 active verticals. */
 const FALLBACK_BUSINESS_OPTIONS = [
   {
     key: 'career_ai',
     label: 'CareerAI Bot',
     hint: `Job seekers on WhatsApp — resumes, ${formatMatchThreshold()}, cover letters.`,
     example: 'Upload resume → matched jobs → apply with cover letter.',
+    kind: 'plugin',
+    supports_use_case_picker: false,
+    recommended_use_cases: ['ai_chat'],
+    allowed_use_cases: ['ai_chat'],
+    max_use_cases: 1,
+    visible_in_signup: true,
   },
   {
-    key: 'farmer',
-    label: 'Farmer / Agriculture',
-    hint: 'Sell seeds, fertilizers, or advise on crops and seasons.',
-    example: 'Customers ask about prices, availability, and farming tips.',
+    key: 'salon',
+    label: 'Salon / Beauty',
+    hint: 'Haircuts, styling, and barber appointments on WhatsApp.',
+    example: 'Customers book a barber and time slot.',
+    recommended_use_cases: ['appointment_booking'],
+    supports_use_case_picker: true,
+    allowed_use_cases: ['appointment_booking'],
+    max_use_cases: 1,
+    visible_in_signup: true,
   },
   {
-    key: 'real_estate',
-    label: 'Real Estate',
-    hint: 'Property listings, site visits, and buyer enquiries.',
-    example: 'Leads ask for flats, rent, or booking a property tour.',
+    key: 'clinic',
+    label: 'Clinic / Doctor',
+    hint: 'Appointments, timings, reports, and patient queries.',
+    example: 'Patients book doctor slots or ask clinic hours.',
+    recommended_use_cases: ['appointment_booking'],
+    supports_use_case_picker: true,
+    allowed_use_cases: ['appointment_booking', 'customer_support'],
+    max_use_cases: 1,
+    visible_in_signup: true,
   },
   {
     key: 'coaching',
     label: 'Coaching Institute',
     hint: 'Courses, admissions, batch timings, and demo classes.',
-    example: 'Students ask about fees, syllabus, or trial sessions.',
+    example: 'Students ask about fees or book a trial session.',
+    recommended_use_cases: ['lead_generation', 'appointment_booking'],
+    supports_use_case_picker: true,
+    allowed_use_cases: ['lead_generation', 'appointment_booking'],
+    max_use_cases: 2,
+    visible_in_signup: true,
   },
   {
-    key: 'clinic',
-    label: 'Clinic / Doctor',
-    hint: 'Appointments, timings, reports, and general queries.',
-    example: 'Patients book slots or ask clinic hours and location.',
-  },
-  {
-    key: 'local_shop',
-    label: 'Local Shop',
-    hint: 'Product catalog, prices, stock, and order updates.',
-    example: 'Shoppers ask "Do you have this?" or delivery time.',
-  },
-  {
-    key: 'travel',
-    label: 'Travel Agency',
-    hint: 'Trip packages, bookings, itineraries, and quotes.',
-    example: 'Customers enquire about destinations and travel dates.',
-  },
-  {
-    key: 'insurance',
-    label: 'Insurance Agent',
-    hint: 'Policies, renewals, claims, and premium quotes.',
-    example: 'Clients ask about coverage, documents, or renewal.',
+    key: 'real_estate',
+    label: 'Real Estate',
+    hint: 'Property listings, site visits, and buyer enquiries.',
+    example: 'Leads ask for flats or book a property tour.',
+    recommended_use_cases: ['lead_generation', 'appointment_booking'],
+    supports_use_case_picker: true,
+    allowed_use_cases: ['lead_generation', 'appointment_booking'],
+    max_use_cases: 2,
+    visible_in_signup: true,
   },
   {
     key: 'ca_accountant',
     label: 'CA / Accountant',
     hint: 'Tax filing, GST, documents, and consultation slots.',
-    example: 'Clients share queries about ITR, GST, or deadlines.',
+    example: 'Clients book a tax consultation slot.',
+    recommended_use_cases: ['appointment_booking'],
+    supports_use_case_picker: true,
+    allowed_use_cases: ['appointment_booking'],
+    max_use_cases: 1,
+    visible_in_signup: true,
   },
   {
-    key: 'support',
-    label: 'Customer Support Team',
-    hint: 'Resolve tickets, FAQs, and follow-ups on WhatsApp.',
-    example: 'Users report issues or ask how to use your product.',
+    key: 'travel',
+    label: 'Travel Agency',
+    hint: 'Trip packages, bookings, itineraries, and quotes.',
+    example: 'Customers enquire about destinations or book a call.',
+    recommended_use_cases: ['lead_generation', 'appointment_booking'],
+    supports_use_case_picker: true,
+    allowed_use_cases: ['lead_generation', 'appointment_booking'],
+    max_use_cases: 2,
+    visible_in_signup: true,
   },
   {
-    key: 'other',
-    label: 'Other business',
-    hint: 'Any business not listed above — we generate a custom flow.',
-    example: 'Describe your business and we tailor workflows with AI.',
+    key: 'local_shop',
+    label: 'Local Shop',
+    hint: 'Product enquiries, orders, and customer help.',
+    example: 'Shoppers ask about products or delivery.',
+    recommended_use_cases: ['lead_generation'],
+    supports_use_case_picker: true,
+    allowed_use_cases: ['lead_generation', 'customer_support'],
+    max_use_cases: 1,
+    visible_in_signup: true,
   },
 ];
 
 const FALLBACK_USE_CASE_OPTIONS = [
   {
-    key: 'customer_support',
-    label: 'Customer Support',
-    hint: 'Answer questions and resolve issues automatically.',
-    example: 'Order status, complaints, general help.',
+    key: 'appointment_booking',
+    label: 'Appointment Booking',
+    hint: 'Collect date, time, and details for bookings.',
+    example: 'Doctor visit, barber slot, site tour.',
+    visible_in_signup: true,
   },
   {
     key: 'lead_generation',
     label: 'Lead Generation',
     hint: 'Capture name, phone, and interest from new chats.',
-    example: 'Property enquiry, course demo, insurance quote.',
+    example: 'Property enquiry, course demo, travel quote.',
+    visible_in_signup: true,
   },
   {
-    key: 'appointment_booking',
-    label: 'Appointment Booking',
-    hint: 'Collect date, time, and details for bookings.',
-    example: 'Doctor visit, site tour, tax consultation.',
-  },
-  {
-    key: 'sales_assistant',
-    label: 'Sales Assistant',
-    hint: 'Qualify buyers and suggest next steps.',
-    example: 'Product recommendations, upsell, follow-up.',
-  },
-  {
-    key: 'faq_bot',
-    label: 'FAQ Bot',
-    hint: 'Instant answers to common repeated questions.',
-    example: 'Timings, prices, location, policies.',
-  },
-  {
-    key: 'ai_chat',
-    label: 'AI Chat Assistant',
-    hint: 'Flexible AI replies for open-ended conversations.',
-    example: 'When customers ask varied or complex questions.',
+    key: 'customer_support',
+    label: 'Customer Support',
+    hint: 'Answer questions and resolve issues automatically.',
+    example: 'Order status, complaints, general help.',
+    visible_in_signup: true,
   },
 ];
-
-const FALLBACK_RECOMMENDED_USE_CASES = {
-  farmer: ['faq_bot', 'customer_support'],
-  real_estate: ['lead_generation', 'appointment_booking'],
-  coaching: ['lead_generation', 'appointment_booking'],
-  clinic: ['appointment_booking', 'faq_bot'],
-  local_shop: ['faq_bot', 'customer_support'],
-  travel: ['lead_generation', 'appointment_booking'],
-  insurance: ['lead_generation', 'customer_support'],
-  ca_accountant: ['appointment_booking', 'customer_support'],
-  support: ['customer_support', 'faq_bot'],
-  career_ai: ['ai_chat'],
-  other: ['ai_chat', 'customer_support'],
-};
 
 function catalogToOptions(catalog) {
   const verticals = catalog?.verticals ?? FALLBACK_BUSINESS_OPTIONS;
@@ -137,17 +137,21 @@ function catalogToOptions(catalog) {
     example: v.example,
     kind: v.kind,
     supports_use_case_picker: v.supports_use_case_picker,
+    recommended_use_cases: v.recommended_use_cases ?? [],
+    allowed_use_cases: v.allowed_use_cases ?? [],
+    max_use_cases: v.max_use_cases ?? 2,
+    visible_in_signup: v.visible_in_signup,
+    deprecated: v.deprecated,
   }));
   const useCaseOptions = useCases.map((u) => ({
     key: u.key,
     label: u.label,
     hint: u.hint,
     example: u.example,
+    visible_in_signup: u.visible_in_signup,
+    deprecated: u.deprecated,
   }));
-  const recommendedUseCases = Object.fromEntries(
-    verticals.map((v) => [v.key, v.recommended_use_cases ?? []]),
-  );
-  return { businessOptions, useCaseOptions, recommendedUseCases };
+  return { businessOptions, useCaseOptions };
 }
 
 const NODE_LABELS = {
@@ -191,23 +195,28 @@ function OptionList({ options, value, onSelect, disabled }) {
   );
 }
 
-function MultiOptionList({ options, values, onToggle, recommended = [] }) {
+function MultiOptionList({ options, values, onToggle, recommended = [], maxValues }) {
+  const atMax = maxValues != null && values.length >= maxValues;
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       {options.map((opt) => {
         const selected = values.includes(opt.key);
         const isRecommended = recommended.includes(opt.key);
+        const disabled = atMax && !selected;
         return (
           <button
             key={opt.key}
             type="button"
+            disabled={disabled}
             onClick={() => onToggle(opt.key)}
             className={`relative rounded-lg border px-4 py-3 text-left transition ${
               selected
                 ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500'
-                : isRecommended
-                  ? 'border-violet-200 bg-violet-50/40 hover:border-violet-300'
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                : disabled
+                  ? 'cursor-not-allowed border-slate-100 bg-slate-50 opacity-50'
+                  : isRecommended
+                    ? 'border-violet-200 bg-violet-50/40 hover:border-violet-300'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
             }`}
           >
             {isRecommended && !selected && (
@@ -244,12 +253,29 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
   const [previews, setPreviews] = useState([]);
   const [previewLoading, setPreviewLoading] = useState(false);
 
-  const { businessOptions, useCaseOptions, recommendedUseCases } = useMemo(
+  const { businessOptions, useCaseOptions } = useMemo(
     () => catalogToOptions(catalog),
     [catalog],
   );
 
+  const signupBusinessOptions = useMemo(
+    () => filterSignupVerticals(businessOptions, profile?.business_category),
+    [businessOptions, profile?.business_category],
+  );
+
   const selectedVertical = businessOptions.find((o) => o.key === business);
+  const maxUseCases = selectedVertical?.max_use_cases ?? 2;
+
+  const visibleUseCaseOptions = useMemo(
+    () => filterUseCasesForVertical(useCaseOptions, selectedVertical),
+    [useCaseOptions, selectedVertical],
+  );
+
+  const recommendedForBusiness = useMemo(
+    () => clampRecommendedUseCases(selectedVertical, visibleUseCaseOptions),
+    [selectedVertical, visibleUseCaseOptions],
+  );
+
   const isOther = business === 'other';
   const isCareerAi = selectedVertical?.kind === 'plugin' || business === 'career_ai';
   const supportsUseCasePicker = selectedVertical?.supports_use_case_picker !== false && !isCareerAi;
@@ -257,11 +283,6 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
   const isBusinessChange =
     profile?.configured && profile.business_category && business !== profile.business_category;
   const blockBusinessChange = isBusinessChange && !profile.can_change_business;
-
-  const recommendedForBusiness = useMemo(
-    () => (business ? recommendedUseCases[business] || [] : []),
-    [business, recommendedUseCases],
-  );
 
   const selectedBusinessLabel = selectedVertical?.label;
 
@@ -320,9 +341,15 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
   }, [step, business, useCases, businessDescription, isOther]);
 
   const toggleUseCase = (key) => {
-    setUseCases((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
-    );
+    if (maxUseCases === 1) {
+      setUseCases([key]);
+      return;
+    }
+    setUseCases((prev) => {
+      if (prev.includes(key)) return prev.filter((k) => k !== key);
+      if (prev.length >= maxUseCases) return prev;
+      return [...prev, key];
+    });
   };
 
   const applyRecommended = () => {
@@ -379,6 +406,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
       if (errors?.business_description?.[0]) toast.error(errors.business_description[0]);
       else if (errors?.business_category?.[0]) toast.error(errors.business_category[0]);
       else if (errors?.use_cases?.[0]) toast.error(errors.use_cases[0]);
+      else if (Array.isArray(errors?.use_cases)) toast.error(errors.use_cases[0]);
       else toast.error(err.response?.data?.message || 'Failed to set up workflows');
     } finally {
       setSubmitting(false);
@@ -398,7 +426,11 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
     }
     setBusiness(key);
     if (key !== 'other') setBusinessDescription('');
-    if (!profile?.configured) setUseCases(recommendedUseCases[key] || []);
+    if (!profile?.configured) {
+      const vertical = businessOptions.find((o) => o.key === key);
+      const visible = filterUseCasesForVertical(useCaseOptions, vertical);
+      setUseCases(clampRecommendedUseCases(vertical, visible));
+    }
   };
 
   const goToUseCases = () => {
@@ -411,9 +443,14 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
       return;
     }
     if (blockBusinessChange) return;
-    if (!profile?.configured && useCases.length === 0 && recommendedForBusiness.length > 0) {
-      setUseCases(recommendedForBusiness);
-    }
+
+    const visibleKeys = new Set(visibleUseCaseOptions.map((o) => o.key));
+    setUseCases((prev) => {
+      const filtered = prev.filter((k) => visibleKeys.has(k)).slice(0, maxUseCases);
+      if (filtered.length > 0) return filtered;
+      if (recommendedForBusiness.length > 0) return recommendedForBusiness;
+      return prev;
+    });
     setStep(2);
   };
 
@@ -486,6 +523,16 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
             </div>
           )}
 
+          {profile?.vertical_deprecated && (
+            <div className="mb-4 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+              <p>
+                <span className="font-medium">{profile.business_label}</span> is a legacy business type.
+                You can keep using it, but new signups use our updated business list.
+              </p>
+            </div>
+          )}
+
           {step === 1 ? (
             <>
               <div className="mb-4 flex gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
@@ -496,7 +543,11 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
                 </p>
               </div>
               <p className="mb-3 text-sm font-medium text-slate-700">What is your business?</p>
-              <OptionList options={businessOptions} value={business} onSelect={handleBusinessSelect} />
+              <OptionList
+                options={signupBusinessOptions}
+                value={business}
+                onSelect={handleBusinessSelect}
+              />
               {isOther && (
                 <div className="mt-4">
                   <label htmlFor="business-description" className="mb-1 block text-sm font-medium text-slate-700">
@@ -546,16 +597,34 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
               <div className="mb-4 flex gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
                 <Lightbulb size={16} className="mt-0.5 shrink-0 text-amber-500" />
                 <p>
-                  Select one or more use cases. Each gets its own workflow with keyword triggers.
+                  {maxUseCases === 1
+                    ? 'Select one use case. We create one auto-reply workflow with keyword triggers.'
+                    : `Select up to ${maxUseCases} use cases. Each gets its own workflow with keyword triggers.`}
                 </p>
               </div>
-              <p className="mb-3 text-sm font-medium text-slate-700">What do you want to automate?</p>
-              <MultiOptionList
-                options={useCaseOptions}
-                values={useCases}
-                onToggle={toggleUseCase}
-                recommended={recommendedForBusiness}
-              />
+              <p className="mb-3 text-sm font-medium text-slate-700">
+                What do you want to automate?
+                {maxUseCases > 1 && (
+                  <span className="ml-1 font-normal text-slate-500">
+                    ({useCases.length}/{maxUseCases} selected)
+                  </span>
+                )}
+              </p>
+              {maxUseCases === 1 ? (
+                <OptionList
+                  options={visibleUseCaseOptions}
+                  value={useCases[0] ?? null}
+                  onSelect={toggleUseCase}
+                />
+              ) : (
+                <MultiOptionList
+                  options={visibleUseCaseOptions}
+                  values={useCases}
+                  onToggle={toggleUseCase}
+                  recommended={recommendedForBusiness}
+                  maxValues={maxUseCases}
+                />
+              )}
               {useCases.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {previewLoading ? (
@@ -565,7 +634,7 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
                       <div key={preview.use_case} className="rounded-lg border border-emerald-100 bg-emerald-50/50 p-3">
                         <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
                           {preview.generation_mode === 'ai' ? <Bot size={14} /> : <Wand2 size={14} />}
-                          {useCaseOptions.find((o) => o.key === preview.use_case)?.label}
+                          {visibleUseCaseOptions.find((o) => o.key === preview.use_case)?.label}
                           <span className="text-xs font-normal text-slate-500">→ {preview.template_name}</span>
                         </div>
                         {preview.node_types?.length > 0 && (
@@ -616,7 +685,9 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
             )
           ) : (
             <Button onClick={() => finish()} loading={submitting} disabled={useCases.length === 0}>
-              Create {useCases.length > 1 ? `${useCases.length} auto-replies` : 'auto-reply'}
+              {maxUseCases === 1 || useCases.length <= 1
+                ? 'Create auto-reply'
+                : `Create ${useCases.length} auto-replies`}
             </Button>
           )}
         </div>
