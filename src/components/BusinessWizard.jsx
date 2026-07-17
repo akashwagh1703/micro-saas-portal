@@ -36,6 +36,17 @@ const FALLBACK_BUSINESS_OPTIONS = [
     visible_in_signup: true,
   },
   {
+    key: 'sports_turf',
+    label: 'Sports Turf / Ground',
+    hint: 'Book cricket, football, or hourly turf slots on WhatsApp.',
+    example: 'Players pick turf, date, and time slot.',
+    recommended_use_cases: ['appointment_booking'],
+    supports_use_case_picker: true,
+    allowed_use_cases: ['appointment_booking'],
+    max_use_cases: 1,
+    visible_in_signup: true,
+  },
+  {
     key: 'clinic',
     label: 'Clinic / Doctor',
     hint: 'Appointments, timings, reports, and patient queries.',

@@ -11,6 +11,7 @@ import IntegrationCredentialsPanel from '../components/integrations/IntegrationC
 import BusinessTypeCard from '../components/BusinessTypeCard';
 import SalonServicesCard from '../components/SalonServicesCard';
 import BusinessDetailsCard from '../components/BusinessDetailsCard';
+import WelcomeImageCard from '../components/WelcomeImageCard';
 import api from '../services/api';
 import { useSelector } from 'react-redux';
 
@@ -94,6 +95,7 @@ export default function Settings() {
   const showCareerTab = businessCategory === 'career_ai' || isCareerAi === true;
   const showAppointmentTab =
     businessCategory === 'salon' ||
+    businessCategory === 'sports_turf' ||
     businessCategory === 'clinic' ||
     businessCategory === 'coaching' ||
     businessCategory === 'real_estate' ||
@@ -649,6 +651,7 @@ export default function Settings() {
       {tab === 'appointment' && showAppointmentTab && (
         <div className="space-y-6">
           <BusinessDetailsCard />
+          <WelcomeImageCard />
           <SalonServicesCard />
         </div>
       )}

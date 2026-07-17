@@ -55,13 +55,32 @@ export function PickOptionsMessagePanel({ data, onUpdate }) {
         }
       />
       {!isDateStep && (
-        <MessageField
-          label="Footer (optional)"
-          value={data.footer}
-          onChange={(footer) => onUpdate({ footer })}
-          rows={2}
-          placeholder="Tap a button to book"
-        />
+        <>
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              className="rounded border-slate-300"
+              checked={data.include_welcome_image !== false}
+              onChange={(e) => onUpdate({ include_welcome_image: e.target.checked })}
+            />
+            Show welcome image (from Settings → Booking & business, or override URL below)
+          </label>
+          <MessageField
+            label="Welcome image URL (optional override)"
+            value={data.welcome_image_url}
+            onChange={(welcome_image_url) => onUpdate({ welcome_image_url })}
+            rows={2}
+            placeholder="Leave blank to use the uploaded business image"
+            hint="Must be HTTPS. Used only for this step when set."
+          />
+          <MessageField
+            label="Footer (optional)"
+            value={data.footer}
+            onChange={(footer) => onUpdate({ footer })}
+            rows={2}
+            placeholder="Tap a button to book"
+          />
+        </>
       )}
       <p className="text-[10px] text-slate-400">{VARIABLE_HINT}</p>
     </div>

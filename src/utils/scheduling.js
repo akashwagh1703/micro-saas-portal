@@ -7,6 +7,7 @@ const RESOURCE_LABELS = {
   real_estate: 'Agent',
   ca_accountant: 'Consultant',
   travel: 'Agent',
+  sports_turf: 'Turf',
 };
 
 const RESOURCE_TYPES = {
@@ -16,6 +17,7 @@ const RESOURCE_TYPES = {
   real_estate: 'agent',
   ca_accountant: 'consultant',
   travel: 'agent',
+  sports_turf: 'turf',
 };
 
 export const WEEKDAYS = [
@@ -42,6 +44,7 @@ export function resourceLabelPlural(profile) {
   if (label === 'Barber') return 'Barbers';
   if (label === 'Doctor') return 'Doctors';
   if (label === 'Agent') return 'Agents';
+  if (label === 'Turf') return 'Turfs';
   return `${label}s`;
 }
 
