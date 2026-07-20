@@ -83,6 +83,12 @@ export default function Login() {
           />
         </div>
 
+        <p className="auth-animate-fade-up auth-stagger-3 text-right text-xs">
+          <Link to="/forgot-password" className="font-medium text-emerald-700 hover:text-emerald-800">
+            Forgot password?
+          </Link>
+        </p>
+
         <div className="auth-animate-fade-up auth-stagger-3">
           <Button type="submit" loading={loading} className="w-full py-2.5">
             Sign in

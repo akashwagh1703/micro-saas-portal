@@ -3,10 +3,26 @@ import { Link } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import api from '../../services/api';
 
-function bookingLink(metadata) {
-  const id = metadata?.booking_id;
+function notificationLink(item) {
+  const metadata = item?.metadata ?? {};
+  if (metadata.lead_id) return `/leads`;
+  if (item?.type === 'lead_created') return metadata.route || '/leads';
+  if (
+    item?.type === 'subscription_activated' ||
+    item?.type === 'subscription_expiring' ||
+    item?.type === 'subscription_expired' ||
+    item?.type === 'payment_received' ||
+    String(item?.type ?? '').startsWith('subscription_') ||
+    String(item?.type ?? '').startsWith('payment_')
+  ) {
+    return '/settings?tab=billing';
+  }
+  const id = metadata.booking_id;
   if (id) return `/scheduling/bookings?id=${id}`;
-  return metadata?.route || '/scheduling/bookings';
+  if (metadata.route === '/settings/billing') return '/settings?tab=billing';
+  if (metadata.route) return metadata.route;
+  if (String(item?.type ?? '').startsWith('booking_')) return '/scheduling/bookings';
+  return '/scheduling/bookings';
 }
 
 function canUseBrowserNotifications() {
@@ -27,15 +43,14 @@ async function requestNotificationPermission() {
 function showBrowserNotification(item) {
   if (!canUseBrowserNotifications() || Notification.permission !== 'granted') return;
   try {
-    const notification = new Notification(item?.title || 'New booking request', {
-      body: item?.body || 'Someone requested a slot. Open to confirm or decline.',
+    const notification = new Notification(item?.title || 'New notification', {
+      body: item?.body || 'Open AutoWave to view details.',
       tag: `owner-notification-${item?.id ?? Date.now()}`,
       requireInteraction: true,
     });
     notification.onclick = () => {
       window.focus();
-      const link = bookingLink(item?.metadata);
-      window.location.href = link;
+      window.location.href = notificationLink(item);
       notification.close();
     };
   } catch {
@@ -207,7 +222,7 @@ export default function NotificationBell() {
               items.map((item) => (
                 <Link
                   key={item.id}
-                  to={bookingLink(item.metadata)}
+                  to={notificationLink(item)}
                   onClick={() => openItem(item)}
                   className={`block border-b border-slate-50 px-4 py-3 hover:bg-slate-50 ${
                     !item.is_read ? 'bg-emerald-50/40' : ''

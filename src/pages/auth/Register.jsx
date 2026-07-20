@@ -21,7 +21,7 @@ export default function Register() {
     try {
       const { data } = await api.post('/auth/register', form);
       dispatch(setCredentials(data));
-      toast.success('Welcome! Let\'s set up your auto-replies.');
+      toast.success('Welcome! Check your email to confirm your address.');
       navigate(await resolvePostAuthPath(api, data.user));
     } catch (err) {
       const errors = err.response?.data?.errors;
