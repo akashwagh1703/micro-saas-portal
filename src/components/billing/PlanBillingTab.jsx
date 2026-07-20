@@ -5,6 +5,7 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import api from '../../services/api';
 import { loadRazorpay } from '../../utils/loadRazorpay';
+import UpiManualPaymentSection from './UpiManualPaymentSection';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -28,6 +29,7 @@ function StatusBadge({ status }) {
     past_due: 'bg-orange-100 text-orange-800',
     expired: 'bg-red-100 text-red-800',
     cancelled: 'bg-slate-100 text-slate-700',
+    pending_verification: 'bg-amber-100 text-amber-900',
   };
   const labels = {
     trial: 'Free trial',
@@ -35,6 +37,7 @@ function StatusBadge({ status }) {
     past_due: 'Payment issue',
     expired: 'Expired',
     cancelled: 'Cancelled',
+    pending_verification: 'Pending verification',
   };
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${styles[status] || styles.expired}`}>
@@ -49,6 +52,8 @@ function eventLabel(eventType) {
     'subscription.charged': 'Renewal payment',
     'subscription.cancel_requested': 'Cancellation scheduled',
     'payment.captured': 'Payment received',
+    'manual.approved': 'UPI payment approved',
+    'manual.rejected': 'UPI payment rejected',
   };
   return map[eventType] || eventType?.replace(/[._]/g, ' ') || 'Transaction';
 }
@@ -58,6 +63,8 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
   const [cancelling, setCancelling] = useState(false);
   const [transactions, setTransactions] = useState([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [paymentConfig, setPaymentConfig] = useState(null);
+  const [configLoading, setConfigLoading] = useState(false);
 
   useEffect(() => {
     if (!billing?.billing_enabled) return;
@@ -68,6 +75,21 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
       .catch(() => setTransactions([]))
       .finally(() => setTransactionsLoading(false));
   }, [billing?.billing_enabled, billing?.status]);
+
+  const showUpi =
+    billing?.payment_mode === 'upi_manual' || billing?.payment_mode === 'both';
+  const showRazorpay =
+    billing?.payment_mode === 'razorpay' || billing?.payment_mode === 'both';
+
+  useEffect(() => {
+    if (!billing?.billing_enabled || !showUpi) return;
+    setConfigLoading(true);
+    api
+      .get('/billing/payment-config')
+      .then((r) => setPaymentConfig(r.data))
+      .catch(() => setPaymentConfig(null))
+      .finally(() => setConfigLoading(false));
+  }, [billing?.billing_enabled, billing?.payment_mode, showUpi]);
 
   if (!billing) {
     return (
@@ -162,8 +184,10 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
     }
   };
 
-  const canSubscribe = status !== 'active' && status !== 'past_due';
+  const canSubscribe =
+    status !== 'active' && status !== 'past_due' && status !== 'pending_verification';
   const showCancel = status === 'active' && !cancel_at_period_end;
+  const upiOnly = billing.payment_mode === 'upi_manual';
 
   return (
     <div className="space-y-4">
@@ -181,6 +205,15 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
             </p>
           </div>
         </div>
+
+        {status === 'pending_verification' && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <p className="text-sm font-medium text-amber-900">Payment under review</p>
+            <p className="mt-1 text-xs text-amber-800/90">
+              We are verifying your UPI payment. Auto-replies stay paused until approval (usually within 24 hours).
+            </p>
+          </div>
+        )}
 
         {status === 'past_due' && (
           <div className="mt-4 rounded-lg border border-orange-200 bg-orange-50 p-3">
@@ -227,14 +260,30 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
               </div>
             </>
           )}
-          {(status === 'expired' || status === 'cancelled') && (
-            <div className="rounded-lg border border-red-100 bg-red-50 p-3 sm:col-span-2">
-              <p className="text-sm font-medium text-red-900">
-                {has_access ? 'Access active until period end' : 'Auto-replies are paused until you subscribe.'}
+          {(status === 'expired' || status === 'cancelled' || status === 'pending_verification') && (
+            <div
+              className={`rounded-lg p-3 sm:col-span-2 ${
+                status === 'pending_verification'
+                  ? 'border border-amber-100 bg-amber-50'
+                  : 'border border-red-100 bg-red-50'
+              }`}
+            >
+              <p
+                className={`text-sm font-medium ${
+                  status === 'pending_verification' ? 'text-amber-900' : 'text-red-900'
+                }`}
+              >
+                {status === 'pending_verification'
+                  ? 'Waiting for payment verification'
+                  : has_access
+                    ? 'Access active until period end'
+                    : 'Auto-replies are paused until you subscribe.'}
               </p>
-              <p className="mt-1 text-xs text-red-800/80">
-                Your data is safe. Subscribe below to go live again.
-              </p>
+              {status !== 'pending_verification' && (
+                <p className="mt-1 text-xs text-red-800/80">
+                  Your data is safe. Subscribe below to go live again.
+                </p>
+              )}
             </div>
           )}
         </dl>
@@ -251,7 +300,16 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
         )}
       </Card>
 
-      {canSubscribe && (
+      {showUpi && (
+        <UpiManualPaymentSection
+          billing={billing}
+          paymentConfig={paymentConfig}
+          configLoading={configLoading}
+          onStatusChange={onStatusChange}
+        />
+      )}
+
+      {canSubscribe && showRazorpay && !upiOnly && (
         <div className="grid gap-4 sm:grid-cols-2">
           <Card className="!p-5">
             <p className="text-sm font-medium text-slate-500">Monthly</p>
@@ -309,13 +367,13 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
         </div>
       )}
 
-      {canSubscribe && !razorpay_configured && (
+      {canSubscribe && showRazorpay && !upiOnly && !razorpay_configured && (
         <p className="text-center text-xs text-amber-700">
           Online payments are not configured on this server yet. Set RAZORPAY_* variables in API env.
         </p>
       )}
 
-      {razorpay_configured && billing.razorpay_webhook_url && (
+      {showRazorpay && !upiOnly && razorpay_configured && billing.razorpay_webhook_url && (
         <Card>
           <p className="text-sm font-medium text-slate-900">Razorpay webhook (server admin)</p>
           <p className="mt-1 text-xs text-slate-500">

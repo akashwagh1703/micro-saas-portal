@@ -15,6 +15,28 @@ export default function BillingBanner({ billing, onRefresh }) {
 
   const { status, days_left, trial_ends_at, current_period_end, plan } = billing;
 
+  if (status === 'pending_verification') {
+    return (
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200/80 bg-gradient-to-r from-amber-50 to-yellow-50 px-4 py-3.5 shadow-sm">
+        <div className="flex items-start gap-3">
+          <Clock size={18} className="text-amber-700" />
+          <div>
+            <p className="text-sm font-medium text-amber-900">UPI payment under review</p>
+            <p className="text-xs text-amber-800/90">
+              Auto-replies are paused until we verify your payment (usually within 24 hours).
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/settings?tab=billing"
+          className="rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-amber-900 shadow-sm ring-1 ring-amber-200 hover:bg-amber-50"
+        >
+          View status
+        </Link>
+      </div>
+    );
+  }
+
   if (status === 'trial') {
     const urgent = days_left <= 3;
     return (
@@ -158,6 +180,16 @@ export function BillingSidebarBadge({ billing, dark = false }) {
         className={`${base} ${dark ? 'bg-orange-500/15 text-orange-200 ring-orange-400/20 hover:bg-orange-500/25' : 'block bg-orange-50 text-orange-800 hover:bg-orange-100'}`}
       >
         Payment issue
+      </Link>
+    );
+  }
+  if (status === 'pending_verification') {
+    return (
+      <Link
+        to="/settings?tab=billing"
+        className={`${base} ${dark ? 'bg-amber-500/15 text-amber-200 ring-amber-400/20 hover:bg-amber-500/25' : 'block bg-amber-50 text-amber-900 hover:bg-amber-100'}`}
+      >
+        Payment pending
       </Link>
     );
   }

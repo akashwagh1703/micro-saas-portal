@@ -12,6 +12,7 @@ import {
   MessageCircle,
   LayoutDashboard,
   Receipt,
+  QrCode,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
@@ -21,9 +22,14 @@ import Input from '../components/ui/Input';
 import PageHeader from '../components/ui/PageHeader';
 import StatCard from '../components/ui/StatCard';
 import { BarChart, DonutChart, formatInr } from '../components/admin/AdminCharts';
+import AdminPaymentReviews from '../components/admin/AdminPaymentReviews';
+import AdminSubscriptionControls from '../components/admin/AdminSubscriptionControls';
+import AdminUserPendingPayment from '../components/admin/AdminUserPendingPayment';
+import { formatBillingEventType } from '../components/admin/adminBillingHelpers';
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'payments', label: 'UPI payments', icon: QrCode },
   { id: 'users', label: 'Users & plans', icon: Users },
   { id: 'transactions', label: 'Transactions', icon: Receipt },
 ];
@@ -53,6 +59,7 @@ function StatusPill({ status }) {
     active: 'bg-emerald-100 text-emerald-800',
     expired: 'bg-red-100 text-red-800',
     cancelled: 'bg-slate-100 text-slate-700',
+    pending_verification: 'bg-amber-100 text-amber-900',
     captured: 'bg-emerald-100 text-emerald-800',
     failed: 'bg-red-100 text-red-800',
   };
@@ -158,6 +165,22 @@ export default function Admin() {
     }
   };
 
+  const runSubscriptionAction = async (payload) => {
+    if (!selected) return;
+    setActionLoading(true);
+    try {
+      const { data } = await api.patch(`/admin/users/${selected.id}/subscription`, payload);
+      toast.success('Subscription updated');
+      await openUser(selected.id);
+      loadUsers(users.page);
+      loadOverview();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Update failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const runAccessAction = async (payload) => {
     if (!selected) return;
     setActionLoading(true);
@@ -192,6 +215,10 @@ export default function Admin() {
     ? [
         { label: 'Active', value: analytics.status_breakdown?.active ?? 0 },
         { label: 'Trial', value: analytics.status_breakdown?.trial ?? 0 },
+        {
+          label: 'Pending UPI',
+          value: analytics.status_breakdown?.pending_verification ?? 0,
+        },
         { label: 'Cancelled', value: analytics.status_breakdown?.cancelled ?? 0 },
         { label: 'Expired', value: analytics.status_breakdown?.expired ?? 0 },
       ]
@@ -246,6 +273,24 @@ export default function Admin() {
             <StatCard icon={UserPlus} label="New this week" value={overview.new_this_week} accent="emerald" />
             <StatCard icon={CreditCard} label="Active plans" value={overview.active_subscriptions} accent="blue" />
             <StatCard icon={Shield} label="On trial" value={overview.on_trial} accent="amber" />
+            <StatCard
+              icon={QrCode}
+              label="Pending UPI"
+              value={overview.pending_payment_submissions ?? 0}
+              accent="amber"
+            />
+            <StatCard
+              icon={Shield}
+              label="Awaiting verification"
+              value={overview.pending_verification_users ?? 0}
+              accent="amber"
+            />
+            <StatCard
+              icon={Receipt}
+              label="UPI approved (MTD)"
+              value={overview.manual_payments_mtd ?? 0}
+              accent="emerald"
+            />
             <StatCard
               icon={IndianRupee}
               label="Revenue (all time)"
@@ -317,6 +362,9 @@ export default function Admin() {
                         </td>
                         <td className="py-3 pr-4">
                           <PlanBadge plan={t.plan} />
+                          <p className="mt-0.5 text-[10px] text-slate-500">
+                            {formatBillingEventType(t.event_type)}
+                          </p>
                         </td>
                         <td className="py-3 pr-4 font-medium text-slate-900">
                           {formatInr(t.amount_inr)}
@@ -330,13 +378,22 @@ export default function Admin() {
                 </tbody>
               </table>
             </div>
-            <div className="mt-4">
+            <div className="mt-4 flex flex-wrap gap-2">
               <Button variant="secondary" onClick={() => setTab('transactions')}>
                 View all transactions
               </Button>
+              {(overview.pending_payment_submissions ?? 0) > 0 && (
+                <Button onClick={() => setTab('payments')}>
+                  Review {overview.pending_payment_submissions} pending UPI
+                </Button>
+              )}
             </div>
           </Card>
         </>
+      )}
+
+      {tab === 'payments' && (
+        <AdminPaymentReviews onOverviewRefresh={loadOverview} />
       )}
 
       {tab === 'users' && (
@@ -362,6 +419,7 @@ export default function Admin() {
                 <option value="active">Active</option>
                 <option value="expired">Expired</option>
                 <option value="cancelled">Cancelled</option>
+                <option value="pending_verification">Pending UPI</option>
               </select>
             </div>
             <div className="w-40">
@@ -549,7 +607,9 @@ export default function Admin() {
                         <p className="font-medium text-slate-900">{t.user_name}</p>
                         <p className="text-xs text-slate-500">{t.user_email}</p>
                       </td>
-                      <td className="py-3 pr-4 text-xs text-slate-600">{t.event_type}</td>
+                      <td className="py-3 pr-4 text-xs text-slate-600">
+                        {formatBillingEventType(t.event_type)}
+                      </td>
                       <td className="py-3 pr-4">
                         <PlanBadge plan={t.plan} />
                       </td>
@@ -639,6 +699,12 @@ export default function Admin() {
                   <dt className="text-slate-500">Period ends</dt>
                   <dd>{formatDate(selected.current_period_end)}</dd>
                 </div>
+                {selected.billing?.cancel_at_period_end ? (
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-slate-500">Cancel scheduled</dt>
+                    <dd className="text-amber-700">At period end</dd>
+                  </div>
+                ) : null}
                 <div className="flex justify-between gap-4">
                   <dt className="text-slate-500">Razorpay customer</dt>
                   <dd className="font-mono text-xs">{selected.razorpay_customer_id || '—'}</dd>
@@ -702,6 +768,7 @@ export default function Admin() {
                     <thead>
                       <tr className="text-slate-500">
                         <th className="py-1 pr-2">Date</th>
+                        <th className="py-1 pr-2">Type</th>
                         <th className="py-1 pr-2">Plan</th>
                         <th className="py-1 pr-2">Amount</th>
                         <th className="py-1">Status</th>
@@ -711,6 +778,9 @@ export default function Admin() {
                       {selected.transactions.map((t) => (
                         <tr key={t.id} className="border-t border-slate-50">
                           <td className="py-2 pr-2">{formatDate(t.created_at)}</td>
+                          <td className="py-2 pr-2 text-slate-600">
+                            {formatBillingEventType(t.event_type)}
+                          </td>
                           <td className="py-2 pr-2">{t.plan || '—'}</td>
                           <td className="py-2 pr-2">{formatInr(t.amount_inr)}</td>
                           <td className="py-2">
@@ -724,9 +794,25 @@ export default function Admin() {
               </div>
             )}
 
+            <AdminUserPendingPayment
+              user={selected}
+              loading={actionLoading}
+              onUpdated={async () => {
+                await openUser(selected.id);
+                loadUsers(users.page);
+                loadOverview();
+              }}
+            />
+
+            <AdminSubscriptionControls
+              user={selected}
+              loading={actionLoading}
+              onApply={(payload) => runSubscriptionAction(payload)}
+            />
+
             {!selected.is_super_admin && (
-              <div className="mt-6 space-y-2 border-t border-slate-100 pt-4">
-                <p className="text-sm font-medium text-slate-900">Access controls</p>
+              <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+                <p className="text-sm font-medium text-slate-900">Quick access overrides</p>
                 <Button
                   className="w-full"
                   loading={actionLoading}

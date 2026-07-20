@@ -4,6 +4,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { AutoWaveMark } from '../components/brand/AutoWaveBrand';
 import { loadRazorpay } from '../utils/loadRazorpay';
+import CareerSeekerUpiPaymentSection from '../components/career/CareerSeekerUpiPaymentSection';
 
 const publicApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -25,12 +26,14 @@ function StatusBadge({ status }) {
     active: 'bg-emerald-100 text-emerald-800',
     expired: 'bg-red-100 text-red-800',
     cancelled: 'bg-slate-100 text-slate-700',
+    pending_verification: 'bg-amber-100 text-amber-900',
   };
   const labels = {
     trial: 'Free trial',
     active: 'Active',
     expired: 'Expired',
     cancelled: 'Cancelled',
+    pending_verification: 'Payment review',
   };
   return (
     <span
@@ -63,6 +66,8 @@ export default function CareerSeekerPortal() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [paying, setPaying] = useState(null);
+  const [paymentConfig, setPaymentConfig] = useState(null);
+  const [configLoading, setConfigLoading] = useState(false);
 
   const loadPortal = () => {
     if (!token) {
@@ -90,10 +95,30 @@ export default function CareerSeekerPortal() {
   }, [token]);
 
   const billing = data?.billing;
-  const canSubscribe =
+  const showRazorpay =
     billing?.billing_enabled &&
     billing?.status !== 'active' &&
-    billing?.razorpay_configured;
+    billing?.razorpay_configured &&
+    (billing?.payment_mode === 'razorpay' || billing?.payment_mode === 'both');
+  const showUpi =
+    billing?.billing_enabled &&
+    billing?.upi_configured &&
+    (billing?.payment_mode === 'upi_manual' || billing?.payment_mode === 'both');
+
+  useEffect(() => {
+    if (!token || !showUpi) {
+      setPaymentConfig(null);
+      return;
+    }
+    setConfigLoading(true);
+    publicApi
+      .get('/career/public/billing/payment-config', { params: { token } })
+      .then((res) => setPaymentConfig(res.data))
+      .catch(() => setPaymentConfig(null))
+      .finally(() => setConfigLoading(false));
+  }, [token, showUpi, billing?.status]);
+
+  const canSubscribe = showRazorpay;
 
   const startCheckout = async (planType) => {
     setPaying(planType);
@@ -215,6 +240,12 @@ export default function CareerSeekerPortal() {
                   </p>
                 )}
 
+                {billing.status === 'pending_verification' && (
+                  <p className="mt-2 text-sm text-amber-900">
+                    Your UPI payment is being verified. CareerAI access is paused until approval.
+                  </p>
+                )}
+
                 {(billing.status === 'expired' || billing.status === 'cancelled') && (
                   <p className="mt-2 text-sm text-red-800">
                     Subscribe to unlock job matching, mock interviews, and AI guidance on WhatsApp.
@@ -246,10 +277,24 @@ export default function CareerSeekerPortal() {
                   </div>
                 )}
 
-                {canSubscribe && !billing.razorpay_configured && (
+                {showUpi && (
+                  <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                    <CareerSeekerUpiPaymentSection
+                      token={token}
+                      publicApi={publicApi}
+                      billing={billing}
+                      paymentConfig={paymentConfig}
+                      configLoading={configLoading}
+                      onStatusChange={(status) => {
+                        setData((prev) => (prev ? { ...prev, billing: status } : prev));
+                      }}
+                    />
+                  </div>
+                )}
+
+                {!canSubscribe && !showUpi && billing.billing_enabled && billing.status !== 'active' && (
                   <p className="mt-2 text-xs text-amber-800">
-                    Online payments are not configured yet. Reply SUBSCRIBE on WhatsApp or contact
-                    support.
+                    Payments are not configured yet. Reply SUBSCRIBE on WhatsApp or contact your career coach.
                   </p>
                 )}
               </section>

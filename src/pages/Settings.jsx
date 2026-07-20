@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, useOutletContext, Link } from 'react-router-dom';
-import { Copy, ExternalLink, CheckCircle2 } from 'lucide-react';
+import { Copy, ExternalLink, CheckCircle2, QrCode, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
@@ -78,6 +78,8 @@ export default function Settings() {
   });
   const [careerForm, setCareerForm] = useState({});
   const [careerErrors, setCareerErrors] = useState({});
+  const [uploadingCareerQr, setUploadingCareerQr] = useState(false);
+  const [careerQrPreview, setCareerQrPreview] = useState(null);
   const [webhookUrl, setWebhookUrl] = useState('');
   const [igWebhookUrl, setIgWebhookUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -133,6 +135,32 @@ export default function Settings() {
     }
   }, [user, showCareerTab, loadBusinessProfile]);
 
+  useEffect(() => {
+    if (!showCareerTab || !careerSettings.seeker_billing?.upi_qr_url) {
+      if (careerQrPreview) URL.revokeObjectURL(careerQrPreview);
+      setCareerQrPreview(null);
+      return undefined;
+    }
+    let cancelled = false;
+    api
+      .get('/career/billing/upi-qr', { responseType: 'blob' })
+      .then((res) => {
+        if (!cancelled) setCareerQrPreview(URL.createObjectURL(res.data));
+      })
+      .catch(() => {
+        if (!cancelled) setCareerQrPreview(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [showCareerTab, careerSettings.seeker_billing?.upi_qr_url]);
+
+  useEffect(() => {
+    return () => {
+      if (careerQrPreview) URL.revokeObjectURL(careerQrPreview);
+    };
+  }, [careerQrPreview]);
+
   const copyWebhook = () => {
     if (!webhookUrl) return;
     navigator.clipboard.writeText(webhookUrl);
@@ -150,6 +178,32 @@ export default function Settings() {
     if (!url) return;
     navigator.clipboard.writeText(url);
     toast.success('Razorpay webhook URL copied');
+  };
+
+  const uploadCareerUpiQr = async (file) => {
+    if (!file) return;
+    setUploadingCareerQr(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const { data } = await api.post('/career/billing/upi-qr', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      toast.success('UPI QR code uploaded');
+      const settingsRes = await api.get('/career/settings');
+      setCareerSettings(settingsRes.data);
+      try {
+        const qrRes = await api.get('/career/billing/upi-qr', { responseType: 'blob' });
+        if (careerQrPreview) URL.revokeObjectURL(careerQrPreview);
+        setCareerQrPreview(URL.createObjectURL(qrRes.data));
+      } catch {
+        /* preview optional */
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not upload QR code');
+    } finally {
+      setUploadingCareerQr(false);
+    }
   };
 
   const saveProfile = async () => {
@@ -731,7 +785,7 @@ export default function Settings() {
 
           <Card title="Job seeker subscription">
             <p className="mb-4 text-sm text-slate-600">
-              Charge candidates with your own Razorpay account. Create two seeker plans in Razorpay, then paste credentials and plan IDs below.
+              Charge candidates with Razorpay and/or UPI manual payments. Configure at least one payment method below.
             </p>
             <div className="space-y-4">
               <label className="flex items-center gap-2 text-sm">
@@ -746,6 +800,85 @@ export default function Settings() {
                 />
                 Enable job seeker billing (trial then paid)
               </label>
+
+              <div>
+                <p className="text-sm font-medium text-slate-900">Payment mode</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Choose how job seekers pay after their free trial.
+                </p>
+                <select
+                  value={
+                    careerForm.seeker_payment_mode ??
+                    careerSettings.seeker_billing?.payment_mode ??
+                    'razorpay'
+                  }
+                  onChange={(e) => patchCareerField('seeker_payment_mode', e.target.value)}
+                  className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="razorpay">Razorpay only</option>
+                  <option value="upi_manual">UPI manual only</option>
+                  <option value="both">Both Razorpay and UPI</option>
+                </select>
+              </div>
+
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 space-y-4">
+                <div className="flex items-center gap-2">
+                  <QrCode size={18} className="text-emerald-700" />
+                  <p className="text-sm font-semibold text-emerald-900">UPI manual payments</p>
+                </div>
+                <Input
+                  label="UPI ID (VPA)"
+                  type="text"
+                  value={careerForm.seeker_upi_vpa ?? careerSettings.seeker_billing?.upi_vpa ?? ''}
+                  onChange={(e) => patchCareerField('seeker_upi_vpa', e.target.value.trim())}
+                  placeholder="yourname@upi"
+                  autoComplete="off"
+                />
+                <Input
+                  label="Payee name (shown to seekers)"
+                  type="text"
+                  value={careerForm.seeker_upi_payee_name ?? careerSettings.seeker_billing?.upi_payee_name ?? ''}
+                  onChange={(e) => patchCareerField('seeker_upi_payee_name', e.target.value)}
+                  placeholder="Your business name"
+                  autoComplete="off"
+                />
+                <div>
+                  <p className="text-sm font-medium text-slate-900">Static UPI QR code</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Upload a QR image seekers scan to pay you directly.
+                  </p>
+                  {careerQrPreview && (
+                    <img
+                      src={careerQrPreview}
+                      alt="UPI QR preview"
+                      className="mt-3 max-h-40 rounded-lg border border-slate-200 bg-white p-2"
+                    />
+                  )}
+                  <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                    <Upload size={16} />
+                    {uploadingCareerQr ? 'Uploading…' : 'Upload QR image'}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      disabled={uploadingCareerQr}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadCareerUpiQr(file);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                </div>
+                {careerSettings.seeker_billing?.enabled &&
+                  (careerSettings.seeker_billing?.payment_mode === 'upi_manual' ||
+                    careerSettings.seeker_billing?.payment_mode === 'both') &&
+                  !careerSettings.seeker_billing?.upi_configured && (
+                    <p className="text-xs text-amber-700">
+                      UPI is incomplete — add UPI ID and upload a QR code.
+                    </p>
+                  )}
+              </div>
 
               <Input
                 label="Razorpay Key ID"
@@ -855,9 +988,12 @@ export default function Settings() {
                 placeholder="plan_..."
                 autoComplete="off"
               />
-              {!careerSettings.seeker_billing?.razorpay_configured && careerSettings.seeker_billing?.enabled && (
+              {!careerSettings.seeker_billing?.razorpay_configured &&
+                careerSettings.seeker_billing?.enabled &&
+                (careerSettings.seeker_billing?.payment_mode === 'razorpay' ||
+                  careerSettings.seeker_billing?.payment_mode === 'both') && (
                 <p className="text-xs text-amber-700">
-                  Billing is enabled but Razorpay is incomplete — add Key ID, Secret, Webhook secret, and both plan IDs.
+                  Razorpay is incomplete — add Key ID, Secret, Webhook secret, and both plan IDs.
                 </p>
               )}
             </div>

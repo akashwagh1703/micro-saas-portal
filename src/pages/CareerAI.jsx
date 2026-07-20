@@ -11,6 +11,7 @@ import {
   ChevronRight,
   ExternalLink,
   RefreshCw,
+  Wallet,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../services/api';
@@ -21,6 +22,7 @@ import Input from '../components/ui/Input';
 import Pagination from '../components/ui/Pagination';
 import { CAREER_MATCH_THRESHOLD, formatMatchThreshold } from '../constants/career';
 import { useOutletContext } from 'react-router-dom';
+import CareerSeekerPaymentReviews from '../components/career/CareerSeekerPaymentReviews';
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: BarChart3 },
@@ -28,6 +30,7 @@ const TABS = [
   { id: 'jobs', label: 'Jobs & matches', icon: Briefcase },
   { id: 'applications', label: 'Applications', icon: FileText },
   { id: 'alerts', label: 'Alerts', icon: Bell },
+  { id: 'payments', label: 'Payments', icon: Wallet },
 ];
 
 const APPLICATION_STATUSES = [
@@ -1496,6 +1499,8 @@ export default function CareerAI() {
               </div>
             </Card>
           )}
+
+          {tab === 'payments' && <CareerSeekerPaymentReviews />}
 
         </>
       )}
