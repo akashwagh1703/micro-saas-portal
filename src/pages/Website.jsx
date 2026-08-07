@@ -6,6 +6,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import SectionEditor from '../components/catalog/SectionEditor';
+import ThemePanel from '../components/catalog/ThemePanel';
 import { SECTION_META, SECTION_ORDER } from '../components/catalog/sectionConfig';
 import {
   createCatalogSite,
@@ -321,6 +322,13 @@ export default function Website() {
             </li>
           ))}
         </ul>
+      </Card>
+
+      <Card
+        title="Appearance"
+        description="Light / dark mode and brand colors for the public catalog page."
+      >
+        <ThemePanel site={site} onChanged={load} />
       </Card>
 
       <Card title="Site details" description="Shown across header, contact, and WhatsApp-facing copy.">
