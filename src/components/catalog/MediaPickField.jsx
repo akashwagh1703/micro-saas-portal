@@ -3,7 +3,7 @@ import { ImagePlus, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from '../ui/Button';
 import AuthMediaImg from './AuthMediaImg';
-import { uploadCatalogMedia } from '../../services/catalogApi';
+import { catalogUploadErrorMessage, uploadCatalogMedia } from '../../services/catalogApi';
 
 /**
  * Pick / upload a single image (or multi for slider).
@@ -84,7 +84,7 @@ export default function MediaPickField({
       }
       toast.success('Image uploaded — click Save to apply');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Upload failed');
+      toast.error(catalogUploadErrorMessage(err));
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import MediaPickField from './MediaPickField';
 import { DEFAULT_THEME, mergeTheme, THEME_MODES } from './sectionConfig';
 import { updateCatalogSite } from '../../services/catalogApi';
 
@@ -27,6 +28,9 @@ export default function ThemePanel({ site, onChanged }) {
           accent_ink: theme.accent_ink || DEFAULT_THEME.accent_ink,
           hero_from: theme.hero_from || DEFAULT_THEME.hero_from,
           hero_to: theme.hero_to || DEFAULT_THEME.hero_to,
+          whatsapp_logo_media_id: theme.whatsapp_logo_media_id
+            ? Number(theme.whatsapp_logo_media_id)
+            : null,
         },
       });
       toast.success('Appearance saved');
@@ -83,6 +87,16 @@ export default function ThemePanel({ site, onChanged }) {
           label="Hero end"
           value={theme.hero_to}
           onChange={(v) => setField('hero_to', v)}
+        />
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+        <MediaPickField
+          site={site}
+          label="WhatsApp message logo"
+          hint="Shown with Welcome, Website, and Order replies on WhatsApp. Square logo works best. Falls back to your Header logo if empty. Click Save appearance after choosing."
+          value={theme.whatsapp_logo_media_id}
+          onChange={(id) => setField('whatsapp_logo_media_id', id)}
         />
       </div>
 

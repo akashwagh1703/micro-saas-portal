@@ -3,7 +3,12 @@ import { ImagePlus, Trash2, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from '../ui/Button';
 import AuthMediaImg from './AuthMediaImg';
-import { deleteCatalogMedia, uploadCatalogMedia, updateCatalogMedia } from '../../services/catalogApi';
+import {
+  catalogUploadErrorMessage,
+  deleteCatalogMedia,
+  uploadCatalogMedia,
+  updateCatalogMedia,
+} from '../../services/catalogApi';
 
 export default function GalleryMediaPanel({
   site,
@@ -36,7 +41,7 @@ export default function GalleryMediaPanel({
       toast.success('Image uploaded');
       onChanged?.();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Upload failed');
+      toast.error(catalogUploadErrorMessage(err));
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -60,7 +65,7 @@ export default function GalleryMediaPanel({
       toast.success('Document uploaded');
       onChanged?.();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Upload failed');
+      toast.error(catalogUploadErrorMessage(err));
     } finally {
       setUploading(false);
     }

@@ -54,6 +54,20 @@ export async function uploadCatalogMedia(file, { kind = 'image', section_id, alt
   return data?.media;
 }
 
+/** Friendly message when nginx 413 / network looks like a CORS failure in DevTools. */
+export function catalogUploadErrorMessage(err) {
+  const status = err?.response?.status;
+  const apiMsg = err?.response?.data?.message;
+  if (typeof apiMsg === 'string' && apiMsg.trim()) return apiMsg;
+  if (status === 413) {
+    return 'File is too large for the server. Use an image under 5 MB (or ask admin to raise nginx client_max_body_size).';
+  }
+  if (!err?.response) {
+    return 'Upload blocked (often file too large). Use JPEG/PNG under 5 MB and try again.';
+  }
+  return 'Upload failed';
+}
+
 export async function updateCatalogMedia(id, payload) {
   const { data } = await api.patch(`/catalog/media/${id}`, payload);
   return data?.media;

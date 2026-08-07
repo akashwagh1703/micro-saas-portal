@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import AuthMediaImg from './AuthMediaImg';
 import {
+  catalogUploadErrorMessage,
   createCatalogProduct,
   deleteCatalogProduct,
   updateCatalogProduct,
@@ -84,7 +85,7 @@ export default function ProductsPanel({ site, onChanged }) {
       toast.success('Image ready — save the product to attach it');
       onChanged?.();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Upload failed');
+      toast.error(catalogUploadErrorMessage(err));
     }
   };
 
