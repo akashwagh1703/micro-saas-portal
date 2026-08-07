@@ -31,6 +31,7 @@ const CareerSeekerPortal = lazy(() => import('./pages/CareerSeekerPortal'));
 const SchedulingResources = lazy(() => import('./pages/scheduling/SchedulingResources'));
 const SchedulingResourceDetail = lazy(() => import('./pages/scheduling/SchedulingResourceDetail'));
 const SchedulingBookings = lazy(() => import('./pages/scheduling/SchedulingBookings'));
+const Website = lazy(() => import('./pages/Website'));
 
 export default function App() {
   return (
@@ -59,6 +60,7 @@ export default function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/inbox" element={<Inbox />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/website" element={<Website />} />
               <Route element={<NonCareerAiRoute />}>
                 <Route path="/contacts" element={<Contacts />} />
                 <Route path="/leads" element={<Leads />} />

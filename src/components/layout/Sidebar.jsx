@@ -13,6 +13,7 @@ import {
   Globe,
   CalendarClock,
   Scissors,
+  LayoutTemplate,
 } from 'lucide-react';
 import api from '../../services/api';
 import { logout } from '../../store/authSlice';
@@ -27,6 +28,7 @@ const defaultNavItems = [
   { to: '/inbox', icon: Inbox, label: 'Messages', hint: 'Customer chats' },
   { to: '/contacts', icon: Users, label: 'Contacts', hint: 'People who messaged you' },
   { to: '/leads', icon: UserPlus, label: 'Leads', hint: 'Captured from auto-replies' },
+  { to: '/website', icon: LayoutTemplate, label: 'Website', hint: 'Catalog & brochure page' },
   { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, CareerAI & billing' },
 ];
 

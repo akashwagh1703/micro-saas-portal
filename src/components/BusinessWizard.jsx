@@ -112,6 +112,17 @@ const FALLBACK_BUSINESS_OPTIONS = [
     max_use_cases: 1,
     visible_in_signup: true,
   },
+  {
+    key: 'catalog',
+    label: 'Catalog / Brochure',
+    hint: 'Share info, photos, and prices via WhatsApp + a public page (no cart).',
+    example: 'Customer says Hi → welcome, gallery, short catalog link.',
+    recommended_use_cases: ['catalog_share'],
+    supports_use_case_picker: false,
+    allowed_use_cases: ['catalog_share'],
+    max_use_cases: 1,
+    visible_in_signup: true,
+  },
 ];
 
 const FALLBACK_USE_CASE_OPTIONS = [
@@ -134,6 +145,13 @@ const FALLBACK_USE_CASE_OPTIONS = [
     label: 'Customer Support',
     hint: 'Answer questions and resolve issues automatically.',
     example: 'Order status, complaints, general help.',
+    visible_in_signup: true,
+  },
+  {
+    key: 'catalog_share',
+    label: 'Catalog / Brochure',
+    hint: 'Share business info, photos, and a short website link on WhatsApp.',
+    example: 'Customer says Hi → welcome, photos, catalog link.',
     visible_in_signup: true,
   },
 ];
@@ -402,6 +420,10 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
         toast.success(`Business updated to ${newProfile.business_label}`);
       } else if (business === 'career_ai') {
         toast.success('CareerAI is ready — connect WhatsApp, then fetch jobs');
+      } else if (business === 'catalog') {
+        toast.success(
+          'Catalog WhatsApp flow created (draft). Publish it under Auto-replies, then build your page in Website.',
+        );
       } else {
         const count = data.workflows?.length ?? 0;
         toast.success(
