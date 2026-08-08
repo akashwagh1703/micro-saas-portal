@@ -6,6 +6,7 @@ import Button from '../ui/Button';
 import api from '../../services/api';
 import { loadRazorpay } from '../../utils/loadRazorpay';
 import UpiManualPaymentSection from './UpiManualPaymentSection';
+import WebsiteAddonBillingSection from './WebsiteAddonBillingSection';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -200,7 +201,8 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
               <StatusBadge status={status} />
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              One platform fee — full access to WhatsApp and Instagram auto-replies, unified inbox, leads, and contacts.
+              Platform plan for WhatsApp and Instagram auto-replies, inbox, leads, and contacts.
+              Your free trial includes bots and Website publish. After trial, Website publish is an optional add-on below.
               Meta messaging and AI costs are billed separately in your own accounts.
             </p>
           </div>
@@ -306,8 +308,17 @@ export default function PlanBillingTab({ billing, onStatusChange }) {
           paymentConfig={paymentConfig}
           configLoading={configLoading}
           onStatusChange={onStatusChange}
+          product="platform"
         />
       )}
+
+      <WebsiteAddonBillingSection
+        billing={billing}
+        paymentConfig={paymentConfig}
+        configLoading={configLoading}
+        showUpi={showUpi}
+        onStatusChange={onStatusChange}
+      />
 
       {canSubscribe && showRazorpay && !upiOnly && (
         <div className="grid gap-4 sm:grid-cols-2">

@@ -14,11 +14,28 @@ function copyText(text, label) {
   );
 }
 
+function apiErrorMessage(err, fallback) {
+  const raw = err?.response?.data?.message;
+  if (typeof raw === 'string') return raw;
+  if (raw && typeof raw === 'object' && typeof raw.message === 'string') return raw.message;
+  return fallback;
+}
+
+const DEFAULT_PLATFORM_BENEFITS = ['Full platform access', 'WhatsApp + Instagram'];
+const DEFAULT_WEBSITE_BENEFITS = [
+  'Publish your public brochure page',
+  'Share /c/slug from WhatsApp',
+];
+
 export default function UpiManualPaymentSection({
   billing,
   paymentConfig,
   configLoading,
   onStatusChange,
+  product = 'platform',
+  title,
+  description,
+  benefits,
 }) {
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [utr, setUtr] = useState('');
@@ -26,12 +43,30 @@ export default function UpiManualPaymentSection({
   const [preview, setPreview] = useState(null);
   const fileRef = useRef(null);
 
-  const prices = paymentConfig || billing?.prices || { monthly_inr: 99, yearly_inr: 999 };
+  const isWebsite = product === 'website';
+  const website = billing?.website;
+  const status = isWebsite ? website?.status : billing?.status;
+  const pending = isWebsite ? website?.pending_submission : billing?.pending_submission;
+
+  const prices = isWebsite
+    ? paymentConfig?.website?.prices ||
+      website?.prices || { monthly_inr: 99, yearly_inr: 799 }
+    : {
+        monthly_inr: paymentConfig?.monthly_inr ?? billing?.prices?.monthly_inr ?? 99,
+        yearly_inr: paymentConfig?.yearly_inr ?? billing?.prices?.yearly_inr ?? 999,
+      };
+
   const amount = selectedPlan === 'yearly' ? prices.yearly_inr : prices.monthly_inr;
   const canSubmit =
-    billing?.status !== 'active' &&
-    billing?.status !== 'pending_verification' &&
-    billing?.status !== 'past_due';
+    status !== 'active' && status !== 'pending_verification' && status !== 'past_due';
+
+  const sectionTitle = title || (isWebsite ? 'Pay for Website add-on' : 'Pay via UPI');
+  const sectionDescription =
+    description ||
+    (isWebsite
+      ? 'Scan the QR code, pay the Website add-on amount, then submit your transaction ID and screenshot. Publish unlocks after verification (usually within 24 hours).'
+      : 'Scan the QR code, pay the exact amount, then submit your transaction ID and screenshot below. Access unlocks after manual verification (usually within 24 hours).');
+  const featureList = benefits || (isWebsite ? DEFAULT_WEBSITE_BENEFITS : DEFAULT_PLATFORM_BENEFITS);
 
   const onFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -65,6 +100,7 @@ export default function UpiManualPaymentSection({
       form.append('plan', selectedPlan);
       form.append('upi_transaction_id', utr.trim());
       form.append('file', file);
+      form.append('product', product);
 
       const { data } = await api.post('/billing/manual-payment', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -77,7 +113,7 @@ export default function UpiManualPaymentSection({
       if (preview) URL.revokeObjectURL(preview);
       setPreview(null);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Could not submit payment');
+      toast.error(apiErrorMessage(err, 'Could not submit payment'));
     } finally {
       setSubmitting(false);
     }
@@ -110,12 +146,9 @@ export default function UpiManualPaymentSection({
       <Card className="!p-5">
         <div className="flex items-center gap-2">
           <QrCode size={20} className="text-emerald-600" />
-          <h3 className="font-semibold text-slate-900">Pay via UPI</h3>
+          <h3 className="font-semibold text-slate-900">{sectionTitle}</h3>
         </div>
-        <p className="mt-2 text-sm text-slate-600">
-          Scan the QR code, pay the exact amount, then submit your transaction ID and screenshot below.
-          Access unlocks after manual verification (usually within 24 hours).
-        </p>
+        <p className="mt-2 text-sm text-slate-600">{sectionDescription}</p>
 
         <div className="mt-4 flex flex-wrap gap-2">
           {['monthly', 'yearly'].map((plan) => (
@@ -194,7 +227,11 @@ export default function UpiManualPaymentSection({
                   />
                   {preview ? (
                     <div className="mt-2 overflow-hidden rounded-xl border border-slate-200">
-                      <img src={preview} alt="Payment proof preview" className="max-h-40 w-full object-contain bg-slate-50" />
+                      <img
+                        src={preview}
+                        alt="Payment proof preview"
+                        className="max-h-40 w-full object-contain bg-slate-50"
+                      />
                     </div>
                   ) : (
                     <button
@@ -221,24 +258,26 @@ export default function UpiManualPaymentSection({
                   Submit for verification
                 </Button>
               </>
-            ) : billing?.status === 'pending_verification' ? (
+            ) : status === 'pending_verification' ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                 <p className="font-medium">Payment under review</p>
                 <p className="mt-1 text-xs text-amber-800/90">
-                  Your submission is being verified. Auto-replies stay paused until approval.
+                  {isWebsite
+                    ? 'Your Website add-on payment is being verified. Publish unlocks after approval.'
+                    : 'Your submission is being verified. Auto-replies stay paused until approval.'}
                 </p>
-                {billing.pending_submission && (
+                {pending && (
                   <ul className="mt-3 space-y-1 text-xs">
                     <li>
-                      Plan: <strong className="capitalize">{billing.pending_submission.plan}</strong>
+                      Plan: <strong className="capitalize">{pending.plan}</strong>
                     </li>
                     <li>
-                      Amount: <strong>₹{billing.pending_submission.amount_inr}</strong>
+                      Amount: <strong>₹{pending.amount_inr}</strong>
                     </li>
                     <li>
-                      UTR: <strong className="font-mono">{billing.pending_submission.upi_transaction_id}</strong>
+                      UTR: <strong className="font-mono">{pending.upi_transaction_id}</strong>
                     </li>
-                    <li>Submitted: {new Date(billing.pending_submission.created_at).toLocaleString()}</li>
+                    <li>Submitted: {new Date(pending.created_at).toLocaleString()}</li>
                   </ul>
                 )}
               </div>
@@ -246,15 +285,17 @@ export default function UpiManualPaymentSection({
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
                 <p className="flex items-center gap-2 font-medium">
                   <CheckCircle2 size={16} />
-                  Subscription active
+                  {isWebsite ? 'Website add-on active' : 'Subscription active'}
                 </p>
               </div>
             )}
 
-            {billing?.pending_submission?.status === 'rejected' && billing?.status !== 'pending_verification' && (
+            {pending?.status === 'rejected' && status !== 'pending_verification' && (
               <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900">
                 <p className="font-medium">Last payment rejected</p>
-                <p className="mt-1 text-xs">{billing.pending_submission.rejection_reason || 'Could not verify payment.'}</p>
+                <p className="mt-1 text-xs">
+                  {pending.rejection_reason || 'Could not verify payment.'}
+                </p>
                 <p className="mt-2 text-xs">You can submit again with the correct UTR and screenshot.</p>
               </div>
             )}
@@ -270,12 +311,12 @@ export default function UpiManualPaymentSection({
             <span className="text-base font-normal text-slate-500">/mo</span>
           </p>
           <ul className="mt-4 space-y-2 text-sm text-slate-600">
-            <li className="flex items-center gap-2">
-              <CheckCircle2 size={14} className="text-emerald-600" /> Full platform access
-            </li>
-            <li className="flex items-center gap-2">
-              <CheckCircle2 size={14} className="text-emerald-600" /> WhatsApp + Instagram
-            </li>
+            {featureList.map((item) => (
+              <li key={item} className="flex items-center gap-2">
+                <CheckCircle2 size={14} className="shrink-0 text-emerald-600" />
+                {item}
+              </li>
+            ))}
           </ul>
         </Card>
         <Card className="!p-5 ring-2 ring-emerald-500/30">

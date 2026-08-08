@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { Copy, ExternalLink, Globe2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import PageHeader from '../components/ui/PageHeader';
@@ -18,7 +19,17 @@ import {
   updateCatalogSlug,
 } from '../services/catalogApi';
 
+function apiErrorMessage(err, fallback) {
+  const raw = err?.response?.data?.message;
+  if (typeof raw === 'string') return raw;
+  if (raw && typeof raw === 'object' && typeof raw.message === 'string') return raw.message;
+  return fallback;
+}
+
 export default function Website() {
+  const navigate = useNavigate();
+  const { billing } = useOutletContext() ?? {};
+  const websiteBilling = billing?.website;
   const [site, setSite] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeType, setActiveType] = useState('header');
@@ -159,7 +170,16 @@ export default function Website() {
     }
   };
 
+  const publishLocked =
+    !!websiteBilling?.billing_enabled &&
+    !websiteBilling?.has_access &&
+    site?.status !== 'published';
+
   const togglePublish = async () => {
+    if (site.status !== 'published' && publishLocked) {
+      toast.error('Website publish needs the Website add-on. Open Plan & billing to subscribe.');
+      return;
+    }
     if (site.status !== 'published') {
       const about = (site.sections || []).find((s) => s.type === 'about');
       const aboutBody =
@@ -183,7 +203,17 @@ export default function Website() {
           : 'Unpublished — WhatsApp will stop sharing the public link',
       );
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Publish failed');
+      const body = err?.response?.data?.message;
+      const code = typeof body === 'object' ? body?.code : err?.response?.data?.code;
+      if (code === 'WEBSITE_REQUIRED' || code === 'website_payment_pending_verification') {
+        toast.error(
+          typeof body === 'object' && body?.message
+            ? body.message
+            : 'Website publish needs the Website add-on. Open Plan & billing to subscribe.',
+        );
+      } else {
+        toast.error(apiErrorMessage(err, 'Publish failed'));
+      }
     } finally {
       setPublishing(false);
     }
@@ -262,12 +292,51 @@ export default function Website() {
             >
               {site.status === 'published' ? 'Published' : 'Draft'}
             </span>
-            <Button type="button" variant="secondary" loading={publishing} onClick={togglePublish}>
-              {site.status === 'published' ? 'Unpublish' : 'Publish'}
-            </Button>
+            {site.status === 'published' ? (
+              <Button type="button" variant="secondary" loading={publishing} onClick={togglePublish}>
+                Unpublish
+              </Button>
+            ) : publishLocked ? (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => navigate('/settings?tab=billing')}
+              >
+                Unlock publish
+              </Button>
+            ) : (
+              <Button type="button" variant="secondary" loading={publishing} onClick={togglePublish}>
+                Publish
+              </Button>
+            )}
           </div>
         }
       />
+
+      {publishLocked && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-medium">
+            {websiteBilling?.status === 'pending_verification'
+              ? 'Website payment under review'
+              : 'Website publish is locked'}
+          </p>
+          <p className="mt-1 text-amber-900/90">
+            {websiteBilling?.status === 'pending_verification'
+              ? 'You can keep editing your draft. Publish unlocks after we verify your UPI payment (usually within 24 hours).'
+              : `You can keep editing your draft. To go live, subscribe to the Website add-on${
+                  websiteBilling?.prices
+                    ? ` (₹${websiteBilling.prices.monthly_inr}/mo or ₹${websiteBilling.prices.yearly_inr}/yr)`
+                    : ''
+                }.`}
+          </p>
+          <Link
+            to="/settings?tab=billing"
+            className="mt-2 inline-flex text-sm font-semibold text-emerald-800 underline-offset-2 hover:underline"
+          >
+            Open Plan &amp; billing →
+          </Link>
+        </div>
+      )}
 
       <Card>
         <div className="flex flex-wrap items-center gap-2">
