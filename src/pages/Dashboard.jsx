@@ -13,6 +13,8 @@ import {
   Target,
   ArrowRight,
   CalendarClock,
+  Package,
+  ShoppingBag,
 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import PageHeader from '../components/ui/PageHeader';
@@ -41,6 +43,24 @@ const schedulingStatConfig = [
   { key: 'bookings_today', label: 'Bookings today', icon: CalendarClock, accent: 'blue' },
   { key: 'bookings_upcoming', label: 'Upcoming appointments', icon: CalendarClock, accent: 'amber' },
   { key: 'resources_active', label: 'Active team members', icon: Users, accent: 'emerald' },
+];
+
+const catalogProductStatConfig = [
+  { key: 'catalog_products_total', label: 'Total products', icon: Package, accent: 'blue' },
+  { key: 'catalog_products_in_stock', label: 'In stock', icon: Package, accent: 'emerald' },
+  { key: 'catalog_products_out_of_stock', label: 'Out of stock', icon: Package, accent: 'rose' },
+];
+
+const catalogOrderStatConfig = [
+  {
+    key: 'catalog_orders_pending_verification',
+    label: 'Pending payments',
+    icon: ShoppingBag,
+    accent: 'amber',
+  },
+  { key: 'catalog_orders_confirmed', label: 'Confirmed orders', icon: ShoppingBag, accent: 'emerald' },
+  { key: 'catalog_orders_pending_payment', label: 'Awaiting payment', icon: ShoppingBag, accent: 'violet' },
+  { key: 'catalog_orders_completed', label: 'Completed', icon: ShoppingBag, accent: 'blue' },
 ];
 
 export default function Dashboard() {
@@ -127,6 +147,7 @@ export default function Dashboard() {
   const stats = progress?.stats;
   const isCareerAi = progress?.isCareerAi;
   const showSchedulingStats = supportsScheduling(progress?.profile);
+  const showCatalogStats = !!stats?.catalog_site_exists;
 
   if (isCareerAi) {
     const careerCards = careerStats
@@ -299,6 +320,61 @@ export default function Dashboard() {
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
                 {schedulingStatConfig.map(({ key, label, icon, accent }) => (
+                  <StatCard
+                    key={key}
+                    icon={icon}
+                    label={label}
+                    value={stats?.[key]}
+                    accent={accent}
+                  />
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {showCatalogStats && (
+            <Card title="Catalog commerce">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm text-slate-600">
+                  Stock and WhatsApp shop orders
+                  {stats?.catalog_payments_configured
+                    ? ' · payments ready'
+                    : ' · set up payment QR on Website to take orders'}
+                  {(stats?.catalog_orders_pending_verification ?? 0) > 0
+                    ? ` · ${stats.catalog_orders_pending_verification} need verification`
+                    : ''}
+                  .
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    to="/website"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-sky-700 hover:text-sky-900"
+                  >
+                    Products
+                    <ArrowRight size={14} />
+                  </Link>
+                  <Link
+                    to="/catalog-orders"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-sky-700 hover:text-sky-900"
+                  >
+                    Orders
+                    <ArrowRight size={14} />
+                  </Link>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {catalogProductStatConfig.map(({ key, label, icon, accent }) => (
+                  <StatCard
+                    key={key}
+                    icon={icon}
+                    label={label}
+                    value={stats?.[key]}
+                    accent={accent}
+                  />
+                ))}
+              </div>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {catalogOrderStatConfig.map(({ key, label, icon, accent }) => (
                   <StatCard
                     key={key}
                     icon={icon}

@@ -12,11 +12,28 @@ import {
   uploadCatalogMedia,
 } from '../../services/catalogApi';
 
+function StockBadge({ product }) {
+  const qty = Number(product.stock_quantity ?? 0);
+  const inStock = product.stock_status === 'in_stock' || qty > 0;
+  return (
+    <span
+      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+        inStock
+          ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200'
+          : 'bg-amber-50 text-amber-900 ring-1 ring-amber-200'
+      }`}
+    >
+      {inStock ? `In stock · ${qty}` : 'Out of stock'}
+    </span>
+  );
+}
+
 export default function ProductsPanel({ site, onChanged }) {
   const products = site?.products || [];
   const images = (site?.media || []).filter((m) => m.kind === 'image');
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
+  const [stock, setStock] = useState('0');
   const [description, setDescription] = useState('');
   const [imageMediaId, setImageMediaId] = useState('');
   const [saving, setSaving] = useState(false);
@@ -28,6 +45,11 @@ export default function ProductsPanel({ site, onChanged }) {
       toast.error('Product name is required');
       return;
     }
+    const stockQty = stock === '' ? 0 : Number(stock);
+    if (!Number.isFinite(stockQty) || stockQty < 0 || !Number.isInteger(stockQty)) {
+      toast.error('Stock must be a whole number of 0 or more');
+      return;
+    }
     setSaving(true);
     try {
       await createCatalogProduct({
@@ -37,9 +59,11 @@ export default function ProductsPanel({ site, onChanged }) {
         price_currency: 'INR',
         image_media_id: imageMediaId ? Number(imageMediaId) : undefined,
         is_active: true,
+        stock_quantity: stockQty,
       });
       setName('');
       setPrice('');
+      setStock('0');
       setDescription('');
       setImageMediaId('');
       toast.success('Product added');
@@ -58,6 +82,25 @@ export default function ProductsPanel({ site, onChanged }) {
       onChanged?.();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Update failed');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const saveStock = async (product, raw) => {
+    const stockQty = Number(raw);
+    if (!Number.isFinite(stockQty) || stockQty < 0 || !Number.isInteger(stockQty)) {
+      toast.error('Stock must be a whole number of 0 or more');
+      return;
+    }
+    if (stockQty === Number(product.stock_quantity ?? 0)) return;
+    setBusyId(product.id);
+    try {
+      await updateCatalogProduct(product.id, { stock_quantity: stockQty });
+      toast.success(stockQty > 0 ? 'Stock updated' : 'Marked out of stock');
+      onChanged?.();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not update stock');
     } finally {
       setBusyId(null);
     }
@@ -94,18 +137,30 @@ export default function ProductsPanel({ site, onChanged }) {
       <form onSubmit={add} className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
         <p className="text-sm font-medium text-slate-800">Add product</p>
         <p className="text-xs text-slate-500">
-          Prices are display-only — no cart or checkout on the brochure.
+          Set stock quantity for inventory. 0 = out of stock. WhatsApp ordering (later) will only
+          offer in-stock active products.
         </p>
         <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Gold package" />
-        <Input
-          label="Price (INR, optional)"
-          type="number"
-          min="0"
-          step="0.01"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          placeholder="999"
-        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Input
+            label="Price (INR, optional)"
+            type="number"
+            min="0"
+            step="0.01"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            placeholder="999"
+          />
+          <Input
+            label="Stock quantity"
+            type="number"
+            min="0"
+            step="1"
+            value={stock}
+            onChange={(e) => setStock(e.target.value)}
+            placeholder="0"
+          />
+        </div>
         <div className="space-y-1.5">
           <label className="block text-sm font-medium text-slate-700">Description</label>
           <textarea
@@ -148,7 +203,7 @@ export default function ProductsPanel({ site, onChanged }) {
       ) : (
         <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
           {products.map((p) => (
-            <li key={p.id} className="flex items-center gap-3 px-3 py-3">
+            <li key={p.id} className="flex flex-wrap items-center gap-3 px-3 py-3">
               <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-slate-100">
                 {p.image ? (
                   <AuthMediaImg
@@ -166,7 +221,29 @@ export default function ProductsPanel({ site, onChanged }) {
                     : 'No price'}
                   {!p.is_active ? ' · Hidden' : ''}
                 </p>
+                <div className="mt-1">
+                  <StockBadge product={p} />
+                </div>
               </div>
+              <label className="flex items-center gap-1.5 text-xs text-slate-600">
+                Stock
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  defaultValue={p.stock_quantity ?? 0}
+                  key={`stock-${p.id}-${p.stock_quantity ?? 0}`}
+                  disabled={busyId === p.id}
+                  className="w-20 rounded-lg border border-slate-200 px-2 py-1 text-sm"
+                  onBlur={(e) => saveStock(p, e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.currentTarget.blur();
+                    }
+                  }}
+                />
+              </label>
               <Button
                 type="button"
                 variant="ghost"

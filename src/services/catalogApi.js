@@ -91,12 +91,56 @@ export async function deleteCatalogProduct(id) {
   await api.delete(`/catalog/products/${id}`);
 }
 
+export async function getCatalogPaymentSettings() {
+  const { data } = await api.get('/catalog/payment-settings');
+  return data?.payment;
+}
+
+export async function updateCatalogPaymentSettings(payload) {
+  const { data } = await api.patch('/catalog/payment-settings', payload);
+  return data?.payment;
+}
+
 /** Auth-only file bytes (draft preview). */
 export async function fetchCatalogMediaBlob(mediaId) {
   const { data } = await api.get(`/catalog/media/${mediaId}/content`, {
     responseType: 'blob',
   });
   return data;
+}
+
+export async function listCatalogOrders(params = {}) {
+  const { data } = await api.get('/catalog/orders', { params });
+  return data;
+}
+
+export async function getCatalogOrder(id) {
+  const { data } = await api.get(`/catalog/orders/${id}`);
+  return data?.order;
+}
+
+export async function createCatalogOrder(payload) {
+  const { data } = await api.post('/catalog/orders', payload);
+  return data?.order;
+}
+
+export async function attachCatalogOrderScreenshot(id, mediaId) {
+  const { data } = await api.post(`/catalog/orders/${id}/screenshot`, {
+    media_id: mediaId,
+  });
+  return data?.order;
+}
+
+export async function confirmCatalogOrder(id) {
+  const { data } = await api.post(`/catalog/orders/${id}/confirm`);
+  return data?.order;
+}
+
+export async function rejectCatalogOrder(id, reason) {
+  const { data } = await api.post(`/catalog/orders/${id}/reject`, {
+    reason: reason || null,
+  });
+  return data?.order;
 }
 
 export function slugifyBusinessName(name) {

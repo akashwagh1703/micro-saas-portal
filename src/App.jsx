@@ -32,6 +32,7 @@ const SchedulingResources = lazy(() => import('./pages/scheduling/SchedulingReso
 const SchedulingResourceDetail = lazy(() => import('./pages/scheduling/SchedulingResourceDetail'));
 const SchedulingBookings = lazy(() => import('./pages/scheduling/SchedulingBookings'));
 const Website = lazy(() => import('./pages/Website'));
+const CatalogOrders = lazy(() => import('./pages/CatalogOrders'));
 
 export default function App() {
   return (
@@ -61,6 +62,7 @@ export default function App() {
               <Route path="/inbox" element={<Inbox />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/website" element={<Website />} />
+              <Route path="/catalog-orders" element={<CatalogOrders />} />
               <Route element={<NonCareerAiRoute />}>
                 <Route path="/contacts" element={<Contacts />} />
                 <Route path="/leads" element={<Leads />} />

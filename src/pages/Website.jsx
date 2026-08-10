@@ -8,6 +8,8 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import SectionEditor from '../components/catalog/SectionEditor';
 import ThemePanel from '../components/catalog/ThemePanel';
+import PaymentSettingsPanel from '../components/catalog/PaymentSettingsPanel';
+import WhatsAppShopSyncCard from '../components/catalog/WhatsAppShopSyncCard';
 import { SECTION_META, SECTION_ORDER } from '../components/catalog/sectionConfig';
 import {
   createCatalogSite,
@@ -28,8 +30,9 @@ function apiErrorMessage(err, fallback) {
 
 export default function Website() {
   const navigate = useNavigate();
-  const { billing } = useOutletContext() ?? {};
+  const { billing, businessProfile } = useOutletContext() ?? {};
   const websiteBilling = billing?.website;
+  const isCatalogBusiness = businessProfile?.business_category === 'catalog';
   const [site, setSite] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeType, setActiveType] = useState('header');
@@ -399,6 +402,15 @@ export default function Website() {
       >
         <ThemePanel site={site} onChanged={load} />
       </Card>
+
+      <Card
+        title="Payment settings"
+        description="Your business UPI QR for catalog WhatsApp orders — not AutoWave subscription billing."
+      >
+        <PaymentSettingsPanel site={site} onChanged={load} />
+      </Card>
+
+      <WhatsAppShopSyncCard visible={isCatalogBusiness} />
 
       <Card title="Site details" description="Shown across header, contact, and WhatsApp-facing copy.">
         <form onSubmit={saveBasics} className="grid gap-3 sm:grid-cols-2">
