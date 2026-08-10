@@ -128,6 +128,14 @@ export async function listCatalogOrders(params = {}) {
   return data;
 }
 
+export async function exportCatalogOrdersCsv(params = {}) {
+  const { data } = await api.get('/catalog/orders/export.csv', {
+    params,
+    responseType: 'blob',
+  });
+  return data;
+}
+
 export async function getCatalogOrder(id) {
   const { data } = await api.get(`/catalog/orders/${id}`);
   return data?.order;
@@ -155,6 +163,41 @@ export async function rejectCatalogOrder(id, reason) {
     reason: reason || null,
   });
   return data?.order;
+}
+
+export async function setCatalogOrderShippingAddress(id, payload) {
+  const { data } = await api.post(`/catalog/orders/${id}/shipping-address`, payload);
+  return data?.order;
+}
+
+export async function markCatalogOrderShipped(id, payload) {
+  const { data } = await api.post(`/catalog/orders/${id}/ship`, payload);
+  return data?.order;
+}
+
+export async function bulkMarkCatalogOrdersShipped(items) {
+  const { data } = await api.post('/catalog/orders/bulk-ship', { items });
+  return data;
+}
+
+export async function markCatalogOrderDelivered(id) {
+  const { data } = await api.post(`/catalog/orders/${id}/deliver`);
+  return data?.order;
+}
+
+export async function fetchCatalogPackingSlipPdf(ids) {
+  const list = Array.isArray(ids) ? ids : [ids];
+  if (list.length === 1) {
+    const { data } = await api.get(`/catalog/orders/${list[0]}/packing-slip.pdf`, {
+      responseType: 'blob',
+    });
+    return data;
+  }
+  const { data } = await api.get('/catalog/orders/packing-slips.pdf', {
+    params: { ids: list.join(',') },
+    responseType: 'blob',
+  });
+  return data;
 }
 
 export function slugifyBusinessName(name) {
