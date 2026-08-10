@@ -30,11 +30,13 @@ function StockBadge({ product }) {
 
 export default function ProductsPanel({ site, onChanged }) {
   const products = site?.products || [];
+  const categories = site?.categories || [];
   const images = (site?.media || []).filter((m) => m.kind === 'image');
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('0');
   const [description, setDescription] = useState('');
+  const [categoryId, setCategoryId] = useState('');
   const [imageMediaId, setImageMediaId] = useState('');
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState(null);
@@ -57,6 +59,7 @@ export default function ProductsPanel({ site, onChanged }) {
         description: description.trim() || undefined,
         price_amount: price !== '' ? Number(price) : undefined,
         price_currency: 'INR',
+        category_id: categoryId ? Number(categoryId) : null,
         image_media_id: imageMediaId ? Number(imageMediaId) : undefined,
         is_active: true,
         stock_quantity: stockQty,
@@ -65,6 +68,7 @@ export default function ProductsPanel({ site, onChanged }) {
       setPrice('');
       setStock('0');
       setDescription('');
+      setCategoryId('');
       setImageMediaId('');
       toast.success('Product added');
       onChanged?.();
@@ -82,6 +86,26 @@ export default function ProductsPanel({ site, onChanged }) {
       onChanged?.();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Update failed');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const saveCategory = async (product, raw) => {
+    const nextId = raw === '' ? null : Number(raw);
+    const currentId = product.category_id ?? null;
+    if (nextId === currentId) return;
+    if (nextId != null && !Number.isFinite(nextId)) {
+      toast.error('Invalid category');
+      return;
+    }
+    setBusyId(product.id);
+    try {
+      await updateCatalogProduct(product.id, { category_id: nextId });
+      toast.success('Category updated');
+      onChanged?.();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not update category');
     } finally {
       setBusyId(null);
     }
@@ -137,10 +161,26 @@ export default function ProductsPanel({ site, onChanged }) {
       <form onSubmit={add} className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
         <p className="text-sm font-medium text-slate-800">Add product</p>
         <p className="text-xs text-slate-500">
-          Set stock quantity for inventory. 0 = out of stock. WhatsApp ordering (later) will only
-          offer in-stock active products.
+          Assign a category for WhatsApp browse. Stock 0 = out of stock (Order hidden until stock is
+          available).
         </p>
         <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Gold package" />
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium text-slate-700">Category</label>
+          <select
+            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+          >
+            <option value="">Uncategorized (Other)</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+                {!c.is_active ? ' (hidden)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <Input
             label="Price (INR, optional)"
@@ -162,7 +202,7 @@ export default function ProductsPanel({ site, onChanged }) {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-slate-700">Description</label>
+          <label className="block text-sm font-medium text-slate-700">Short description</label>
           <textarea
             className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/10"
             rows={2}
@@ -221,8 +261,21 @@ export default function ProductsPanel({ site, onChanged }) {
                     : 'No price'}
                   {!p.is_active ? ' · Hidden' : ''}
                 </p>
-                <div className="mt-1">
+                <div className="mt-1 flex flex-wrap items-center gap-2">
                   <StockBadge product={p} />
+                  <select
+                    className="rounded-lg border border-slate-200 px-2 py-1 text-xs"
+                    value={p.category_id ?? ''}
+                    disabled={busyId === p.id}
+                    onChange={(e) => saveCategory(p, e.target.value)}
+                  >
+                    <option value="">Other</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <label className="flex items-center gap-1.5 text-xs text-slate-600">

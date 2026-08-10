@@ -77,6 +77,20 @@ export async function deleteCatalogMedia(id) {
   await api.delete(`/catalog/media/${id}`);
 }
 
+export async function createCatalogCategory(payload) {
+  const { data } = await api.post('/catalog/categories', payload);
+  return data?.category;
+}
+
+export async function updateCatalogCategory(id, payload) {
+  const { data } = await api.patch(`/catalog/categories/${id}`, payload);
+  return data?.category;
+}
+
+export async function deleteCatalogCategory(id) {
+  await api.delete(`/catalog/categories/${id}`);
+}
+
 export async function createCatalogProduct(payload) {
   const { data } = await api.post('/catalog/products', payload);
   return data?.product;

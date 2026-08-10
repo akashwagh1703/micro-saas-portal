@@ -4,6 +4,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import GalleryMediaPanel from './GalleryMediaPanel';
 import MediaPickField from './MediaPickField';
+import CategoriesPanel from './CategoriesPanel';
 import ProductsPanel from './ProductsPanel';
 import {
   FAQ_MAX,
@@ -333,14 +334,21 @@ export default function SectionEditor({ site, section, onChanged }) {
       )}
 
       {section.type === 'products' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <Input
             label="Intro (optional)"
             value={config.intro || ''}
             onChange={(e) => setField('intro', e.target.value)}
             placeholder="Browse our offerings"
           />
-          <ProductsPanel site={site} onChanged={onChanged} />
+          <div>
+            <p className="mb-2 text-sm font-semibold text-slate-800">Categories</p>
+            <CategoriesPanel site={site} onChanged={onChanged} />
+          </div>
+          <div>
+            <p className="mb-2 text-sm font-semibold text-slate-800">Products</p>
+            <ProductsPanel site={site} onChanged={onChanged} />
+          </div>
         </div>
       )}
 

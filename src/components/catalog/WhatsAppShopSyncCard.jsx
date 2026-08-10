@@ -29,7 +29,7 @@ export default function WhatsAppShopSyncCard({ visible }) {
   return (
     <Card
       title="WhatsApp shop"
-      description="Browse products → Order → business QR → screenshot. Publish your Catalog auto-reply after updating."
+      description="Catalog → categories → products → Order → business QR → screenshot. Publish your Catalog auto-reply after updating."
     >
       <div className="flex flex-wrap items-center gap-3">
         <Button type="button" variant="secondary" loading={syncing} onClick={sync}>
