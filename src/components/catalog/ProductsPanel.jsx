@@ -161,8 +161,8 @@ export default function ProductsPanel({ site, onChanged }) {
       <form onSubmit={add} className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
         <p className="text-sm font-medium text-slate-800">Add product</p>
         <p className="text-xs text-slate-500">
-          Assign a category for WhatsApp browse. Stock 0 = out of stock (Order hidden until stock is
-          available).
+          Assign a category and image for WhatsApp browse. Stock 0 = out of stock (Order hidden until
+          stock is available).
         </p>
         <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Gold package" />
         <div className="space-y-1.5">
@@ -211,20 +211,65 @@ export default function ProductsPanel({ site, onChanged }) {
             placeholder="Short details customers should know"
           />
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <label className="block text-sm font-medium text-slate-700">Image (optional)</label>
-          <select
-            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm"
-            value={imageMediaId}
-            onChange={(e) => setImageMediaId(e.target.value)}
-          >
-            <option value="">No image</option>
-            {images.map((m) => (
-              <option key={m.id} value={m.id}>
-                #{m.id} {m.file_name || m.alt || 'image'}
-              </option>
-            ))}
-          </select>
+          <p className="text-xs text-slate-500">
+            Shown on WhatsApp product listing. Tap a thumbnail to select, or upload a new one.
+          </p>
+          {imageMediaId ? (
+            <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-white p-2">
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                {(() => {
+                  const selected = images.find((m) => String(m.id) === String(imageMediaId));
+                  return selected ? (
+                    <AuthMediaImg
+                      media={selected}
+                      siteStatus={site.status}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : null;
+                })()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-slate-800">Selected image</p>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-slate-500 hover:text-slate-800"
+                  onClick={() => setImageMediaId('')}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          ) : null}
+          {images.length > 0 ? (
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {images.map((m) => {
+                const selected = String(m.id) === String(imageMediaId);
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setImageMediaId(String(m.id))}
+                    className={`overflow-hidden rounded-lg border-2 bg-slate-100 ${
+                      selected
+                        ? 'border-emerald-500 ring-2 ring-emerald-500/30'
+                        : 'border-transparent hover:border-slate-300'
+                    }`}
+                    title={m.file_name || m.alt || `Image #${m.id}`}
+                  >
+                    <AuthMediaImg
+                      media={m}
+                      siteStatus={site.status}
+                      className="aspect-square h-full w-full object-cover"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500">No images yet — upload one below.</p>
+          )}
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif"
@@ -244,14 +289,18 @@ export default function ProductsPanel({ site, onChanged }) {
         <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
           {products.map((p) => (
             <li key={p.id} className="flex flex-wrap items-center gap-3 px-3 py-3">
-              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200">
                 {p.image ? (
                   <AuthMediaImg
                     media={p.image}
                     siteStatus={site.status}
                     className="h-full w-full object-cover"
                   />
-                ) : null}
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[10px] text-slate-400">
+                    No img
+                  </div>
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-slate-900">{p.name}</p>
