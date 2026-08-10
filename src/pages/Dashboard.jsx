@@ -25,6 +25,7 @@ import TestBotCard from '../components/onboarding/TestBotCard';
 import BusinessWizard from '../components/BusinessWizard';
 import BusinessTypeCard from '../components/BusinessTypeCard';
 import ChannelAnalytics from '../components/dashboard/ChannelAnalytics';
+import CatalogSalesAnalytics from '../components/catalog/CatalogSalesAnalytics';
 import api from '../services/api';
 import { fetchSetupProgress, buildSetupSteps } from '../utils/setupProgress';
 import { resourceLabelPlural, supportsScheduling } from '../utils/scheduling';
@@ -357,7 +358,7 @@ export default function Dashboard() {
                     to="/catalog-orders"
                     className="inline-flex items-center gap-1 text-sm font-medium text-sky-700 hover:text-sky-900"
                   >
-                    Orders
+                    Orders & sales
                     <ArrowRight size={14} />
                   </Link>
                 </div>
@@ -383,6 +384,9 @@ export default function Dashboard() {
                     accent={accent}
                   />
                 ))}
+              </div>
+              <div className="mt-4">
+                <CatalogSalesAnalytics compact />
               </div>
             </Card>
           )}

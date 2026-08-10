@@ -30,7 +30,7 @@ const defaultNavItems = [
   { to: '/contacts', icon: Users, label: 'Contacts', hint: 'People who messaged you' },
   { to: '/leads', icon: UserPlus, label: 'Leads', hint: 'Captured from auto-replies' },
   { to: '/website', icon: LayoutTemplate, label: 'Website', hint: 'Catalog & brochure page' },
-  { to: '/catalog-orders', icon: Package, label: 'Orders', hint: 'Verify catalog payments' },
+  { to: '/catalog-orders', icon: Package, label: 'Orders', hint: 'Sales, income & shipping' },
   { to: '/settings', icon: Settings, label: 'Settings', hint: 'WhatsApp, CareerAI & billing' },
 ];
 

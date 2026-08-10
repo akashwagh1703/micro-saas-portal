@@ -8,6 +8,7 @@ import EmptyState from '../components/ui/EmptyState';
 import PageHeader from '../components/ui/PageHeader';
 import Input from '../components/ui/Input';
 import AuthMediaImg from '../components/catalog/AuthMediaImg';
+import CatalogSalesAnalytics from '../components/catalog/CatalogSalesAnalytics';
 import {
   attachCatalogOrderScreenshot,
   bulkMarkCatalogOrdersShipped,
@@ -424,13 +425,15 @@ export default function CatalogOrders() {
       <PageHeader
         eyebrow="Catalog commerce"
         title="Orders"
-        description="Verify payments, collect addresses, bulk-ship, print packing slips, and export for Excel."
+        description="Sales analytics, verify payments, ship orders, packing slips, and Excel export."
         action={
           <Link to="/website">
             <Button variant="secondary">Website & products</Button>
           </Link>
         }
       />
+
+      <CatalogSalesAnalytics />
 
       {selectedIds.size > 0 ? (
         <Card className="!p-3 border-violet-200 bg-violet-50/50">

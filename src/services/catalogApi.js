@@ -128,6 +128,11 @@ export async function listCatalogOrders(params = {}) {
   return data;
 }
 
+export async function fetchCatalogOrdersAnalytics(days = 30) {
+  const { data } = await api.get('/catalog/orders/analytics', { params: { days } });
+  return data;
+}
+
 export async function exportCatalogOrdersCsv(params = {}) {
   const { data } = await api.get('/catalog/orders/export.csv', {
     params,
