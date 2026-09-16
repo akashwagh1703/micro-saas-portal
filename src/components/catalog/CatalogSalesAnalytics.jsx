@@ -16,7 +16,7 @@ function formatPct(pct) {
   return `${sign}${pct}%`;
 }
 
-export default function CatalogSalesAnalytics({ compact = false }) {
+export default function CatalogSalesAnalytics({ compact = false, isCoffeeShop = false }) {
   const [days, setDays] = useState(30);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,7 +54,20 @@ export default function CatalogSalesAnalytics({ compact = false }) {
   }));
 
   const statusSegments = (data?.by_status || []).map((row) => ({
-    label: String(row.status || '').replace(/_/g, ' '),
+    label:
+      ({
+        pending_payment: 'Awaiting payment',
+        pending_verification: 'Needs verification',
+        confirmed: 'Awaiting address',
+        preparing: 'Preparing',
+        ready_for_pickup: 'Ready for pickup',
+        ready_to_ship: 'Ready to ship',
+        shipped: 'Shipped',
+        delivered: 'Delivered',
+        completed: 'Completed',
+        rejected: 'Rejected',
+        cancelled: 'Cancelled',
+      }[row.status] || String(row.status || '').replace(/_/g, ' ')),
     value: row.count,
   }));
 
@@ -64,7 +77,9 @@ export default function CatalogSalesAnalytics({ compact = false }) {
         <div>
           <h2 className="text-sm font-semibold text-slate-900">Sales & income</h2>
           <p className="mt-1 text-xs text-slate-500">
-            Paid income = confirmed, ready to ship, shipped, delivered, and completed orders.
+            {isCoffeeShop
+              ? 'Paid income = preparing, ready for pickup, and completed orders.'
+              : 'Paid income = confirmed, ready to ship, shipped, delivered, and completed orders.'}
             {data?.from && data?.to ? ` · ${data.from} → ${data.to}` : ''}
           </p>
         </div>
@@ -123,11 +138,28 @@ export default function CatalogSalesAnalytics({ compact = false }) {
               value={formatInr(summary.revenue_pending_verification_inr)}
               hint="Awaiting your confirmation"
             />
-            <Metric
-              label="Pipeline"
-              value={`${summary.orders_ready_to_ship} / ${summary.orders_shipped} / ${summary.orders_delivered}`}
-              hint="Ready · shipped · delivered"
-            />
+            {isCoffeeShop ? (
+              <Metric
+                label="Café queue"
+                value={`${summary.orders_preparing} / ${summary.orders_ready_for_pickup}`}
+                hint="Preparing · ready pickup"
+              />
+            ) : (
+              <>
+                <Metric
+                  label="Pipeline"
+                  value={`${summary.orders_ready_to_ship} / ${summary.orders_shipped} / ${summary.orders_delivered}`}
+                  hint="Ready · shipped · delivered"
+                />
+                {(summary.orders_preparing > 0 || summary.orders_ready_for_pickup > 0) && (
+                  <Metric
+                    label="Café queue"
+                    value={`${summary.orders_preparing} / ${summary.orders_ready_for_pickup}`}
+                    hint="Preparing · ready pickup"
+                  />
+                )}
+              </>
+            )}
           </div>
 
           {!compact ? (
@@ -148,12 +180,14 @@ export default function CatalogSalesAnalytics({ compact = false }) {
 
           {!compact && data.top_products?.length > 0 ? (
             <div>
-              <p className="mb-2 text-sm font-semibold text-slate-900">Top products (paid)</p>
+              <p className="mb-2 text-sm font-semibold text-slate-900">
+                {isCoffeeShop ? 'Top menu items (paid)' : 'Top products (paid)'}
+              </p>
               <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-sm">
                   <thead className="text-xs uppercase text-slate-400">
                     <tr>
-                      <th className="pb-2 font-medium">Product</th>
+                      <th className="pb-2 font-medium">{isCoffeeShop ? 'Item' : 'Product'}</th>
                       <th className="pb-2 font-medium">Orders</th>
                       <th className="pb-2 font-medium">Income</th>
                     </tr>

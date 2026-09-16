@@ -110,6 +110,7 @@ export default function Sidebar({ billing, businessCategory, businessProfile, mo
   const user = useSelector((state) => state.auth.user);
   const isSuperAdmin = !!user?.is_super_admin;
   const isCareerAi = businessCategory === 'career_ai';
+  const isCoffeeShop = businessCategory === 'coffee_shop';
   const showScheduling = supportsScheduling(businessProfile);
 
   const schedulingNavItems = showScheduling
@@ -119,11 +120,26 @@ export default function Sidebar({ billing, businessCategory, businessProfile, mo
       ]
     : [];
 
+  const withCafeHints = (items) =>
+    isCoffeeShop
+      ? items.map((item) => {
+          if (item.to === '/website') {
+            return { ...item, hint: 'Menu page & café branding' };
+          }
+          if (item.to === '/catalog-orders') {
+            return { ...item, hint: 'Verify, prepare & pickup' };
+          }
+          return item;
+        })
+      : items;
+
   const workspaceItems = isCareerAi
     ? careerNavItems
     : [
-        ...defaultNavItems.filter(
-          (item) => item.to !== '/career-ai' || businessCategory === 'career_ai',
+        ...withCafeHints(
+          defaultNavItems.filter(
+            (item) => item.to !== '/career-ai' || businessCategory === 'career_ai',
+          ),
         ),
         ...schedulingNavItems,
       ];

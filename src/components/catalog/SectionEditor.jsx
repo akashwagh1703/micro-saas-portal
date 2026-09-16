@@ -14,12 +14,12 @@ import {
   SOCIALS_MAX,
   TESTIMONIALS_MAX,
   mergeSectionConfig,
-  SECTION_META,
+  sectionMetaForVertical,
 } from './sectionConfig';
 import { updateCatalogSection } from '../../services/catalogApi';
 
-export default function SectionEditor({ site, section, onChanged }) {
-  const meta = SECTION_META[section.type] || { label: section.type, hint: '' };
+export default function SectionEditor({ site, section, onChanged, isCoffeeShop = false }) {
+  const meta = sectionMetaForVertical(section.type, isCoffeeShop);
   const [enabled, setEnabled] = useState(section.enabled);
   const [title, setTitle] = useState(section.title || meta.label);
   const [config, setConfig] = useState(() => mergeSectionConfig(section.type, section.config));
@@ -329,7 +329,12 @@ export default function SectionEditor({ site, section, onChanged }) {
             value={config.caption || ''}
             onChange={(e) => setField('caption', e.target.value)}
           />
-          <GalleryMediaPanel site={site} sectionId={section.id} onChanged={onChanged} />
+          <GalleryMediaPanel
+            site={site}
+            sectionId={section.id}
+            onChanged={onChanged}
+            isCoffeeShop={isCoffeeShop}
+          />
         </div>
       )}
 
@@ -346,8 +351,10 @@ export default function SectionEditor({ site, section, onChanged }) {
             <CategoriesPanel site={site} onChanged={onChanged} />
           </div>
           <div>
-            <p className="mb-2 text-sm font-semibold text-slate-800">Products</p>
-            <ProductsPanel site={site} onChanged={onChanged} />
+            <p className="mb-2 text-sm font-semibold text-slate-800">
+              {isCoffeeShop ? 'Menu items' : 'Products'}
+            </p>
+            <ProductsPanel site={site} onChanged={onChanged} isCoffeeShop={isCoffeeShop} />
           </div>
         </div>
       )}
@@ -414,7 +421,11 @@ export default function SectionEditor({ site, section, onChanged }) {
                     next[idx] = { ...next[idx], quote: e.target.value };
                     setField('items', next);
                   }}
-                  placeholder="Great quality bats and quick delivery…"
+                  placeholder={
+                    isCoffeeShop
+                      ? 'Best latte in town — ready in minutes…'
+                      : 'Great quality bats and quick delivery…'
+                  }
                 />
               </div>
               <div className="space-y-1.5">
@@ -495,7 +506,9 @@ export default function SectionEditor({ site, section, onChanged }) {
                   next[idx] = { ...next[idx], question: e.target.value };
                   setField('items', next);
                 }}
-                placeholder="Do you deliver in Nashik?"
+                placeholder={
+                  isCoffeeShop ? 'Do you have seating / Wi‑Fi?' : 'Do you deliver in Nashik?'
+                }
               />
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-slate-700">Answer</label>
@@ -508,7 +521,11 @@ export default function SectionEditor({ site, section, onChanged }) {
                     next[idx] = { ...next[idx], answer: e.target.value };
                     setField('items', next);
                   }}
-                  placeholder="Yes — same-day delivery in most areas."
+                  placeholder={
+                    isCoffeeShop
+                      ? 'Yes — indoor seating and free Wi‑Fi during café hours.'
+                      : 'Yes — same-day delivery in most areas.'
+                  }
                 />
               </div>
             </div>

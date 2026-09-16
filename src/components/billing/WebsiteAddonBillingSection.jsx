@@ -65,7 +65,7 @@ export default function WebsiteAddonBillingSection({
               <WebsiteStatusBadge status={website.status} />
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Optional add-on to publish your public brochure at{' '}
+              Optional add-on to publish your public page at{' '}
               <span className="font-mono text-xs">/c/your-slug</span>. Draft editing stays with your
               platform plan. Trial includes publish; after that this add-on is required to go live
               (already-published pages stay live).
@@ -135,7 +135,7 @@ export default function WebsiteAddonBillingSection({
           title="Pay for Website add-on"
           description="Scan the QR, pay the Website add-on amount, then submit your UTR and screenshot. Publish unlocks after verification (usually within 24 hours)."
           benefits={[
-            'Publish your public brochure page',
+            'Publish your public website page',
             'Share /c/slug from WhatsApp',
             'Draft editing stays free with your plan',
           ]}

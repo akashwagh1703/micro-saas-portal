@@ -23,7 +23,7 @@ function apiErrorMessage(err, fallback) {
 
 const DEFAULT_PLATFORM_BENEFITS = ['Full platform access', 'WhatsApp + Instagram'];
 const DEFAULT_WEBSITE_BENEFITS = [
-  'Publish your public brochure page',
+  'Publish your public website page',
   'Share /c/slug from WhatsApp',
 ];
 

@@ -149,6 +149,16 @@ export default function Dashboard() {
   const isCareerAi = progress?.isCareerAi;
   const showSchedulingStats = supportsScheduling(progress?.profile);
   const showCatalogStats = !!stats?.catalog_site_exists;
+  const isCoffeeShop =
+    progress?.profile?.business_category === 'coffee_shop' ||
+    layoutProfile?.business_category === 'coffee_shop';
+  const catalogProductStats = isCoffeeShop
+    ? [
+        { key: 'catalog_products_total', label: 'Menu items', icon: Package, accent: 'blue' },
+        { key: 'catalog_products_in_stock', label: 'Available', icon: Package, accent: 'emerald' },
+        { key: 'catalog_products_out_of_stock', label: 'Unavailable', icon: Package, accent: 'rose' },
+      ]
+    : catalogProductStatConfig;
 
   if (isCareerAi) {
     const careerCards = careerStats
@@ -334,10 +344,12 @@ export default function Dashboard() {
           )}
 
           {showCatalogStats && (
-            <Card title="Catalog commerce">
+            <Card title={isCoffeeShop ? 'Café orders' : 'Catalog commerce'}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm text-slate-600">
-                  Stock and WhatsApp shop orders
+                  {isCoffeeShop
+                    ? 'Menu and WhatsApp café orders'
+                    : 'Stock and WhatsApp shop orders'}
                   {stats?.catalog_payments_configured
                     ? ' · payments ready'
                     : ' · set up payment QR on Website to take orders'}
@@ -351,7 +363,7 @@ export default function Dashboard() {
                     to="/website"
                     className="inline-flex items-center gap-1 text-sm font-medium text-sky-700 hover:text-sky-900"
                   >
-                    Products
+                    {isCoffeeShop ? 'Menu' : 'Products'}
                     <ArrowRight size={14} />
                   </Link>
                   <Link
@@ -364,7 +376,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
-                {catalogProductStatConfig.map(({ key, label, icon, accent }) => (
+                {catalogProductStats.map(({ key, label, icon, accent }) => (
                   <StatCard
                     key={key}
                     icon={icon}
@@ -386,7 +398,7 @@ export default function Dashboard() {
                 ))}
               </div>
               <div className="mt-4">
-                <CatalogSalesAnalytics compact />
+                <CatalogSalesAnalytics compact isCoffeeShop={isCoffeeShop} />
               </div>
             </Card>
           )}

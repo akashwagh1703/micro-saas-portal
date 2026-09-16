@@ -10,7 +10,7 @@ import SectionEditor from '../components/catalog/SectionEditor';
 import ThemePanel from '../components/catalog/ThemePanel';
 import PaymentSettingsPanel from '../components/catalog/PaymentSettingsPanel';
 import WhatsAppShopSyncCard from '../components/catalog/WhatsAppShopSyncCard';
-import { SECTION_META, SECTION_ORDER } from '../components/catalog/sectionConfig';
+import { SECTION_ORDER, sectionMetaForVertical } from '../components/catalog/sectionConfig';
 import {
   createCatalogSite,
   getCatalogSite,
@@ -32,7 +32,10 @@ export default function Website() {
   const navigate = useNavigate();
   const { billing, businessProfile } = useOutletContext() ?? {};
   const websiteBilling = billing?.website;
-  const isCatalogBusiness = businessProfile?.business_category === 'catalog';
+  const isCatalogBusiness =
+    businessProfile?.business_category === 'catalog' ||
+    businessProfile?.business_category === 'coffee_shop';
+  const isCoffeeShop = businessProfile?.business_category === 'coffee_shop';
   const [site, setSite] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeType, setActiveType] = useState('header');
@@ -105,10 +108,10 @@ export default function Website() {
       { ok: !!(site.slug || '').trim(), label: 'Public URL slug' },
       { ok: !!aboutBody, label: 'About section text' },
       { ok: images.length > 0, label: 'At least one gallery photo' },
-      { ok: products.length > 0, label: 'Products (optional)', optional: true },
+      { ok: products.length > 0, label: isCoffeeShop ? 'Menu items (optional)' : 'Products (optional)', optional: true },
       { ok: !!(site.contact_whatsapp || site.contact_phone), label: 'Phone or WhatsApp' },
     ];
-  }, [site]);
+  }, [site, isCoffeeShop]);
 
   const onBusinessNameChange = (value) => {
     setBusinessName(value);
@@ -235,7 +238,7 @@ export default function Website() {
   if (loading) {
     return (
       <div className="mx-auto max-w-4xl space-y-6">
-        <PageHeader eyebrow="Brochure" title="Website" description="Loading…" />
+        <PageHeader eyebrow={isCoffeeShop ? 'Café' : 'Brochure'} title="Website" description="Loading…" />
         <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />
       </div>
     );
@@ -245,11 +248,18 @@ export default function Website() {
     return (
       <div className="mx-auto max-w-xl space-y-6">
         <PageHeader
-          eyebrow="Brochure"
+          eyebrow={isCoffeeShop ? 'Café' : 'Brochure'}
           title="Website"
-          description="Build a simple catalog page for WhatsApp customers — info, photos, and optional prices. No AutoWave branding on the public page."
+          description={
+            isCoffeeShop
+              ? 'Build a public menu page for WhatsApp customers — logo, categories, drinks/food, and prices. No AutoWave branding.'
+              : 'Build a simple catalog page for WhatsApp customers — info, photos, and optional prices. No AutoWave branding on the public page.'
+          }
         />
-        <Card title="Create your catalog site" description="Pick a short URL slug customers can open from WhatsApp.">
+        <Card
+          title={isCoffeeShop ? 'Create your café menu site' : 'Create your catalog site'}
+          description="Pick a short URL slug customers can open from WhatsApp."
+        >
           <form onSubmit={createSite} className="space-y-4">
             <Input
               label="Business name"
@@ -281,9 +291,13 @@ export default function Website() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <PageHeader
-        eyebrow="Brochure"
+        eyebrow={isCoffeeShop ? 'Café' : 'Brochure'}
         title="Website"
-        description="Configure sections for your public catalog. Customers get a short link — no AutoWave branding."
+        description={
+          isCoffeeShop
+            ? 'Configure your public menu page. Customers get a short link from WhatsApp — no AutoWave branding.'
+            : 'Configure sections for your public catalog. Customers get a short link — no AutoWave branding.'
+        }
         action={
           <div className="flex flex-wrap items-center gap-2">
             <span
@@ -410,7 +424,10 @@ export default function Website() {
         <PaymentSettingsPanel site={site} onChanged={load} />
       </Card>
 
-      <WhatsAppShopSyncCard visible={isCatalogBusiness} />
+      <WhatsAppShopSyncCard
+        visible={isCatalogBusiness}
+        variant={isCoffeeShop ? 'coffee' : 'catalog'}
+      />
 
       <Card title="Site details" description="Shown across header, contact, and WhatsApp-facing copy.">
         <form onSubmit={saveBasics} className="grid gap-3 sm:grid-cols-2">
@@ -473,7 +490,7 @@ export default function Website() {
           <div className="flex flex-col gap-1">
             {SECTION_ORDER.map((type) => {
               const sec = sectionsByType[type];
-              const meta = SECTION_META[type];
+              const meta = sectionMetaForVertical(type, isCoffeeShop);
               return (
                 <button
                   key={type}
@@ -497,7 +514,12 @@ export default function Website() {
 
         <Card>
           {activeSection ? (
-            <SectionEditor site={site} section={activeSection} onChanged={load} />
+            <SectionEditor
+              site={site}
+              section={activeSection}
+              onChanged={load}
+              isCoffeeShop={isCoffeeShop}
+            />
           ) : (
             <p className="text-sm text-slate-500">Section not found.</p>
           )}

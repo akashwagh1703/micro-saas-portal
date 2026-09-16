@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useOutletContext, useSearchParams } from 'react-router-dom';
 import { Download, FileText, Package, Truck, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
@@ -20,6 +20,8 @@ import {
   getCatalogSite,
   listCatalogOrders,
   markCatalogOrderDelivered,
+  markCatalogOrderReadyForPickup,
+  markCatalogOrderCompleted,
   markCatalogOrderShipped,
   rejectCatalogOrder,
   setCatalogOrderShippingAddress,
@@ -30,12 +32,28 @@ const ORDER_STATUS_STYLES = {
   pending_payment: 'bg-slate-100 text-slate-700',
   pending_verification: 'bg-amber-50 text-amber-800',
   confirmed: 'bg-sky-50 text-sky-800',
+  preparing: 'bg-orange-50 text-orange-800',
   ready_to_ship: 'bg-violet-50 text-violet-800',
+  ready_for_pickup: 'bg-teal-50 text-teal-800',
   shipped: 'bg-indigo-50 text-indigo-800',
   delivered: 'bg-emerald-50 text-emerald-800',
   rejected: 'bg-red-50 text-red-800',
   cancelled: 'bg-slate-100 text-slate-600',
   completed: 'bg-blue-50 text-blue-800',
+};
+
+const STATUS_LABELS = {
+  pending_payment: 'Awaiting payment',
+  pending_verification: 'Needs verification',
+  confirmed: 'Awaiting address',
+  preparing: 'Preparing',
+  ready_for_pickup: 'Ready for pickup',
+  ready_to_ship: 'Ready to ship',
+  shipped: 'Shipped',
+  delivered: 'Delivered',
+  completed: 'Completed',
+  rejected: 'Rejected',
+  cancelled: 'Cancelled',
 };
 
 function formatMoney(amount) {
@@ -56,7 +74,7 @@ function formatWhen(iso) {
 }
 
 function statusLabel(status) {
-  return String(status || '').replace(/_/g, ' ');
+  return STATUS_LABELS[status] || String(status || '').replace(/_/g, ' ');
 }
 
 function downloadBlob(blob, filename) {
@@ -69,6 +87,8 @@ function downloadBlob(blob, filename) {
 }
 
 export default function CatalogOrders() {
+  const { businessProfile } = useOutletContext() ?? {};
+  const isCoffeeShop = businessProfile?.business_category === 'coffee_shop';
   const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
@@ -192,9 +212,12 @@ export default function CatalogOrders() {
 
   const handleConfirm = async () => {
     if (!selected || selected.order_status !== 'pending_verification') return;
+    const isPickup = selected.fulfillment_type === 'pickup';
     if (
       !window.confirm(
-        'Confirm this payment? Stock will be deducted and the customer will be asked for a delivery address on WhatsApp.',
+        isPickup
+          ? 'Confirm this payment? Stock will be deducted and the order moves to Preparing. Customer is notified on WhatsApp.'
+          : 'Confirm this payment? Stock will be deducted and the customer will be asked for a delivery address on WhatsApp.',
       )
     ) {
       return;
@@ -202,9 +225,15 @@ export default function CatalogOrders() {
     setConfirming(true);
     try {
       await confirmCatalogOrder(selected.id);
-      toast.success('Payment confirmed — customer asked for address');
-      setStatusFilter('confirmed');
-      load('confirmed');
+      if (isPickup) {
+        toast.success('Payment confirmed — order is preparing');
+        setStatusFilter('preparing');
+        load('preparing');
+      } else {
+        toast.success('Payment confirmed — customer asked for address');
+        setStatusFilter('confirmed');
+        load('confirmed');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not confirm order');
     } finally {
@@ -289,6 +318,41 @@ export default function CatalogOrders() {
       load('delivered');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not mark delivered');
+    } finally {
+      setDelivering(false);
+    }
+  };
+
+  const handleReadyForPickup = async () => {
+    if (!selected || selected.order_status !== 'preparing') return;
+    setDelivering(true);
+    try {
+      await markCatalogOrderReadyForPickup(selected.id);
+      toast.success('Ready for pickup — customer notified');
+      setStatusFilter('ready_for_pickup');
+      load('ready_for_pickup');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not mark ready');
+    } finally {
+      setDelivering(false);
+    }
+  };
+
+  const handleCompletePickup = async () => {
+    if (
+      !selected ||
+      (selected.order_status !== 'ready_for_pickup' && selected.order_status !== 'preparing')
+    ) {
+      return;
+    }
+    setDelivering(true);
+    try {
+      await markCatalogOrderCompleted(selected.id);
+      toast.success('Order completed — customer notified');
+      setStatusFilter('completed');
+      load('completed');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not complete order');
     } finally {
       setDelivering(false);
     }
@@ -379,7 +443,7 @@ export default function CatalogOrders() {
   const handleCreateTest = async (e) => {
     e.preventDefault();
     if (!testProductId) {
-      toast.error('Select a product');
+      toast.error(isCoffeeShop ? 'Select a menu item' : 'Select a product');
       return;
     }
     setCreating(true);
@@ -423,17 +487,23 @@ export default function CatalogOrders() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <PageHeader
-        eyebrow="Catalog commerce"
+        eyebrow={isCoffeeShop ? 'Café' : 'Catalog commerce'}
         title="Orders"
-        description="Sales analytics, verify payments, ship orders, packing slips, and Excel export."
+        description={
+          isCoffeeShop
+            ? 'Sales analytics, verify payments, prepare orders, and mark ready for pickup.'
+            : 'Sales analytics, verify payments, ship orders, packing slips, and Excel export.'
+        }
         action={
           <Link to="/website">
-            <Button variant="secondary">Website & products</Button>
+            <Button variant="secondary">
+              {isCoffeeShop ? 'Website & menu' : 'Website & products'}
+            </Button>
           </Link>
         }
       />
 
-      <CatalogSalesAnalytics />
+      <CatalogSalesAnalytics isCoffeeShop={isCoffeeShop} />
 
       {selectedIds.size > 0 ? (
         <Card className="!p-3 border-violet-200 bg-violet-50/50">
@@ -522,10 +592,23 @@ export default function CatalogOrders() {
             >
               <option value="pending_verification">Needs verification</option>
               <option value="pending_payment">Awaiting payment</option>
-              <option value="confirmed">Awaiting address</option>
-              <option value="ready_to_ship">Ready to ship</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
+              {isCoffeeShop ? (
+                <>
+                  <option value="preparing">Preparing</option>
+                  <option value="ready_for_pickup">Ready for pickup</option>
+                  <option value="completed">Completed</option>
+                </>
+              ) : (
+                <>
+                  <option value="confirmed">Awaiting address</option>
+                  <option value="preparing">Preparing (café)</option>
+                  <option value="ready_for_pickup">Ready for pickup</option>
+                  <option value="ready_to_ship">Ready to ship</option>
+                  <option value="shipped">Shipped</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="completed">Completed</option>
+                </>
+              )}
               <option value="rejected">Rejected</option>
               <option value="all">All orders</option>
             </select>
@@ -575,7 +658,9 @@ export default function CatalogOrders() {
       <Card className="!p-4">
         <h2 className="text-sm font-semibold text-slate-900">Create test order</h2>
         <p className="mt-1 text-xs text-slate-500">
-          Create an order, attach a screenshot, confirm, then add address / ship.
+          {isCoffeeShop
+            ? 'Create an order, attach a screenshot, confirm, then mark preparing → ready → completed.'
+            : 'Create an order, attach a screenshot, confirm, then add address / ship.'}
         </p>
         <form onSubmit={handleCreateTest} className="mt-3 grid gap-3 sm:grid-cols-4">
           <select
@@ -584,7 +669,7 @@ export default function CatalogOrders() {
             className="rounded-lg border border-slate-200 px-3 py-2 text-sm sm:col-span-2"
             required
           >
-            <option value="">Select product</option>
+            <option value="">{isCoffeeShop ? 'Select menu item' : 'Select product'}</option>
             {products.map((p) => (
               <option key={p.id} value={String(p.id)}>
                 {p.name} · stock {p.stock_quantity ?? 0} · {formatMoney(p.price_amount)}
@@ -650,13 +735,18 @@ export default function CatalogOrders() {
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium text-slate-900">{order.product_name}</p>
                         <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                             ORDER_STATUS_STYLES[order.order_status] ||
                             'bg-slate-100 text-slate-600'
                           }`}
                         >
                           {statusLabel(order.order_status)}
                         </span>
+                        {order.fulfillment_type === 'pickup' ? (
+                          <span className="rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-800">
+                            Pickup
+                          </span>
+                        ) : null}
                       </div>
                       <p className="mt-1 text-sm text-slate-600">
                         {order.order_number} · {formatMoney(order.amount_inr)}
@@ -664,7 +754,11 @@ export default function CatalogOrders() {
                       <p className="mt-0.5 text-xs text-slate-500">
                         {order.customer_name || order.customer_phone || 'No customer'} ·{' '}
                         {formatWhen(order.created_at)}
-                        {order.shipping_pincode ? ` · PIN ${order.shipping_pincode}` : ''}
+                        {order.fulfillment_type === 'pickup' && order.pickup_slot_label
+                          ? ` · ${order.pickup_slot_label}`
+                          : order.shipping_pincode
+                            ? ` · PIN ${order.shipping_pincode}`
+                            : ''}
                       </p>
                     </button>
                   </div>
@@ -719,6 +813,19 @@ export default function CatalogOrders() {
                     {statusLabel(selected.order_status)} · {statusLabel(selected.payment_status)}
                   </dd>
                 </div>
+                {selected.fulfillment_type === 'pickup' || selected.pickup_slot_label ? (
+                  <div>
+                    <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                      Pickup
+                    </dt>
+                    <dd className="mt-0.5 text-slate-800">
+                      {selected.pickup_slot_label || '—'}
+                      {selected.pickup_at
+                        ? ` · ${formatWhen(selected.pickup_at)}`
+                        : ''}
+                    </dd>
+                  </div>
+                ) : null}
                 {selected.has_shipping_address ? (
                   <div>
                     <dt className="text-xs font-medium uppercase tracking-wide text-slate-400">
@@ -827,7 +934,8 @@ export default function CatalogOrders() {
               )}
 
               {(selected.order_status === 'confirmed' ||
-                selected.order_status === 'ready_to_ship') && (
+                selected.order_status === 'ready_to_ship') &&
+                selected.fulfillment_type !== 'pickup' && (
                 <form onSubmit={handleSaveAddress} className="mt-6 space-y-2 border-t border-slate-100 pt-4">
                   <p className="text-sm font-semibold text-slate-900">Shipping address</p>
                   <p className="text-xs text-slate-500">
@@ -939,10 +1047,39 @@ export default function CatalogOrders() {
                   </Button>
                 </div>
               )}
+
+              {selected.fulfillment_type === 'pickup' && selected.order_status === 'preparing' && (
+                <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+                  <p className="text-sm font-semibold text-slate-900">Pickup</p>
+                  <Button className="w-full" onClick={handleReadyForPickup} loading={delivering}>
+                    Mark ready for pickup
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="w-full"
+                    onClick={handleCompletePickup}
+                    loading={delivering}
+                  >
+                    Mark completed
+                  </Button>
+                </div>
+              )}
+
+              {selected.fulfillment_type === 'pickup' &&
+                selected.order_status === 'ready_for_pickup' && (
+                  <div className="mt-4 border-t border-slate-100 pt-4">
+                    <Button className="w-full" onClick={handleCompletePickup} loading={delivering}>
+                      Mark completed (collected)
+                    </Button>
+                  </div>
+                )}
             </>
           ) : (
             <p className="text-sm text-slate-500">
-              Select an order to verify payment, add address, or ship.
+              {isCoffeeShop
+                ? 'Select an order to verify payment, prepare, or mark ready for pickup.'
+                : 'Select an order to verify payment, add address, or ship.'}
             </p>
           )}
         </Card>

@@ -190,6 +190,16 @@ export async function markCatalogOrderDelivered(id) {
   return data?.order;
 }
 
+export async function markCatalogOrderReadyForPickup(id) {
+  const { data } = await api.post(`/catalog/orders/${id}/ready-for-pickup`);
+  return data?.order;
+}
+
+export async function markCatalogOrderCompleted(id) {
+  const { data } = await api.post(`/catalog/orders/${id}/complete`);
+  return data?.order;
+}
+
 export async function fetchCatalogPackingSlipPdf(ids) {
   const list = Array.isArray(ids) ? ids : [ids];
   if (list.length === 1) {

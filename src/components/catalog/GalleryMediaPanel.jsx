@@ -14,6 +14,7 @@ export default function GalleryMediaPanel({
   site,
   sectionId,
   onChanged,
+  isCoffeeShop = false,
 }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -127,7 +128,8 @@ export default function GalleryMediaPanel({
 
       {sectionMedia.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-          No gallery media yet — upload photos your customers will see on the brochure.
+          No gallery media yet — upload photos your customers will see on the{' '}
+          {isCoffeeShop ? 'café page' : 'brochure'}.
         </p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

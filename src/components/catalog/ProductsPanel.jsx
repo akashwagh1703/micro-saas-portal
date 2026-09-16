@@ -28,7 +28,7 @@ function StockBadge({ product }) {
   );
 }
 
-export default function ProductsPanel({ site, onChanged }) {
+export default function ProductsPanel({ site, onChanged, isCoffeeShop = false }) {
   const products = site?.products || [];
   const categories = site?.categories || [];
   const images = (site?.media || []).filter((m) => m.kind === 'image');
@@ -44,7 +44,7 @@ export default function ProductsPanel({ site, onChanged }) {
   const add = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error('Product name is required');
+      toast.error(isCoffeeShop ? 'Item name is required' : 'Product name is required');
       return;
     }
     const stockQty = stock === '' ? 0 : Number(stock);
@@ -70,7 +70,7 @@ export default function ProductsPanel({ site, onChanged }) {
       setDescription('');
       setCategoryId('');
       setImageMediaId('');
-      toast.success('Product added');
+      toast.success(isCoffeeShop ? 'Menu item added' : 'Product added');
       onChanged?.();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not add product');
@@ -135,7 +135,7 @@ export default function ProductsPanel({ site, onChanged }) {
     setBusyId(productId);
     try {
       await deleteCatalogProduct(productId);
-      toast.success('Product deleted');
+      toast.success(isCoffeeShop ? 'Menu item deleted' : 'Product deleted');
       onChanged?.();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not delete');
@@ -159,12 +159,19 @@ export default function ProductsPanel({ site, onChanged }) {
   return (
     <div className="space-y-5">
       <form onSubmit={add} className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4">
-        <p className="text-sm font-medium text-slate-800">Add product</p>
+        <p className="text-sm font-medium text-slate-800">
+          {isCoffeeShop ? 'Add menu item' : 'Add product'}
+        </p>
         <p className="text-xs text-slate-500">
           Assign a category and image for WhatsApp browse. Stock 0 = out of stock (Order hidden until
           stock is available).
         </p>
-        <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Gold package" />
+        <Input
+          label="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={isCoffeeShop ? 'e.g. Cappuccino' : 'e.g. Gold package'}
+        />
         <div className="space-y-1.5">
           <label className="block text-sm font-medium text-slate-700">Category</label>
           <select
@@ -279,12 +286,14 @@ export default function ProductsPanel({ site, onChanged }) {
         </div>
         <Button type="submit" loading={saving}>
           <Plus size={16} />
-          Add product
+          {isCoffeeShop ? 'Add menu item' : 'Add product'}
         </Button>
       </form>
 
       {products.length === 0 ? (
-        <p className="text-sm text-slate-500">No products yet.</p>
+        <p className="text-sm text-slate-500">
+          {isCoffeeShop ? 'No menu items yet.' : 'No products yet.'}
+        </p>
       ) : (
         <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
           {products.map((p) => (

@@ -43,6 +43,27 @@ export const SECTION_META = {
   },
 };
 
+/** Café-friendly section chrome for coffee_shop tenants. */
+export function sectionMetaForVertical(type, isCoffeeShop = false) {
+  const base = SECTION_META[type] || { label: type, hint: '' };
+  if (!isCoffeeShop) return base;
+  const cafe = {
+    highlights: {
+      label: 'Highlights',
+      hint: 'Short stats under the hero (years, cups served, locations…)',
+    },
+    gallery: {
+      label: 'Gallery',
+      hint: 'Photos of your café, drinks, and space',
+    },
+    products: {
+      label: 'Menu',
+      hint: 'Drinks and food with prices — order via WhatsApp',
+    },
+  };
+  return cafe[type] || base;
+}
+
 export const SECTION_ORDER = [
   'header',
   'hero',

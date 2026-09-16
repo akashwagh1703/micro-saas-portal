@@ -123,6 +123,17 @@ const FALLBACK_BUSINESS_OPTIONS = [
     max_use_cases: 1,
     visible_in_signup: true,
   },
+  {
+    key: 'coffee_shop',
+    label: 'Coffee / Café',
+    hint: 'Menu on WhatsApp + optional public page — order, pay by UPI, pick up.',
+    example: 'Customer says Hi → logo welcome → menu by category → order → pay.',
+    recommended_use_cases: ['catalog_share'],
+    supports_use_case_picker: false,
+    allowed_use_cases: ['catalog_share'],
+    max_use_cases: 1,
+    visible_in_signup: true,
+  },
 ];
 
 const FALLBACK_USE_CASE_OPTIONS = [
@@ -423,6 +434,10 @@ export default function BusinessWizard({ onClose, onCreated, profile: initialPro
       } else if (business === 'catalog') {
         toast.success(
           'Catalog WhatsApp flow created (draft). Publish it under Auto-replies, then build your page in Website.',
+        );
+      } else if (business === 'coffee_shop') {
+        toast.success(
+          'Coffee shop WhatsApp menu flow created (draft). Publish it under Auto-replies, then add menu & logo in Website.',
         );
       } else {
         const count = data.workflows?.length ?? 0;
